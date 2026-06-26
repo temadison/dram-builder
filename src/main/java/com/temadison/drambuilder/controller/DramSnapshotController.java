@@ -4,6 +4,7 @@ import com.temadison.drambuilder.dto.ScenarioRequest;
 import com.temadison.drambuilder.dto.ScenarioResponse;
 import com.temadison.drambuilder.dto.SnapshotRequest;
 import com.temadison.drambuilder.dto.SnapshotResponse;
+import com.temadison.drambuilder.service.DramScenarioService;
 import com.temadison.drambuilder.service.DramSnapshotService;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class DramSnapshotController {
 
     private final DramSnapshotService dramSnapshotService;
+    private final DramScenarioService dramScenarioService;
 
-    public DramSnapshotController(DramSnapshotService dramSnapshotService) {
+    public DramSnapshotController(DramSnapshotService dramSnapshotService, DramScenarioService dramScenarioService) {
         this.dramSnapshotService = dramSnapshotService;
+        this.dramScenarioService = dramScenarioService;
     }
 
     @PostMapping("/snapshot")
@@ -34,6 +37,6 @@ public class DramSnapshotController {
 
     @PostMapping("/scenario")
     public ScenarioResponse runScenario(@Valid @RequestBody ScenarioRequest request) {
-        return dramSnapshotService.runScenario(request);
+        return dramScenarioService.runScenario(request);
     }
 }

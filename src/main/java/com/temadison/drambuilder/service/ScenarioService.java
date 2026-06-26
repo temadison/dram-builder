@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * the resulting DRAM move and dollar impact versus a purchase price.
  */
 @Service
-public class ScenarioService {
+public class ScenarioService implements ScenarioCalculator {
 
     private static final MathContext MATH_CONTEXT = new MathContext(18, RoundingMode.HALF_UP);
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
@@ -30,6 +30,7 @@ public class ScenarioService {
      * @param input baseline prices, hypothetical moves, and holding weights
      * @return scenario result sorted by absolute weighted contribution
      */
+    @Override
     public ScenarioCalculationResult calculate(ScenarioInput input) {
         Map<String, BigDecimal> securityMoves = input.securityMovesPercent() == null ? Map.of() : input.securityMovesPercent();
         Map<String, BigDecimal> fxMoves = input.fxMovesPercent() == null ? Map.of() : input.fxMovesPercent();

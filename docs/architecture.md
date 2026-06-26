@@ -40,13 +40,19 @@ Planned tables:
 
 ## Domain Boundaries
 
-`SyntheticNavService` is the pure calculation service. It does not depend on Spring persistence and is covered by deterministic unit tests.
+`SyntheticNavCalculator`, `AttributionCalculator`, and `ScenarioCalculator` are the calculation contracts. Their default Spring implementations are persistence-free and covered by deterministic unit tests.
 
-`AttributionService` is the pure snapshot comparison service. It ranks holding-level contribution changes and calculates synthetic NAV and market price changes versus the prior snapshot.
+`SyntheticNavService` calculates normalized synthetic NAV, holding returns, and premium/discount.
 
-`ScenarioService` is the pure hypothetical move service. It applies security and FX moves to current holding weights and returns estimated DRAM move, projected price, and dollar impact versus purchase price.
+`AttributionService` ranks holding-level contribution changes and calculates synthetic NAV and market price changes versus the prior snapshot.
 
-`DramSnapshotService` coordinates DRAM-specific snapshot ingestion, entity persistence, calculation, and DTO mapping. Future releases should extract generic ETF snapshot handling when additional bridge trades or ETFs are supported.
+`ScenarioService` applies security and FX moves to current holding weights and returns estimated DRAM move, projected price, and dollar impact versus purchase price.
+
+`DramSnapshotService` coordinates DRAM-specific snapshot ingestion, entity persistence, NAV calculation, attribution, and snapshot response mapping.
+
+`DramScenarioService` coordinates scenario execution against the latest snapshot and persists scenario runs and holding-level scenario results.
+
+Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
 ## Financial Concepts
 

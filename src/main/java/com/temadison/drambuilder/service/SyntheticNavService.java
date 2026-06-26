@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
  * and estimates fair value by applying each holding's weighted USD return factor.
  */
 @Service
-public class SyntheticNavService {
+public class SyntheticNavService implements SyntheticNavCalculator {
 
     private static final MathContext MATH_CONTEXT = new MathContext(18, RoundingMode.HALF_UP);
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
@@ -32,6 +32,7 @@ public class SyntheticNavService {
      * @param holdings manually entered holdings
      * @return normalized synthetic NAV calculation result
      */
+    @Override
     public SyntheticNavResult calculate(BigDecimal marketPrice, List<HoldingInput> holdings) {
         validateWeights(holdings);
 

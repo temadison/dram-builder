@@ -16,7 +16,7 @@ import org.springframework.stereotype.Service;
  * attribution math can be tested independently.
  */
 @Service
-public class AttributionService {
+public class AttributionService implements AttributionCalculator {
 
     private static final MathContext MATH_CONTEXT = new MathContext(18, RoundingMode.HALF_UP);
     private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
@@ -29,6 +29,7 @@ public class AttributionService {
      * @param prior prior snapshot calculation inputs, or null when unavailable
      * @return attribution result with top contributors sorted by absolute contribution change
      */
+    @Override
     public AttributionResult calculate(AttributionSnapshotInput current, AttributionSnapshotInput prior) {
         if (prior == null) {
             return new AttributionResult(
