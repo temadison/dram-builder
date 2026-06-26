@@ -9,5 +9,7 @@ public interface FxRateSnapshotRepository extends JpaRepository<FxRateSnapshot, 
 
     Optional<FxRateSnapshot> findFirstByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(String baseCurrency, String quoteCurrency);
 
+    List<FxRateSnapshot> findTop2ByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(String baseCurrency, String quoteCurrency);
+
     List<FxRateSnapshot> findTop20ByOrderByObservedAtDesc();
 }

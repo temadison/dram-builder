@@ -16,6 +16,8 @@ Release 0.5 adds Bridge Score v1 and a rotation signal based on target exposure,
 
 Release 0.6 adds a basic static dashboard served by Spring Boot for latest snapshot, holdings, attribution, scenarios, bridge score, and manual snapshot entry.
 
+The current post-0.6 step connects stored market data to snapshot creation so manual price/FX entry can be separated from DRAM NAV calculation.
+
 ## Package Layout
 
 - `domain`: JPA entities for ETF, security, holding snapshots, holdings, and NAV snapshots.
@@ -69,6 +71,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 `DramSnapshotService` coordinates DRAM-specific snapshot ingestion, entity persistence, NAV calculation, attribution, and snapshot response mapping.
 
+`DramMarketDataSnapshotService` converts latest stored security prices and FX rates into the existing snapshot input contract, then delegates persistence and NAV math to `DramSnapshotService`.
+
 `DramScenarioService` coordinates scenario execution against the latest snapshot and persists scenario runs and holding-level scenario results.
 
 `DramBridgeScoreService` builds score inputs from the latest snapshot and applies default or request-provided placeholder assumptions.
@@ -103,6 +107,8 @@ Unit tests use deterministic object fixtures and avoid persistence for calculati
 
 API integration tests use `@SpringBootTest`, `MockMvc`, the `test` profile, and fixture-driven snapshot creation through `POST /api/dram/snapshot`. This verifies controller, validation, service, repository, and JPA behavior together without opening a real server port.
 
+Market-data-driven snapshot tests seed price and FX records through `/api/market-data/*`, then create a snapshot through `/api/dram/snapshot/from-market-data`. This verifies the intended developer workflow without direct repository setup.
+
 Manual local seed data is opt-in with `app.seed.enabled=true` under the `local` profile. The `LocalSeedDataRunner` creates two sample DRAM snapshots only when no snapshot exists, allowing `/api/dram/latest`, `/api/dram/scenario`, and `/api/dram/bridge-score` to be exercised immediately after startup.
 
 ## UI
@@ -119,4 +125,4 @@ The dashboard is served at `/`, and `GET /api/dram` returns an API index for man
 
 ## Next Release
 
-Next releases should improve data management and production hardening, including migrations, richer validation, and eventually automated market data ingestion.
+Next releases should improve data management and production hardening, including CSV/provider ingestion, official NAV capture, richer validation, and dashboard support for stored market data.

@@ -3,11 +3,13 @@ package com.temadison.drambuilder.controller;
 import com.temadison.drambuilder.dto.ApiEndpointResponse;
 import com.temadison.drambuilder.dto.BridgeScoreRequest;
 import com.temadison.drambuilder.dto.BridgeScoreResponse;
+import com.temadison.drambuilder.dto.MarketDataSnapshotRequest;
 import com.temadison.drambuilder.dto.ScenarioRequest;
 import com.temadison.drambuilder.dto.ScenarioResponse;
 import com.temadison.drambuilder.dto.SnapshotRequest;
 import com.temadison.drambuilder.dto.SnapshotResponse;
 import com.temadison.drambuilder.service.DramBridgeScoreService;
+import com.temadison.drambuilder.service.DramMarketDataSnapshotService;
 import com.temadison.drambuilder.service.DramScenarioService;
 import com.temadison.drambuilder.service.DramSnapshotService;
 import jakarta.validation.Valid;
@@ -23,15 +25,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class DramSnapshotController {
 
     private final DramSnapshotService dramSnapshotService;
+    private final DramMarketDataSnapshotService dramMarketDataSnapshotService;
     private final DramScenarioService dramScenarioService;
     private final DramBridgeScoreService dramBridgeScoreService;
 
     public DramSnapshotController(
             DramSnapshotService dramSnapshotService,
+            DramMarketDataSnapshotService dramMarketDataSnapshotService,
             DramScenarioService dramScenarioService,
             DramBridgeScoreService dramBridgeScoreService
     ) {
         this.dramSnapshotService = dramSnapshotService;
+        this.dramMarketDataSnapshotService = dramMarketDataSnapshotService;
         this.dramScenarioService = dramScenarioService;
         this.dramBridgeScoreService = dramBridgeScoreService;
     }
@@ -44,6 +49,7 @@ public class DramSnapshotController {
                 List.of(
                         "GET /api/dram/latest",
                         "POST /api/dram/snapshot",
+                        "POST /api/dram/snapshot/from-market-data",
                         "POST /api/dram/scenario",
                         "GET /api/dram/bridge-score",
                         "POST /api/dram/bridge-score",
@@ -57,6 +63,11 @@ public class DramSnapshotController {
     @PostMapping("/snapshot")
     public SnapshotResponse createSnapshot(@Valid @RequestBody SnapshotRequest request) {
         return dramSnapshotService.createSnapshot(request);
+    }
+
+    @PostMapping("/snapshot/from-market-data")
+    public SnapshotResponse createSnapshotFromMarketData(@Valid @RequestBody MarketDataSnapshotRequest request) {
+        return dramMarketDataSnapshotService.createSnapshot(request);
     }
 
     @GetMapping("/latest")

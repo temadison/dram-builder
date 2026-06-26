@@ -14,6 +14,7 @@ The current implementation covers Release 0.1 through Release 0.6, plus the init
 - Bridge Score v1 with a rotation signal and recommendation.
 - Basic static dashboard served by Spring Boot.
 - Source-tagged manual market data snapshots for prices and FX rates.
+- DRAM snapshot creation from stored latest market data.
 - Basic health endpoint and deterministic unit tests for calculation logic.
 
 ## Requirements
@@ -164,6 +165,92 @@ curl "$BASE_URL/api/market-data/prices/NASDAQ/MU/latest"
 curl "$BASE_URL/api/market-data/fx-rates/KRW/USD/latest"
 curl "$BASE_URL/api/market-data"
 ```
+
+### Create DRAM Snapshot From Stored Market Data
+
+`POST /api/dram/snapshot/from-market-data`
+
+This endpoint uses previously stored market data instead of requiring every holding price and FX value inline. The request supplies holding identities and weights. The service looks up:
+
+- DRAM market price from the latest `DRAM` / `NYSEARCA` price snapshot, unless `marketPrice` is provided.
+- Current holding price from the latest matching security price snapshot.
+- Prior holding price from the previous matching security price snapshot, or the latest value when only one exists.
+- Current/prior FX from the latest two `currency` / `USD` FX snapshots, or the latest value when only one exists. USD holdings use `1`.
+
+Example market data setup:
+
+```bash
+curl -X POST "$BASE_URL/api/market-data/prices" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticker": "DRAM",
+    "name": "Roundhill Memory ETF",
+    "exchange": "NYSEARCA",
+    "currency": "USD",
+    "price": 81.50,
+    "source": "manual"
+  }'
+
+curl -X POST "$BASE_URL/api/market-data/prices" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticker": "000660",
+    "name": "SK hynix",
+    "exchange": "KRX",
+    "currency": "KRW",
+    "price": 114000,
+    "source": "manual"
+  }'
+
+curl -X POST "$BASE_URL/api/market-data/prices" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticker": "MU",
+    "name": "Micron Technology",
+    "exchange": "NASDAQ",
+    "currency": "USD",
+    "price": 108.25,
+    "source": "manual"
+  }'
+
+curl -X POST "$BASE_URL/api/market-data/fx-rates" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "baseCurrency": "KRW",
+    "quoteCurrency": "USD",
+    "rate": 0.00081000,
+    "source": "manual"
+  }'
+```
+
+Then create the DRAM snapshot:
+
+```bash
+curl -X POST "$BASE_URL/api/dram/snapshot/from-market-data" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "asOfDate": "2026-06-26",
+    "purchasePrice": 76.31,
+    "holdings": [
+      {
+        "ticker": "000660",
+        "name": "SK hynix",
+        "exchange": "KRX",
+        "currency": "KRW",
+        "weight": 0.26
+      },
+      {
+        "ticker": "MU",
+        "name": "Micron Technology",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "weight": 0.19
+      }
+    ]
+  }'
+```
+
+If a required price or FX snapshot is missing, the API returns `404` with a `not_found` error. This is intentional because the calculation should not silently invent market data.
 
 ### Create Manual DRAM Snapshot
 
@@ -389,6 +476,7 @@ Current tests cover:
 - Scenario sensitivity and dollar impact calculations.
 - Bridge Score v1 and rotation signal selection.
 - API integration coverage for latest snapshot, scenario, bridge score, and missing snapshot behavior.
+- Market-data-driven snapshot creation through public API endpoints.
 - Static dashboard resource coverage.
 - Invalid total holding weights.
 
