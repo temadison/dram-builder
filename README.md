@@ -2,7 +2,7 @@
 
 DRAM Bridge Model is a lightweight Spring Boot service for analyzing the Roundhill Memory ETF (`DRAM`) as a temporary bridge investment before rotating into SK hynix and/or Micron.
 
-The current implementation covers Release 0.1 through Release 0.3:
+The current implementation covers Release 0.1 through Release 0.4:
 
 - Spring Boot project skeleton with layered packages.
 - Manual DRAM holding snapshot entry.
@@ -10,6 +10,7 @@ The current implementation covers Release 0.1 through Release 0.3:
 - Synthetic NAV calculation from holding weights, current/prior prices, and FX rates.
 - Market price versus synthetic NAV premium/discount.
 - Snapshot-to-snapshot attribution with top holding contribution changes.
+- Scenario analysis for hypothetical security and FX moves.
 - Basic health endpoint and deterministic unit tests for calculation logic.
 
 ## Requirements
@@ -129,6 +130,44 @@ When at least two snapshots exist, responses include an `attribution` object:
 }
 ```
 
+### Run Scenario
+
+`POST /api/dram/scenario`
+
+This endpoint uses the latest persisted DRAM snapshot as the baseline. Security moves are keyed by holding ticker, and FX moves are keyed by currency. Percent values are entered as whole percentages, so `10` means +10%.
+
+```bash
+curl -X POST http://localhost:8080/api/dram/scenario \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "name": "HBM upside with KRW tailwind",
+    "purchasePrice": 76.31,
+    "securityMovesPercent": {
+      "000660": 10,
+      "MU": 5,
+      "005930": -3
+    },
+    "fxMovesPercent": {
+      "KRW": 2
+    }
+  }'
+```
+
+Example response fields:
+
+```json
+{
+  "scenarioRunId": 1,
+  "baselineSnapshotId": 2,
+  "name": "HBM upside with KRW tailwind",
+  "baselineMarketPrice": 80.00,
+  "purchasePrice": 76.31,
+  "estimatedMovePercent": 3.891000,
+  "projectedMarketPrice": 83.112800,
+  "dollarImpactVsPurchasePrice": 6.802800
+}
+```
+
 ## Calculation Formulas
 
 Release 0.2 uses a normalized synthetic NAV model:
@@ -151,6 +190,16 @@ market_price_change = current_market_price / prior_market_price - 1
 contribution_change = current_weighted_contribution - prior_weighted_contribution
 ```
 
+Scenario analysis uses the latest saved snapshot as the baseline:
+
+```text
+scenario_total_move = (1 + security_move) * (1 + fx_move) - 1
+scenario_weighted_contribution = holding_weight * scenario_total_move
+estimated_dram_move = sum(scenario_weighted_contribution)
+projected_market_price = baseline_market_price * (1 + estimated_dram_move)
+dollar_impact_vs_purchase = projected_market_price - purchase_price
+```
+
 The model distinguishes market price and synthetic NAV. Official NAV and estimated fair value will be added as separate concepts in later releases when official data ingestion exists.
 
 ## Testing
@@ -165,6 +214,7 @@ Current tests cover:
 - Premium/discount calculation.
 - FX-adjusted holding contribution.
 - Snapshot-to-snapshot attribution and top contributor ranking.
+- Scenario sensitivity and dollar impact calculations.
 - Invalid total holding weights.
 
 ## Architecture

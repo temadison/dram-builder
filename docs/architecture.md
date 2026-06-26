@@ -2,13 +2,15 @@
 
 ## Release Scope
 
-This repository currently implements Release 0.1 through Release 0.3.
+This repository currently implements Release 0.1 through Release 0.4.
 
 Release 0.1 establishes the Spring Boot skeleton, layered package layout, health endpoint, configuration, and test framework.
 
 Release 0.2 adds manual snapshot ingestion, persistence, synthetic NAV calculation, and latest snapshot retrieval.
 
 Release 0.3 adds snapshot-to-snapshot attribution by comparing the latest snapshot with the prior persisted snapshot and ranking holding contribution changes.
+
+Release 0.4 adds scenario analysis for hypothetical security and FX moves against the latest persisted snapshot.
 
 ## Package Layout
 
@@ -28,19 +30,21 @@ Implemented tables:
 - `etf_holding_snapshot`
 - `etf_holding`
 - `nav_snapshot`
+- `scenario_run`
+- `scenario_result`
 
 Planned tables:
 
 - `price_snapshot`
 - `fx_rate_snapshot`
-- `scenario_run`
-- `scenario_result`
 
 ## Domain Boundaries
 
 `SyntheticNavService` is the pure calculation service. It does not depend on Spring persistence and is covered by deterministic unit tests.
 
 `AttributionService` is the pure snapshot comparison service. It ranks holding-level contribution changes and calculates synthetic NAV and market price changes versus the prior snapshot.
+
+`ScenarioService` is the pure hypothetical move service. It applies security and FX moves to current holding weights and returns estimated DRAM move, projected price, and dollar impact versus purchase price.
 
 `DramSnapshotService` coordinates DRAM-specific snapshot ingestion, entity persistence, calculation, and DTO mapping. Future releases should extract generic ETF snapshot handling when additional bridge trades or ETFs are supported.
 
@@ -65,4 +69,4 @@ Planned concepts:
 
 ## Next Release
 
-Release 0.4 should add a scenario engine for hypothetical SK hynix, Micron, Samsung, and FX moves, including dollar impact versus the $76.31 purchase price.
+Release 0.5 should add Bridge Score v1 with exposure, premium/discount, liquidity placeholder, tracking confidence placeholder, event timing risk placeholder, and a plain-English recommendation.

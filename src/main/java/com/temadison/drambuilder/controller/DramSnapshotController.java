@@ -1,5 +1,7 @@
 package com.temadison.drambuilder.controller;
 
+import com.temadison.drambuilder.dto.ScenarioRequest;
+import com.temadison.drambuilder.dto.ScenarioResponse;
 import com.temadison.drambuilder.dto.SnapshotRequest;
 import com.temadison.drambuilder.dto.SnapshotResponse;
 import com.temadison.drambuilder.service.DramSnapshotService;
@@ -28,5 +30,10 @@ public class DramSnapshotController {
     @GetMapping("/latest")
     public SnapshotResponse latestSnapshot() {
         return dramSnapshotService.latestSnapshot();
+    }
+
+    @PostMapping("/scenario")
+    public ScenarioResponse runScenario(@Valid @RequestBody ScenarioRequest request) {
+        return dramSnapshotService.runScenario(request);
     }
 }
