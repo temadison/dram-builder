@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: dram-bridge-model
+  profiles:
+    active: local
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
