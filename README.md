@@ -34,7 +34,13 @@ To start with deterministic sample DRAM data for manual API/browser testing:
 ./gradlew bootRun --args='--app.seed.enabled=true'
 ```
 
-With the seed flag enabled, the app creates two local DRAM snapshots if no snapshot exists. Then these endpoints work immediately:
+With the seed flag enabled, the app creates two local DRAM snapshots if no snapshot exists. The dashboard is available at:
+
+```text
+http://localhost:8080/
+```
+
+These endpoints also work immediately:
 
 ```bash
 curl http://localhost:8080/api/dram/latest
@@ -72,6 +78,8 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 Configuration is in `src/main/resources/application-dev.yml`.
 
 ## API
+
+`GET /api/dram` returns an index of available DRAM API endpoints and the UI path.
 
 ### Create Manual DRAM Snapshot
 
@@ -286,6 +294,8 @@ The model distinguishes market price and synthetic NAV. Official NAV and estimat
 
 Tests use the `test` profile in `src/test/resources/application-test.yml`, backed by in-memory H2 in MySQL compatibility mode. API integration tests seed data through the public snapshot endpoint using deterministic fixtures in `src/test/java/com/temadison/drambuilder/fixtures`.
 
+Static UI resources are served from `src/main/resources/static` and covered by integration tests.
+
 Current tests cover:
 
 - Synthetic NAV calculation.
@@ -295,6 +305,7 @@ Current tests cover:
 - Scenario sensitivity and dollar impact calculations.
 - Bridge Score v1 and rotation signal selection.
 - API integration coverage for latest snapshot, scenario, bridge score, and missing snapshot behavior.
+- Static dashboard resource coverage.
 - Invalid total holding weights.
 
 ## Architecture

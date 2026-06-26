@@ -2,7 +2,7 @@
 
 ## Release Scope
 
-This repository currently implements Release 0.1 through Release 0.5.
+This repository currently implements Release 0.1 through Release 0.6.
 
 Release 0.1 establishes the Spring Boot skeleton, layered package layout, health endpoint, configuration, and test framework.
 
@@ -14,6 +14,8 @@ Release 0.4 adds scenario analysis for hypothetical security and FX moves agains
 
 Release 0.5 adds Bridge Score v1 and a rotation signal based on target exposure, premium/discount, and explicit placeholder quality scores.
 
+Release 0.6 adds a basic static dashboard served by Spring Boot for latest snapshot, holdings, attribution, scenarios, bridge score, and manual snapshot entry.
+
 ## Package Layout
 
 - `domain`: JPA entities for ETF, security, holding snapshots, holdings, and NAV snapshots.
@@ -22,6 +24,7 @@ Release 0.5 adds Bridge Score v1 and a rotation signal based on target exposure,
 - `controller`: REST endpoints and API error handling.
 - `dto`: Request and response contracts.
 - `config`: Application configuration.
+- `static`: Lightweight browser UI using ES modules and plain CSS.
 
 ## Data Model
 
@@ -88,6 +91,18 @@ API integration tests use `@SpringBootTest`, `MockMvc`, the `test` profile, and 
 
 Manual local seed data is opt-in with `app.seed.enabled=true` under the `local` profile. The `LocalSeedDataRunner` creates two sample DRAM snapshots only when no snapshot exists, allowing `/api/dram/latest`, `/api/dram/scenario`, and `/api/dram/bridge-score` to be exercised immediately after startup.
 
+## UI
+
+The Release 0.6 UI is intentionally static and build-free. `index.html` loads ES modules from `static/js`:
+
+- `api.js`: REST calls.
+- `format.js`: display formatting helpers.
+- `sampleData.js`: deterministic manual-entry sample snapshot.
+- `view.js`: DOM rendering.
+- `app.js`: UI orchestration and event handling.
+
+The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery.
+
 ## Next Release
 
-Release 0.6 should add a basic modular UI for latest snapshot, holdings, sensitivities, bridge score, and recommendation.
+Next releases should improve data management and production hardening, including migrations, richer validation, and eventually automated market data ingestion.

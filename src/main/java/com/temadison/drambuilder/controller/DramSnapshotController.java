@@ -1,5 +1,6 @@
 package com.temadison.drambuilder.controller;
 
+import com.temadison.drambuilder.dto.ApiEndpointResponse;
 import com.temadison.drambuilder.dto.BridgeScoreRequest;
 import com.temadison.drambuilder.dto.BridgeScoreResponse;
 import com.temadison.drambuilder.dto.ScenarioRequest;
@@ -10,6 +11,7 @@ import com.temadison.drambuilder.service.DramBridgeScoreService;
 import com.temadison.drambuilder.service.DramScenarioService;
 import com.temadison.drambuilder.service.DramSnapshotService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -32,6 +34,21 @@ public class DramSnapshotController {
         this.dramSnapshotService = dramSnapshotService;
         this.dramScenarioService = dramScenarioService;
         this.dramBridgeScoreService = dramBridgeScoreService;
+    }
+
+    @GetMapping
+    public ApiEndpointResponse apiIndex() {
+        return new ApiEndpointResponse(
+                "DRAM Bridge Model API",
+                "/",
+                List.of(
+                        "GET /api/dram/latest",
+                        "POST /api/dram/snapshot",
+                        "POST /api/dram/scenario",
+                        "GET /api/dram/bridge-score",
+                        "POST /api/dram/bridge-score"
+                )
+        );
     }
 
     @PostMapping("/snapshot")
