@@ -7,6 +7,7 @@ import com.temadison.drambuilder.service.BridgeScoreCalculator;
 import com.temadison.drambuilder.service.DramBridgeScoreService;
 import com.temadison.drambuilder.service.DramScenarioService;
 import com.temadison.drambuilder.service.DramSnapshotService;
+import com.temadison.drambuilder.service.MarketDataService;
 import com.temadison.drambuilder.service.ScenarioCalculator;
 import com.temadison.drambuilder.service.SyntheticNavCalculator;
 import org.junit.jupiter.api.Test;
@@ -28,6 +29,9 @@ class DramBuilderApplicationTest {
     private DramBridgeScoreService dramBridgeScoreService;
 
     @Autowired
+    private MarketDataService marketDataService;
+
+    @Autowired
     private SyntheticNavCalculator syntheticNavCalculator;
 
     @Autowired
@@ -44,6 +48,7 @@ class DramBuilderApplicationTest {
         assertThat(dramSnapshotService).isNotNull();
         assertThat(dramScenarioService).isNotNull();
         assertThat(dramBridgeScoreService).isNotNull();
+        assertThat(marketDataService).isNotNull();
         assertThat(syntheticNavCalculator).isNotNull();
         assertThat(attributionCalculator).isNotNull();
         assertThat(scenarioCalculator).isNotNull();

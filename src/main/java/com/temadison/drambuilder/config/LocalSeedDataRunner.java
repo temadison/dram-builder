@@ -1,9 +1,13 @@
 package com.temadison.drambuilder.config;
 
 import com.temadison.drambuilder.dto.HoldingInput;
+import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
+import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.SnapshotRequest;
 import com.temadison.drambuilder.service.DramSnapshotService;
+import com.temadison.drambuilder.service.MarketDataService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.boot.CommandLineRunner;
@@ -17,9 +21,11 @@ import org.springframework.stereotype.Component;
 public class LocalSeedDataRunner implements CommandLineRunner {
 
     private final DramSnapshotService dramSnapshotService;
+    private final MarketDataService marketDataService;
 
-    public LocalSeedDataRunner(DramSnapshotService dramSnapshotService) {
+    public LocalSeedDataRunner(DramSnapshotService dramSnapshotService, MarketDataService marketDataService) {
         this.dramSnapshotService = dramSnapshotService;
+        this.marketDataService = marketDataService;
     }
 
     @Override
@@ -30,6 +36,17 @@ public class LocalSeedDataRunner implements CommandLineRunner {
 
         dramSnapshotService.createSnapshot(baselineSnapshot());
         dramSnapshotService.createSnapshot(followUpSnapshot());
+        seedMarketData();
+    }
+
+    private void seedMarketData() {
+        Instant observedAt = Instant.parse("2026-06-26T20:00:00Z");
+        marketDataService.createPriceSnapshot(new PriceSnapshotRequest("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", new BigDecimal("81.50"), "local-seed", observedAt));
+        marketDataService.createPriceSnapshot(new PriceSnapshotRequest("000660", "SK hynix", "KRX", "KRW", new BigDecimal("114000"), "local-seed", observedAt));
+        marketDataService.createPriceSnapshot(new PriceSnapshotRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("108"), "local-seed", observedAt));
+        marketDataService.createPriceSnapshot(new PriceSnapshotRequest("005930", "Samsung Electronics", "KRX", "KRW", new BigDecimal("79000"), "local-seed", observedAt));
+        marketDataService.createFxRateSnapshot(new FxRateSnapshotRequest("KRW", "USD", new BigDecimal("0.00081000"), "local-seed", observedAt));
+        marketDataService.createFxRateSnapshot(new FxRateSnapshotRequest("USD", "USD", BigDecimal.ONE, "local-seed", observedAt));
     }
 
     private boolean snapshotExists() {

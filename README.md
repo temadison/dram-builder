@@ -101,6 +101,46 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 
 `GET /api/dram` returns an index of available DRAM API endpoints and the UI path.
 
+### Market Data Snapshots
+
+`POST /api/market-data/prices`
+
+Stores a source-tagged security price snapshot. `observedAt` is optional; when omitted the server uses the current timestamp.
+
+```bash
+curl -X POST http://localhost:8080/api/market-data/prices \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticker": "MU",
+    "name": "Micron Technology",
+    "exchange": "NASDAQ",
+    "currency": "USD",
+    "price": 108.25,
+    "source": "manual"
+  }'
+```
+
+`POST /api/market-data/fx-rates`
+
+```bash
+curl -X POST http://localhost:8080/api/market-data/fx-rates \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "baseCurrency": "KRW",
+    "quoteCurrency": "USD",
+    "rate": 0.00081000,
+    "source": "manual"
+  }'
+```
+
+Latest snapshot lookups:
+
+```bash
+curl http://localhost:8080/api/market-data/prices/NASDAQ/MU/latest
+curl http://localhost:8080/api/market-data/fx-rates/KRW/USD/latest
+curl http://localhost:8080/api/market-data
+```
+
 ### Create Manual DRAM Snapshot
 
 `POST /api/dram/snapshot`

@@ -37,11 +37,13 @@ Implemented tables:
 - `nav_snapshot`
 - `scenario_run`
 - `scenario_result`
+- `price_snapshot`
+- `fx_rate_snapshot`
 
 Planned tables:
 
-- `price_snapshot`
-- `fx_rate_snapshot`
+- provider ingestion run tables
+- official NAV snapshot tables
 
 ## Migrations
 
@@ -50,6 +52,8 @@ Flyway owns schema creation and evolution. Migration files live in `src/main/res
 Hibernate uses `ddl-auto: validate` in local, test, and dev profiles. This keeps entity mappings honest without allowing Hibernate to mutate database structure implicitly.
 
 The initial migration `V1__initial_schema.sql` creates the current ETF, security, holdings, NAV, and scenario tables. Future schema changes should be added as new versioned migrations rather than editing existing applied migrations.
+
+`V2__market_data_snapshots.sql` adds source-tagged security price and FX rate snapshots. These tables are intentionally provider-neutral so manual entry, CSV import, or automated provider ingestion can all write the same normalized records.
 
 ## Domain Boundaries
 
@@ -68,6 +72,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 `DramScenarioService` coordinates scenario execution against the latest snapshot and persists scenario runs and holding-level scenario results.
 
 `DramBridgeScoreService` builds score inputs from the latest snapshot and applies default or request-provided placeholder assumptions.
+
+`MarketDataService` stores manual security prices and FX rates with source and observed timestamp metadata. Automated data providers should either call this service or implement a provider-specific ingestion service that writes the same tables.
 
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
