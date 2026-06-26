@@ -2,11 +2,13 @@
 
 ## Release Scope
 
-This repository currently implements Release 0.1 and Release 0.2 only.
+This repository currently implements Release 0.1 through Release 0.3.
 
 Release 0.1 establishes the Spring Boot skeleton, layered package layout, health endpoint, configuration, and test framework.
 
 Release 0.2 adds manual snapshot ingestion, persistence, synthetic NAV calculation, and latest snapshot retrieval.
+
+Release 0.3 adds snapshot-to-snapshot attribution by comparing the latest snapshot with the prior persisted snapshot and ranking holding contribution changes.
 
 ## Package Layout
 
@@ -38,6 +40,8 @@ Planned tables:
 
 `SyntheticNavService` is the pure calculation service. It does not depend on Spring persistence and is covered by deterministic unit tests.
 
+`AttributionService` is the pure snapshot comparison service. It ranks holding-level contribution changes and calculates synthetic NAV and market price changes versus the prior snapshot.
+
 `DramSnapshotService` coordinates DRAM-specific snapshot ingestion, entity persistence, calculation, and DTO mapping. Future releases should extract generic ETF snapshot handling when additional bridge trades or ETFs are supported.
 
 ## Financial Concepts
@@ -61,4 +65,4 @@ Planned concepts:
 
 ## Next Release
 
-Release 0.3 should add attribution over time by comparing the latest snapshot to the prior snapshot and returning top contributors to ETF movement.
+Release 0.4 should add a scenario engine for hypothetical SK hynix, Micron, Samsung, and FX moves, including dollar impact versus the $76.31 purchase price.

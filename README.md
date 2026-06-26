@@ -2,13 +2,14 @@
 
 DRAM Bridge Model is a lightweight Spring Boot service for analyzing the Roundhill Memory ETF (`DRAM`) as a temporary bridge investment before rotating into SK hynix and/or Micron.
 
-The current implementation covers Release 0.1 and Release 0.2:
+The current implementation covers Release 0.1 through Release 0.3:
 
 - Spring Boot project skeleton with layered packages.
 - Manual DRAM holding snapshot entry.
 - Persistence for ETFs, securities, holding snapshots, holdings, and NAV snapshots.
 - Synthetic NAV calculation from holding weights, current/prior prices, and FX rates.
 - Market price versus synthetic NAV premium/discount.
+- Snapshot-to-snapshot attribution with top holding contribution changes.
 - Basic health endpoint and deterministic unit tests for calculation logic.
 
 ## Requirements
@@ -105,6 +106,29 @@ curl -X POST http://localhost:8080/api/dram/snapshot \
 curl http://localhost:8080/api/dram/latest
 ```
 
+When at least two snapshots exist, responses include an `attribution` object:
+
+```json
+{
+  "hasPriorSnapshot": true,
+  "currentSnapshotId": 2,
+  "priorSnapshotId": 1,
+  "syntheticNavChangePercent": 2.150000,
+  "marketPriceChangePercent": 1.250000,
+  "topContributors": [
+    {
+      "ticker": "000660",
+      "name": "SK hynix",
+      "currentWeight": 0.250000,
+      "priorWeight": 0.240000,
+      "currentContributionPercent": 2.500000,
+      "priorContributionPercent": 1.200000,
+      "contributionChangePercent": 1.300000
+    }
+  ]
+}
+```
+
 ## Calculation Formulas
 
 Release 0.2 uses a normalized synthetic NAV model:
@@ -117,6 +141,14 @@ weighted_contribution = holding_weight * total_usd_return
 estimated_etf_move = sum(weighted_contribution)
 synthetic_nav = market_price * (1 + estimated_etf_move)
 premium_discount = (market_price / synthetic_nav - 1) * 100
+```
+
+Attribution compares the latest snapshot to the previous persisted snapshot:
+
+```text
+synthetic_nav_change = current_synthetic_nav / prior_synthetic_nav - 1
+market_price_change = current_market_price / prior_market_price - 1
+contribution_change = current_weighted_contribution - prior_weighted_contribution
 ```
 
 The model distinguishes market price and synthetic NAV. Official NAV and estimated fair value will be added as separate concepts in later releases when official data ingestion exists.
@@ -132,6 +164,7 @@ Current tests cover:
 - Synthetic NAV calculation.
 - Premium/discount calculation.
 - FX-adjusted holding contribution.
+- Snapshot-to-snapshot attribution and top contributor ranking.
 - Invalid total holding weights.
 
 ## Architecture

@@ -5,6 +5,8 @@ import com.temadison.drambuilder.domain.EtfHolding;
 import com.temadison.drambuilder.domain.EtfHoldingSnapshot;
 import com.temadison.drambuilder.domain.NavSnapshot;
 import com.temadison.drambuilder.domain.Security;
+import com.temadison.drambuilder.dto.AttributionResponse;
+import com.temadison.drambuilder.dto.HoldingAttributionResponse;
 import com.temadison.drambuilder.dto.HoldingInput;
 import com.temadison.drambuilder.dto.HoldingResult;
 import com.temadison.drambuilder.dto.SnapshotRequest;
@@ -21,7 +23,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * Coordinates manual DRAM snapshot ingestion, persistence, synthetic NAV calculation,
- * and response mapping for the Release 0.2 API.
+ * attribution, and response mapping for the DRAM snapshot API.
  */
 @Service
 public class DramSnapshotService {
@@ -34,25 +36,30 @@ public class DramSnapshotService {
     private final EtfHoldingSnapshotRepository holdingSnapshotRepository;
     private final NavSnapshotRepository navSnapshotRepository;
     private final SyntheticNavService syntheticNavService;
+    private final AttributionService attributionService;
 
     public DramSnapshotService(
             EtfRepository etfRepository,
             SecurityRepository securityRepository,
             EtfHoldingSnapshotRepository holdingSnapshotRepository,
             NavSnapshotRepository navSnapshotRepository,
-            SyntheticNavService syntheticNavService
+            SyntheticNavService syntheticNavService,
+            AttributionService attributionService
     ) {
         this.etfRepository = etfRepository;
         this.securityRepository = securityRepository;
         this.holdingSnapshotRepository = holdingSnapshotRepository;
         this.navSnapshotRepository = navSnapshotRepository;
         this.syntheticNavService = syntheticNavService;
+        this.attributionService = attributionService;
     }
 
     @Transactional
     public SnapshotResponse createSnapshot(SnapshotRequest request) {
         Etf etf = etfRepository.findByTicker(DRAM_TICKER)
                 .orElseGet(() -> etfRepository.save(new Etf(DRAM_TICKER, DRAM_NAME)));
+        NavSnapshot priorSnapshot = navSnapshotRepository.findFirstByHoldingSnapshotEtfTickerOrderByCreatedAtDesc(DRAM_TICKER)
+                .orElse(null);
         Instant now = Instant.now();
 
         EtfHoldingSnapshot holdingSnapshot = new EtfHoldingSnapshot(
@@ -92,34 +99,26 @@ public class DramSnapshotService {
                 now
         ));
 
-        return toResponse(navSnapshot, navResult);
+        return toResponse(navSnapshot, navResult, priorSnapshot);
     }
 
     @Transactional
     public SnapshotResponse latestSnapshot() {
-        NavSnapshot navSnapshot = navSnapshotRepository.findFirstByHoldingSnapshotEtfTickerOrderByCreatedAtDesc(DRAM_TICKER)
-                .orElseThrow(() -> new IllegalStateException("No DRAM snapshot has been created yet"));
+        List<NavSnapshot> latestSnapshots = navSnapshotRepository.findTop2ByHoldingSnapshotEtfTickerOrderByCreatedAtDesc(DRAM_TICKER);
+        if (latestSnapshots.isEmpty()) {
+            throw new IllegalStateException("No DRAM snapshot has been created yet");
+        }
 
+        NavSnapshot navSnapshot = latestSnapshots.getFirst();
+        NavSnapshot priorSnapshot = latestSnapshots.size() > 1 ? latestSnapshots.get(1) : null;
         SyntheticNavResult navResult = syntheticNavService.calculate(
                 navSnapshot.getMarketPrice(),
-                navSnapshot.getHoldingSnapshot().getHoldings().stream()
-                        .map(holding -> new HoldingInput(
-                                holding.getSecurity().getTicker(),
-                                holding.getSecurity().getName(),
-                                holding.getSecurity().getExchange(),
-                                holding.getSecurity().getCurrency(),
-                                holding.getWeight(),
-                                holding.getCurrentPrice(),
-                                holding.getPriorPrice(),
-                                holding.getCurrentFxToUsd(),
-                                holding.getPriorFxToUsd()
-                        ))
-                        .toList()
+                toHoldingInputs(navSnapshot)
         );
-        return toResponse(navSnapshot, navResult);
+        return toResponse(navSnapshot, navResult, priorSnapshot);
     }
 
-    private SnapshotResponse toResponse(NavSnapshot navSnapshot, SyntheticNavResult navResult) {
+    private SnapshotResponse toResponse(NavSnapshot navSnapshot, SyntheticNavResult navResult, NavSnapshot priorSnapshot) {
         EtfHoldingSnapshot holdingSnapshot = navSnapshot.getHoldingSnapshot();
         return new SnapshotResponse(
                 holdingSnapshot.getId(),
@@ -131,7 +130,67 @@ public class DramSnapshotService {
                 navSnapshot.getEstimatedEtfMovePercent(),
                 navSnapshot.getPremiumDiscountPercent(),
                 navSnapshot.getCreatedAt(),
-                toHoldingResults(navResult.holdings())
+                toHoldingResults(navResult.holdings()),
+                toAttributionResponse(navSnapshot, navResult, priorSnapshot)
+        );
+    }
+
+    private List<HoldingInput> toHoldingInputs(NavSnapshot navSnapshot) {
+        return navSnapshot.getHoldingSnapshot().getHoldings().stream()
+                .map(holding -> new HoldingInput(
+                        holding.getSecurity().getTicker(),
+                        holding.getSecurity().getName(),
+                        holding.getSecurity().getExchange(),
+                        holding.getSecurity().getCurrency(),
+                        holding.getWeight(),
+                        holding.getCurrentPrice(),
+                        holding.getPriorPrice(),
+                        holding.getCurrentFxToUsd(),
+                        holding.getPriorFxToUsd()
+                ))
+                .toList();
+    }
+
+    private AttributionResponse toAttributionResponse(NavSnapshot navSnapshot, SyntheticNavResult navResult, NavSnapshot priorSnapshot) {
+        AttributionSnapshotInput currentInput = new AttributionSnapshotInput(
+                navSnapshot.getHoldingSnapshot().getId(),
+                navSnapshot.getMarketPrice(),
+                navSnapshot.getSyntheticNav(),
+                navResult.holdings()
+        );
+
+        AttributionSnapshotInput priorInput = null;
+        if (priorSnapshot != null) {
+            SyntheticNavResult priorNavResult = syntheticNavService.calculate(
+                    priorSnapshot.getMarketPrice(),
+                    toHoldingInputs(priorSnapshot)
+            );
+            priorInput = new AttributionSnapshotInput(
+                    priorSnapshot.getHoldingSnapshot().getId(),
+                    priorSnapshot.getMarketPrice(),
+                    priorSnapshot.getSyntheticNav(),
+                    priorNavResult.holdings()
+            );
+        }
+
+        AttributionResult attribution = attributionService.calculate(currentInput, priorInput);
+        return new AttributionResponse(
+                attribution.hasPriorSnapshot(),
+                attribution.currentSnapshotId(),
+                attribution.priorSnapshotId(),
+                attribution.syntheticNavChangePercent(),
+                attribution.marketPriceChangePercent(),
+                attribution.topContributors().stream()
+                        .map(holding -> new HoldingAttributionResponse(
+                                holding.ticker(),
+                                holding.name(),
+                                holding.currentWeight(),
+                                holding.priorWeight(),
+                                holding.currentContributionPercent(),
+                                holding.priorContributionPercent(),
+                                holding.contributionChangePercent()
+                        ))
+                        .toList()
         );
     }
 

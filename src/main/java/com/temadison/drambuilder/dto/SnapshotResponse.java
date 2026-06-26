@@ -15,6 +15,7 @@ public record SnapshotResponse(
         BigDecimal estimatedEtfMovePercent,
         BigDecimal premiumDiscountPercent,
         Instant createdAt,
-        List<HoldingResult> holdings
+        List<HoldingResult> holdings,
+        AttributionResponse attribution
 ) {
 }
