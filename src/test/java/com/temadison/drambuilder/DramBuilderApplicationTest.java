@@ -3,6 +3,8 @@ package com.temadison.drambuilder;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.temadison.drambuilder.service.AttributionCalculator;
+import com.temadison.drambuilder.service.BridgeScoreCalculator;
+import com.temadison.drambuilder.service.DramBridgeScoreService;
 import com.temadison.drambuilder.service.DramScenarioService;
 import com.temadison.drambuilder.service.DramSnapshotService;
 import com.temadison.drambuilder.service.ScenarioCalculator;
@@ -23,6 +25,9 @@ class DramBuilderApplicationTest {
     private DramScenarioService dramScenarioService;
 
     @Autowired
+    private DramBridgeScoreService dramBridgeScoreService;
+
+    @Autowired
     private SyntheticNavCalculator syntheticNavCalculator;
 
     @Autowired
@@ -31,12 +36,17 @@ class DramBuilderApplicationTest {
     @Autowired
     private ScenarioCalculator scenarioCalculator;
 
+    @Autowired
+    private BridgeScoreCalculator bridgeScoreCalculator;
+
     @Test
     void contextLoadsCoreServicesThroughInterfaces() {
         assertThat(dramSnapshotService).isNotNull();
         assertThat(dramScenarioService).isNotNull();
+        assertThat(dramBridgeScoreService).isNotNull();
         assertThat(syntheticNavCalculator).isNotNull();
         assertThat(attributionCalculator).isNotNull();
         assertThat(scenarioCalculator).isNotNull();
+        assertThat(bridgeScoreCalculator).isNotNull();
     }
 }

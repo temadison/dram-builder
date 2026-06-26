@@ -1,9 +1,12 @@
 package com.temadison.drambuilder.controller;
 
+import com.temadison.drambuilder.dto.BridgeScoreRequest;
+import com.temadison.drambuilder.dto.BridgeScoreResponse;
 import com.temadison.drambuilder.dto.ScenarioRequest;
 import com.temadison.drambuilder.dto.ScenarioResponse;
 import com.temadison.drambuilder.dto.SnapshotRequest;
 import com.temadison.drambuilder.dto.SnapshotResponse;
+import com.temadison.drambuilder.service.DramBridgeScoreService;
 import com.temadison.drambuilder.service.DramScenarioService;
 import com.temadison.drambuilder.service.DramSnapshotService;
 import jakarta.validation.Valid;
@@ -19,10 +22,16 @@ public class DramSnapshotController {
 
     private final DramSnapshotService dramSnapshotService;
     private final DramScenarioService dramScenarioService;
+    private final DramBridgeScoreService dramBridgeScoreService;
 
-    public DramSnapshotController(DramSnapshotService dramSnapshotService, DramScenarioService dramScenarioService) {
+    public DramSnapshotController(
+            DramSnapshotService dramSnapshotService,
+            DramScenarioService dramScenarioService,
+            DramBridgeScoreService dramBridgeScoreService
+    ) {
         this.dramSnapshotService = dramSnapshotService;
         this.dramScenarioService = dramScenarioService;
+        this.dramBridgeScoreService = dramBridgeScoreService;
     }
 
     @PostMapping("/snapshot")
@@ -38,5 +47,15 @@ public class DramSnapshotController {
     @PostMapping("/scenario")
     public ScenarioResponse runScenario(@Valid @RequestBody ScenarioRequest request) {
         return dramScenarioService.runScenario(request);
+    }
+
+    @GetMapping("/bridge-score")
+    public BridgeScoreResponse latestBridgeScore() {
+        return dramBridgeScoreService.latestBridgeScore();
+    }
+
+    @PostMapping("/bridge-score")
+    public BridgeScoreResponse latestBridgeScore(@Valid @RequestBody BridgeScoreRequest request) {
+        return dramBridgeScoreService.latestBridgeScore(request);
     }
 }

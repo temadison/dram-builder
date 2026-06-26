@@ -2,7 +2,7 @@
 
 DRAM Bridge Model is a lightweight Spring Boot service for analyzing the Roundhill Memory ETF (`DRAM`) as a temporary bridge investment before rotating into SK hynix and/or Micron.
 
-The current implementation covers Release 0.1 through Release 0.4:
+The current implementation covers Release 0.1 through Release 0.5:
 
 - Spring Boot project skeleton with layered packages.
 - Manual DRAM holding snapshot entry.
@@ -11,6 +11,7 @@ The current implementation covers Release 0.1 through Release 0.4:
 - Market price versus synthetic NAV premium/discount.
 - Snapshot-to-snapshot attribution with top holding contribution changes.
 - Scenario analysis for hypothetical security and FX moves.
+- Bridge Score v1 with a rotation signal and recommendation.
 - Basic health endpoint and deterministic unit tests for calculation logic.
 
 ## Requirements
@@ -168,6 +169,50 @@ Example response fields:
 }
 ```
 
+### Get Bridge Score
+
+`GET /api/dram/bridge-score`
+
+Uses the latest persisted DRAM snapshot. Defaults:
+
+- Target exposure tickers: `000660`, `MU`
+- Liquidity placeholder: `70`
+- Tracking confidence placeholder: `65`
+- Timing risk placeholder: `50`
+- Direct SK hynix availability: `false`
+
+```bash
+curl http://localhost:8080/api/dram/bridge-score
+```
+
+`POST /api/dram/bridge-score`
+
+Override placeholder assumptions or target tickers:
+
+```bash
+curl -X POST http://localhost:8080/api/dram/bridge-score \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "targetTickers": ["000660", "MU"],
+    "liquidityScore": 75,
+    "trackingConfidenceScore": 70,
+    "timingRiskScore": 55,
+    "directSkHynixAvailable": false
+  }'
+```
+
+Example response fields:
+
+```json
+{
+  "score": 84.00,
+  "rotationSignal": "HOLD DRAM",
+  "recommendation": "DRAM remains an efficient bridge based on current exposure and valuation inputs.",
+  "targetExposureWeight": 0.450000,
+  "premiumDiscountPercent": -1.500000
+}
+```
+
 ## Calculation Formulas
 
 Release 0.2 uses a normalized synthetic NAV model:
@@ -200,6 +245,24 @@ projected_market_price = baseline_market_price * (1 + estimated_dram_move)
 dollar_impact_vs_purchase = projected_market_price - purchase_price
 ```
 
+Bridge Score v1 uses a 0-100 weighted score:
+
+```text
+target_exposure_score = min((target_exposure_weight / 0.50) * 100, 100)
+premium_discount_score =
+  100 when discount is at least 1%
+  85 when premium/discount is between -1% and 0%
+  65 when premium is 0% to 2%
+  35 when premium is 2% to 5%
+  10 when premium is greater than 5%
+bridge_score =
+  target_exposure_score * 45%
+  + premium_discount_score * 25%
+  + liquidity_score * 10%
+  + tracking_confidence_score * 10%
+  + timing_risk_score * 10%
+```
+
 The model distinguishes market price and synthetic NAV. Official NAV and estimated fair value will be added as separate concepts in later releases when official data ingestion exists.
 
 ## Testing
@@ -215,6 +278,7 @@ Current tests cover:
 - FX-adjusted holding contribution.
 - Snapshot-to-snapshot attribution and top contributor ranking.
 - Scenario sensitivity and dollar impact calculations.
+- Bridge Score v1 and rotation signal selection.
 - Invalid total holding weights.
 
 ## Architecture

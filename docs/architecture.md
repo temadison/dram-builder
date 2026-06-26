@@ -2,7 +2,7 @@
 
 ## Release Scope
 
-This repository currently implements Release 0.1 through Release 0.4.
+This repository currently implements Release 0.1 through Release 0.5.
 
 Release 0.1 establishes the Spring Boot skeleton, layered package layout, health endpoint, configuration, and test framework.
 
@@ -11,6 +11,8 @@ Release 0.2 adds manual snapshot ingestion, persistence, synthetic NAV calculati
 Release 0.3 adds snapshot-to-snapshot attribution by comparing the latest snapshot with the prior persisted snapshot and ranking holding contribution changes.
 
 Release 0.4 adds scenario analysis for hypothetical security and FX moves against the latest persisted snapshot.
+
+Release 0.5 adds Bridge Score v1 and a rotation signal based on target exposure, premium/discount, and explicit placeholder quality scores.
 
 ## Package Layout
 
@@ -40,7 +42,7 @@ Planned tables:
 
 ## Domain Boundaries
 
-`SyntheticNavCalculator`, `AttributionCalculator`, and `ScenarioCalculator` are the calculation contracts. Their default Spring implementations are persistence-free and covered by deterministic unit tests.
+`SyntheticNavCalculator`, `AttributionCalculator`, `ScenarioCalculator`, and `BridgeScoreCalculator` are the calculation contracts. Their default Spring implementations are persistence-free and covered by deterministic unit tests.
 
 `SyntheticNavService` calculates normalized synthetic NAV, holding returns, and premium/discount.
 
@@ -48,9 +50,13 @@ Planned tables:
 
 `ScenarioService` applies security and FX moves to current holding weights and returns estimated DRAM move, projected price, and dollar impact versus purchase price.
 
+`BridgeScoreService` calculates Bridge Score v1 and chooses a rotation signal from `HOLD DRAM`, `ROTATE TO SK HYNIX`, `WAIT`, and `AVOID ADDING`.
+
 `DramSnapshotService` coordinates DRAM-specific snapshot ingestion, entity persistence, NAV calculation, attribution, and snapshot response mapping.
 
 `DramScenarioService` coordinates scenario execution against the latest snapshot and persists scenario runs and holding-level scenario results.
+
+`DramBridgeScoreService` builds score inputs from the latest snapshot and applies default or request-provided placeholder assumptions.
 
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
@@ -75,4 +81,4 @@ Planned concepts:
 
 ## Next Release
 
-Release 0.5 should add Bridge Score v1 with exposure, premium/discount, liquidity placeholder, tracking confidence placeholder, event timing risk placeholder, and a plain-English recommendation.
+Release 0.6 should add a basic modular UI for latest snapshot, holdings, sensitivities, bridge score, and recommendation.
