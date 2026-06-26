@@ -77,7 +77,16 @@ Planned concepts:
 ## Profiles
 
 - `local`: default profile using in-memory H2 for lightweight development.
+- `test`: isolated in-memory H2 profile for Spring integration tests.
 - `dev`: MySQL-backed profile for persistent development data.
+
+## Test Data
+
+Unit tests use deterministic object fixtures and avoid persistence for calculation services.
+
+API integration tests use `@SpringBootTest`, `MockMvc`, the `test` profile, and fixture-driven snapshot creation through `POST /api/dram/snapshot`. This verifies controller, validation, service, repository, and JPA behavior together without opening a real server port.
+
+Manual local seed data is opt-in with `app.seed.enabled=true` under the `local` profile. The `LocalSeedDataRunner` creates two sample DRAM snapshots only when no snapshot exists, allowing `/api/dram/latest`, `/api/dram/scenario`, and `/api/dram/bridge-score` to be exercised immediately after startup.
 
 ## Next Release
 

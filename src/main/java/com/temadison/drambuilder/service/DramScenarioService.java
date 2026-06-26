@@ -9,10 +9,10 @@ import com.temadison.drambuilder.dto.ScenarioRequest;
 import com.temadison.drambuilder.dto.ScenarioResponse;
 import com.temadison.drambuilder.repository.NavSnapshotRepository;
 import com.temadison.drambuilder.repository.ScenarioRunRepository;
-import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Coordinates scenario execution against the latest DRAM snapshot and persists

@@ -6,13 +6,13 @@ import com.temadison.drambuilder.dto.BridgeScoreComponentResponse;
 import com.temadison.drambuilder.dto.BridgeScoreRequest;
 import com.temadison.drambuilder.dto.BridgeScoreResponse;
 import com.temadison.drambuilder.repository.NavSnapshotRepository;
-import jakarta.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Builds Bridge Score v1 inputs from the latest DRAM snapshot and returns an
@@ -35,7 +35,7 @@ public class DramBridgeScoreService {
         this.bridgeScoreCalculator = bridgeScoreCalculator;
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public BridgeScoreResponse latestBridgeScore(BridgeScoreRequest request) {
         BridgeScoreRequest resolvedRequest = request == null ? new BridgeScoreRequest(null, null, null, null, false) : request;
         NavSnapshot baseline = navSnapshotRepository.findFirstByHoldingSnapshotEtfTickerOrderByCreatedAtDesc(DRAM_TICKER)
@@ -76,6 +76,7 @@ public class DramBridgeScoreService {
         );
     }
 
+    @Transactional(readOnly = true)
     public BridgeScoreResponse latestBridgeScore() {
         return latestBridgeScore(new BridgeScoreRequest(null, null, null, null, false));
     }

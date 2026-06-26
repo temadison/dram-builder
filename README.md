@@ -28,6 +28,19 @@ The default `local` profile uses an in-memory H2 database so the API can run wit
 ./gradlew bootRun
 ```
 
+To start with deterministic sample DRAM data for manual API/browser testing:
+
+```bash
+./gradlew bootRun --args='--app.seed.enabled=true'
+```
+
+With the seed flag enabled, the app creates two local DRAM snapshots if no snapshot exists. Then these endpoints work immediately:
+
+```bash
+curl http://localhost:8080/api/dram/latest
+curl http://localhost:8080/api/dram/bridge-score
+```
+
 Health check:
 
 ```bash
@@ -271,6 +284,8 @@ The model distinguishes market price and synthetic NAV. Official NAV and estimat
 ./gradlew test
 ```
 
+Tests use the `test` profile in `src/test/resources/application-test.yml`, backed by in-memory H2 in MySQL compatibility mode. API integration tests seed data through the public snapshot endpoint using deterministic fixtures in `src/test/java/com/temadison/drambuilder/fixtures`.
+
 Current tests cover:
 
 - Synthetic NAV calculation.
@@ -279,6 +294,7 @@ Current tests cover:
 - Snapshot-to-snapshot attribution and top contributor ranking.
 - Scenario sensitivity and dollar impact calculations.
 - Bridge Score v1 and rotation signal selection.
+- API integration coverage for latest snapshot, scenario, bridge score, and missing snapshot behavior.
 - Invalid total holding weights.
 
 ## Architecture
