@@ -77,6 +77,26 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 
 Configuration is in `src/main/resources/application-dev.yml`.
 
+## Database Migrations
+
+Schema changes are managed with Flyway migrations in `src/main/resources/db/migration`.
+
+Hibernate is configured with `ddl-auto: validate` for `local`, `test`, and `dev`, so the application verifies that entity mappings match the migrated schema but does not create or alter tables automatically.
+
+If you created a local MySQL `dram_bridge` schema before Flyway was introduced, recreate the dev database before running the app:
+
+```sql
+DROP DATABASE IF EXISTS dram_bridge;
+CREATE DATABASE dram_bridge;
+GRANT ALL PRIVILEGES ON dram_bridge.* TO 'dram_bridge'@'localhost';
+```
+
+Then run:
+
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+```
+
 ## API
 
 `GET /api/dram` returns an index of available DRAM API endpoints and the UI path.
@@ -292,7 +312,7 @@ The model distinguishes market price and synthetic NAV. Official NAV and estimat
 ./gradlew test
 ```
 
-Tests use the `test` profile in `src/test/resources/application-test.yml`, backed by in-memory H2 in MySQL compatibility mode. API integration tests seed data through the public snapshot endpoint using deterministic fixtures in `src/test/java/com/temadison/drambuilder/fixtures`.
+Tests use the `test` profile in `src/test/resources/application-test.yml`, backed by in-memory H2 in MySQL compatibility mode. Flyway applies the same versioned migrations used by local/dev startup, then Hibernate validates the mappings. API integration tests seed data through the public snapshot endpoint using deterministic fixtures in `src/test/java/com/temadison/drambuilder/fixtures`.
 
 Static UI resources are served from `src/main/resources/static` and covered by integration tests.
 

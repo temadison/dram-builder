@@ -43,6 +43,14 @@ Planned tables:
 - `price_snapshot`
 - `fx_rate_snapshot`
 
+## Migrations
+
+Flyway owns schema creation and evolution. Migration files live in `src/main/resources/db/migration`.
+
+Hibernate uses `ddl-auto: validate` in local, test, and dev profiles. This keeps entity mappings honest without allowing Hibernate to mutate database structure implicitly.
+
+The initial migration `V1__initial_schema.sql` creates the current ETF, security, holdings, NAV, and scenario tables. Future schema changes should be added as new versioned migrations rather than editing existing applied migrations.
+
 ## Domain Boundaries
 
 `SyntheticNavCalculator`, `AttributionCalculator`, `ScenarioCalculator`, and `BridgeScoreCalculator` are the calculation contracts. Their default Spring implementations are persistence-free and covered by deterministic unit tests.

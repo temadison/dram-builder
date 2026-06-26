@@ -5,8 +5,10 @@ spring:
     password:
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     open-in-view: false
+  flyway:
+    enabled: true
 
 app:
   seed:
