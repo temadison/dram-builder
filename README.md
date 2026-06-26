@@ -2,7 +2,7 @@
 
 DRAM Bridge Model is a lightweight Spring Boot service for analyzing the Roundhill Memory ETF (`DRAM`) as a temporary bridge investment before rotating into SK hynix and/or Micron.
 
-The current implementation covers Release 0.1 through Release 0.5:
+The current implementation covers Release 0.1 through Release 0.6, plus the initial market data snapshot foundation:
 
 - Spring Boot project skeleton with layered packages.
 - Manual DRAM holding snapshot entry.
@@ -12,6 +12,8 @@ The current implementation covers Release 0.1 through Release 0.5:
 - Snapshot-to-snapshot attribution with top holding contribution changes.
 - Scenario analysis for hypothetical security and FX moves.
 - Bridge Score v1 with a rotation signal and recommendation.
+- Basic static dashboard served by Spring Boot.
+- Source-tagged manual market data snapshots for prices and FX rates.
 - Basic health endpoint and deterministic unit tests for calculation logic.
 
 ## Requirements
@@ -28,35 +30,57 @@ The default `local` profile uses an in-memory H2 database so the API can run wit
 ./gradlew bootRun
 ```
 
-To start with deterministic sample DRAM data for manual API/browser testing:
+By default Spring Boot uses port `8080`, configured in `src/main/resources/application.yml`. If that port is already in use, run on another port:
 
 ```bash
-./gradlew bootRun --args='--app.seed.enabled=true'
+./gradlew bootRun --args='--server.port=8081'
 ```
 
-With the seed flag enabled, the app creates two local DRAM snapshots if no snapshot exists. The dashboard is available at:
+In IntelliJ, add the same value as a program argument:
 
 ```text
-http://localhost:8080/
+--server.port=8081
 ```
+
+The examples below use a `BASE_URL` variable so the port is explicit. Set it to the port your app actually started on:
+
+```bash
+export BASE_URL=http://localhost:8081
+```
+
+## Dashboard
+
+The dashboard is served from the Spring Boot app at `/`. If the app is running on port `8081`, open:
+
+```text
+http://localhost:8081/
+```
+
+If you use another port, replace `8081` with that port. The dashboard uses the same backend APIs documented below, so it needs at least one snapshot before the main values populate. For the easiest local workflow, start with seed data:
+
+```bash
+./gradlew bootRun --args='--server.port=8081 --app.seed.enabled=true'
+```
+
+With the seed flag enabled, the app creates two local DRAM snapshots if no snapshot exists. Then open the dashboard URL above.
 
 These endpoints also work immediately:
 
 ```bash
-curl http://localhost:8080/api/dram/latest
-curl http://localhost:8080/api/dram/bridge-score
+curl "$BASE_URL/api/dram/latest"
+curl "$BASE_URL/api/dram/bridge-score"
 ```
 
 Health check:
 
 ```bash
-curl http://localhost:8080/api/health
+curl "$BASE_URL/api/health"
 ```
 
 Spring Actuator health is also available:
 
 ```bash
-curl http://localhost:8080/actuator/health
+curl "$BASE_URL/actuator/health"
 ```
 
 ## Running With MySQL
@@ -108,7 +132,7 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 Stores a source-tagged security price snapshot. `observedAt` is optional; when omitted the server uses the current timestamp.
 
 ```bash
-curl -X POST http://localhost:8080/api/market-data/prices \
+curl -X POST "$BASE_URL/api/market-data/prices" \
   -H 'Content-Type: application/json' \
   -d '{
     "ticker": "MU",
@@ -123,7 +147,7 @@ curl -X POST http://localhost:8080/api/market-data/prices \
 `POST /api/market-data/fx-rates`
 
 ```bash
-curl -X POST http://localhost:8080/api/market-data/fx-rates \
+curl -X POST "$BASE_URL/api/market-data/fx-rates" \
   -H 'Content-Type: application/json' \
   -d '{
     "baseCurrency": "KRW",
@@ -136,9 +160,9 @@ curl -X POST http://localhost:8080/api/market-data/fx-rates \
 Latest snapshot lookups:
 
 ```bash
-curl http://localhost:8080/api/market-data/prices/NASDAQ/MU/latest
-curl http://localhost:8080/api/market-data/fx-rates/KRW/USD/latest
-curl http://localhost:8080/api/market-data
+curl "$BASE_URL/api/market-data/prices/NASDAQ/MU/latest"
+curl "$BASE_URL/api/market-data/fx-rates/KRW/USD/latest"
+curl "$BASE_URL/api/market-data"
 ```
 
 ### Create Manual DRAM Snapshot
@@ -148,7 +172,7 @@ curl http://localhost:8080/api/market-data
 Weights are decimals, so `0.25` means 25%. FX values are USD per one unit of the holding currency. For USD holdings, use `1`.
 
 ```bash
-curl -X POST http://localhost:8080/api/dram/snapshot \
+curl -X POST "$BASE_URL/api/dram/snapshot" \
   -H 'Content-Type: application/json' \
   -d '{
     "asOfDate": "2026-06-26",
@@ -186,7 +210,7 @@ curl -X POST http://localhost:8080/api/dram/snapshot \
 `GET /api/dram/latest`
 
 ```bash
-curl http://localhost:8080/api/dram/latest
+curl "$BASE_URL/api/dram/latest"
 ```
 
 When at least two snapshots exist, responses include an `attribution` object:
@@ -219,7 +243,7 @@ When at least two snapshots exist, responses include an `attribution` object:
 This endpoint uses the latest persisted DRAM snapshot as the baseline. Security moves are keyed by holding ticker, and FX moves are keyed by currency. Percent values are entered as whole percentages, so `10` means +10%.
 
 ```bash
-curl -X POST http://localhost:8080/api/dram/scenario \
+curl -X POST "$BASE_URL/api/dram/scenario" \
   -H 'Content-Type: application/json' \
   -d '{
     "name": "HBM upside with KRW tailwind",
@@ -263,7 +287,7 @@ Uses the latest persisted DRAM snapshot. Defaults:
 - Direct SK hynix availability: `false`
 
 ```bash
-curl http://localhost:8080/api/dram/bridge-score
+curl "$BASE_URL/api/dram/bridge-score"
 ```
 
 `POST /api/dram/bridge-score`
@@ -271,7 +295,7 @@ curl http://localhost:8080/api/dram/bridge-score
 Override placeholder assumptions or target tickers:
 
 ```bash
-curl -X POST http://localhost:8080/api/dram/bridge-score \
+curl -X POST "$BASE_URL/api/dram/bridge-score" \
   -H 'Content-Type: application/json' \
   -d '{
     "targetTickers": ["000660", "MU"],
