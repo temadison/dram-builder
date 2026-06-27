@@ -22,10 +22,16 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
 
     private final TwelveDataProviderProperties properties;
     private final TwelveDataClient twelveDataClient;
+    private final ConfiguredDramSnapshotRequestFactory snapshotRequestFactory;
 
-    public TwelveDataMarketDataProvider(TwelveDataProviderProperties properties, TwelveDataClient twelveDataClient) {
+    public TwelveDataMarketDataProvider(
+            TwelveDataProviderProperties properties,
+            TwelveDataClient twelveDataClient,
+            ConfiguredDramSnapshotRequestFactory snapshotRequestFactory
+    ) {
         this.properties = properties;
         this.twelveDataClient = twelveDataClient;
+        this.snapshotRequestFactory = snapshotRequestFactory;
     }
 
     @Override
@@ -69,7 +75,7 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
             fxRates.add(toFxRequest(currency, closes.get(1)));
         }
 
-        return new MarketDataIngestionRequest(prices, fxRates, List.of(), null);
+        return new MarketDataIngestionRequest(prices, fxRates, List.of(), snapshotRequestFactory.snapshotRequestOrNull());
     }
 
     private void validateConfigured() {

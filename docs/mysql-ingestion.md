@@ -154,6 +154,8 @@ Provider mode is scaffolded but not connected to a vendor yet:
 
 Twelve Data provider configuration is scaffolded under `app.provider.twelvedata`. Keep `app.provider.twelvedata.enabled=false` until the API key and symbol map are validated. If provider mode is enabled without an active provider, ingestion records `No market data provider is configured`; if Twelve Data is enabled without an API key, ingestion records `Twelve Data API key is required when app.provider.twelvedata.enabled=true`.
 
+Provider runs can also create a DRAM snapshot when `app.dram.snapshot.enabled=true`. This uses the latest stored DRAM market price plus the configured purchase price and holdings. Keep it disabled until the complete Roundhill holdings export has been loaded into `app.dram.snapshot.holdings`; the dev profile only includes a partial starter set for local validation.
+
 Recommended next implementation:
 
 1. Validate each configured Twelve Data symbol with a real API key.

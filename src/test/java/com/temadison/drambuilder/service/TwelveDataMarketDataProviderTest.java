@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.temadison.drambuilder.config.DramSnapshotProperties;
 import com.temadison.drambuilder.config.TwelveDataProviderProperties;
 import com.temadison.drambuilder.dto.MarketDataIngestionRequest;
 import java.math.BigDecimal;
@@ -39,7 +40,11 @@ class TwelveDataMarketDataProviderTest {
                 new TwelveDataClient.DailyClose(prior, new BigDecimal("0.00073600"))
         ));
 
-        MarketDataIngestionRequest request = new TwelveDataMarketDataProvider(properties, client).latestIngestionRequest();
+        MarketDataIngestionRequest request = new TwelveDataMarketDataProvider(
+                properties,
+                client,
+                disabledSnapshotFactory()
+        ).latestIngestionRequest();
 
         assertThat(request.prices()).hasSize(4);
         assertThat(request.prices().get(0).ticker()).isEqualTo("000660");
@@ -73,7 +78,11 @@ class TwelveDataMarketDataProviderTest {
                 new TwelveDataClient.DailyClose(prior, new BigDecimal("1358.6956521739"))
         ));
 
-        MarketDataIngestionRequest request = new TwelveDataMarketDataProvider(properties, client).latestIngestionRequest();
+        MarketDataIngestionRequest request = new TwelveDataMarketDataProvider(
+                properties,
+                client,
+                disabledSnapshotFactory()
+        ).latestIngestionRequest();
 
         assertThat(request.fxRates()).hasSize(2);
         assertThat(request.fxRates().get(0).baseCurrency()).isEqualTo("KRW");
@@ -89,5 +98,11 @@ class TwelveDataMarketDataProviderTest {
         symbol.setName(name);
         symbol.setCurrency(currency);
         return symbol;
+    }
+
+    private ConfiguredDramSnapshotRequestFactory disabledSnapshotFactory() {
+        DramSnapshotProperties properties = new DramSnapshotProperties();
+        properties.setEnabled(false);
+        return new ConfiguredDramSnapshotRequestFactory(properties);
     }
 }

@@ -106,7 +106,7 @@ Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer
 
 `POST /api/market-data/ingest/provider` exposes the provider path for manual setup validation. It is intended for ad hoc provider pulls and troubleshooting; scheduled ingestion remains the normal automation path.
 
-The selected first provider is Twelve Data for prices and FX. A disabled-by-default Twelve Data provider bean is scaffolded under `app.provider.twelvedata`; when enabled without a key, it records a failed provider run instead of silently skipping. The first HTTP implementation fetches current/prior daily closes for configured equities and non-USD FX pairs, falling back to inverse USD pairs when needed. Roundhill remains the issuer source for DRAM holdings, weights, and official NAV. See `docs/provider-selection.md` for the decision record and initial symbol map.
+The selected first provider is Twelve Data for prices and FX. A disabled-by-default Twelve Data provider bean is scaffolded under `app.provider.twelvedata`; when enabled without a key, it records a failed provider run instead of silently skipping. The first HTTP implementation fetches current/prior daily closes for configured equities and non-USD FX pairs, falling back to inverse USD pairs when needed. `ConfiguredDramSnapshotRequestFactory` can attach a disabled-by-default `app.dram.snapshot` request to provider ingestion once purchase price and issuer holdings are configured. Roundhill remains the issuer source for DRAM holdings, weights, and official NAV. See `docs/provider-selection.md` for the decision record and initial symbol map.
 
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 

@@ -67,7 +67,9 @@ app:
 
 Enable it only after the API key and symbol map have been validated. If `enabled=true` without an API key, provider ingestion records a failed run with a clear configuration message.
 
-The current adapter calls Twelve Data `time_series` with `interval=1day` and `outputsize=2` for each configured equity symbol. It first tries direct non-USD currency pairs such as `KRW/USD` for FX snapshots; if a direct pair is unavailable, it falls back to the inverse pair such as `USD/KRW` and stores the inverted USD conversion rate. The provider currently writes price and FX records only; DRAM snapshot creation remains a separate step until Roundhill holdings/NAV ingestion is automated.
+The current adapter calls Twelve Data `time_series` with `interval=1day` and `outputsize=2` for each configured equity symbol. It first tries direct non-USD currency pairs such as `KRW/USD` for FX snapshots; if a direct pair is unavailable, it falls back to the inverse pair such as `USD/KRW` and stores the inverted USD conversion rate.
+
+Provider ingestion can optionally include a DRAM snapshot request from `app.dram.snapshot`. Keep `app.dram.snapshot.enabled=false` until the purchase price and complete Roundhill holdings file are validated. The dev profile includes a partial U.S.-listed starter holdings set only; Roundhill remains the issuer source for complete holdings, weights, and official NAV.
 
 ## Subscription Assumption
 

@@ -14,6 +14,13 @@ management:
         include: health,info
 
 app:
+  dram:
+    snapshot:
+      enabled: false
+      purchase-price:
+      etf-ticker: DRAM
+      etf-exchange: BATS
+      holdings: []
   provider:
     twelvedata:
       enabled: false

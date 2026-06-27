@@ -15,6 +15,33 @@ spring:
     enabled: true
 
 app:
+  dram:
+    snapshot:
+      enabled: false
+      purchase-price:
+      etf-ticker: DRAM
+      etf-exchange: BATS
+      holdings:
+        - ticker: MU
+          name: Micron Technology
+          exchange: NASDAQ
+          currency: USD
+          weight: 0.2383
+        - ticker: SNDK
+          name: SanDisk
+          exchange: NASDAQ
+          currency: USD
+          weight: 0.0466
+        - ticker: WDC
+          name: Western Digital
+          exchange: NASDAQ
+          currency: USD
+          weight: 0.0464
+        - ticker: STX
+          name: Seagate Technology
+          exchange: NASDAQ
+          currency: USD
+          weight: 0.0449
   provider:
     twelvedata:
       enabled: false
