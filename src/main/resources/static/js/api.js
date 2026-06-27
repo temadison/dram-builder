@@ -22,6 +22,10 @@ export async function getIngestionRuns() {
   return request('/api/market-data/ingestion-runs');
 }
 
+export async function getIngestionConfig() {
+  return request('/api/market-data/ingestion-config');
+}
+
 export async function importMarketData(payload) {
   return request('/api/market-data/import', {
     method: 'POST',

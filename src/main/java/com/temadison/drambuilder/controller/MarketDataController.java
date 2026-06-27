@@ -4,6 +4,7 @@ import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
+import com.temadison.drambuilder.dto.MarketDataIngestionConfigResponse;
 import com.temadison.drambuilder.dto.MarketDataIngestionRunResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
@@ -11,6 +12,7 @@ import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
 import com.temadison.drambuilder.service.MarketDataCsvImportService;
+import com.temadison.drambuilder.service.MarketDataIngestionConfigService;
 import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import com.temadison.drambuilder.service.MarketDataService;
 import jakarta.validation.Valid;
@@ -30,15 +32,18 @@ public class MarketDataController {
     private final MarketDataService marketDataService;
     private final MarketDataCsvImportService marketDataCsvImportService;
     private final MarketDataIngestionRunService marketDataIngestionRunService;
+    private final MarketDataIngestionConfigService marketDataIngestionConfigService;
 
     public MarketDataController(
             MarketDataService marketDataService,
             MarketDataCsvImportService marketDataCsvImportService,
-            MarketDataIngestionRunService marketDataIngestionRunService
+            MarketDataIngestionRunService marketDataIngestionRunService,
+            MarketDataIngestionConfigService marketDataIngestionConfigService
     ) {
         this.marketDataService = marketDataService;
         this.marketDataCsvImportService = marketDataCsvImportService;
         this.marketDataIngestionRunService = marketDataIngestionRunService;
+        this.marketDataIngestionConfigService = marketDataIngestionConfigService;
     }
 
     @GetMapping
@@ -49,6 +54,11 @@ public class MarketDataController {
     @GetMapping("/ingestion-runs")
     public List<MarketDataIngestionRunResponse> ingestionRuns() {
         return marketDataIngestionRunService.recentRuns();
+    }
+
+    @GetMapping("/ingestion-config")
+    public MarketDataIngestionConfigResponse ingestionConfig() {
+        return marketDataIngestionConfigService.config();
     }
 
     @PostMapping("/prices")

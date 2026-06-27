@@ -47,11 +47,13 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("official-nav-form")))
                 .andExpect(content().string(containsString("Snapshot Entry")))
                 .andExpect(content().string(containsString("market-snapshot-form")))
+                .andExpect(content().string(containsString("ingestion-config-table")))
                 .andExpect(content().string(containsString("ingestion-run-table")))
                 .andExpect(content().string(containsString("/js/app.js")));
 
         mockMvc.perform(get("/js/app.js"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("getIngestionConfig")))
                 .andExpect(content().string(containsString("getIngestionRuns")))
                 .andExpect(content().string(containsString("getLatestSnapshot")))
                 .andExpect(content().string(containsString("importMarketData")))
@@ -62,6 +64,7 @@ class UiResourceIntegrationTest {
 
         mockMvc.perform(get("/js/view.js"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("renderIngestionConfig")))
                 .andExpect(content().string(containsString("renderFreshness")))
                 .andExpect(content().string(containsString("renderIngestionRuns")))
                 .andExpect(content().string(containsString("freshness-status")));
@@ -78,6 +81,7 @@ class UiResourceIntegrationTest {
                 .andExpect(jsonPath("$.name", is("DRAM Bridge Model API")))
                 .andExpect(jsonPath("$.ui", is("/")))
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/dram/latest")))
+                .andExpect(jsonPath("$.endpoints", hasItem("GET /api/market-data/ingestion-config")))
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/market-data/ingestion-runs")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import/csv")))

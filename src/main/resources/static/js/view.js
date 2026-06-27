@@ -133,6 +133,31 @@ export function renderIngestionRuns(runs) {
   `, 6);
 }
 
+export function renderIngestionConfig(config) {
+  if (!config) {
+    return;
+  }
+
+  const rows = [
+    ['Runner', config.runnerEnabled ? 'Enabled' : 'Disabled'],
+    ['Schedule', config.scheduleEnabled ? 'Enabled' : 'Disabled'],
+    ['Mode', config.scheduleMode || 'file'],
+    ['Zone', config.scheduleZone || '—'],
+    ['Morning', config.morningCron || '—'],
+    ['Evening', config.eveningCron || '—'],
+    ['File', config.ingestionFile || '—'],
+    ['Providers', String(config.providerCount ?? 0)],
+    ['Freshness', `${config.freshnessMaxAgeHours}h / ${config.freshnessRequiredPrices || '—'}`]
+  ];
+
+  renderRows('ingestion-config-table', rows, ([label, value]) => `
+    <tr>
+      <td>${escapeHtml(label)}</td>
+      <td>${escapeHtml(value)}</td>
+    </tr>
+  `, 2);
+}
+
 function renderFreshness(freshness) {
   const status = freshness?.status || 'UNKNOWN';
   const statusElement = document.getElementById('freshness-status');

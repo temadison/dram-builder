@@ -191,9 +191,12 @@ curl "$BASE_URL/api/market-data/prices/NASDAQ/MU/latest"
 curl "$BASE_URL/api/market-data/fx-rates/KRW/USD/latest"
 curl "$BASE_URL/api/market-data/official-navs/DRAM/latest"
 curl "$BASE_URL/api/market-data"
+curl "$BASE_URL/api/market-data/ingestion-config"
 ```
 
 `GET /api/market-data` also includes a `freshness` block. By default it checks DRAM plus the currently loadable U.S.-listed holdings (`BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX`) and marks the set `FRESH`, `STALE`, or `MISSING` using `app.market-data.freshness.max-age-hours`.
+
+`GET /api/market-data/ingestion-config` returns non-secret runtime ingestion settings, including runner state, schedule mode, cron windows, configured file path, provider count, and freshness thresholds.
 
 `POST /api/market-data/official-navs`
 

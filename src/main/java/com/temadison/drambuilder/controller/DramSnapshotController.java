@@ -54,6 +54,7 @@ public class DramSnapshotController {
                         "GET /api/dram/bridge-score",
                         "POST /api/dram/bridge-score",
                         "GET /api/market-data",
+                        "GET /api/market-data/ingestion-config",
                         "GET /api/market-data/ingestion-runs",
                         "POST /api/market-data/import",
                         "POST /api/market-data/import/csv",

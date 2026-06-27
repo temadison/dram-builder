@@ -188,6 +188,23 @@ class MarketDataApiIntegrationTest {
     }
 
     @Test
+    void exposesIngestionConfigWithoutSecrets() throws Exception {
+        mockMvc.perform(get("/api/market-data/ingestion-config"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.runnerEnabled", is(false)))
+                .andExpect(jsonPath("$.ingestionFile").doesNotExist())
+                .andExpect(jsonPath("$.exitAfterRun", is(false)))
+                .andExpect(jsonPath("$.scheduleEnabled", is(false)))
+                .andExpect(jsonPath("$.scheduleMode", is("file")))
+                .andExpect(jsonPath("$.scheduleZone", is("America/Chicago")))
+                .andExpect(jsonPath("$.morningCron", is("0 0 2 * * MON-FRI")))
+                .andExpect(jsonPath("$.eveningCron", is("0 30 16 * * MON-FRI")))
+                .andExpect(jsonPath("$.providerCount", is(0)))
+                .andExpect(jsonPath("$.freshnessMaxAgeHours", is(18)))
+                .andExpect(jsonPath("$.freshnessRequiredPrices", is("BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX")));
+    }
+
+    @Test
     void latestPriceReturnsNotFoundWhenMissing() throws Exception {
         mockMvc.perform(get("/api/market-data/prices/NASDAQ/MU/latest"))
                 .andExpect(status().isNotFound())
