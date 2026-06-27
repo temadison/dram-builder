@@ -14,6 +14,7 @@ The current implementation covers Release 0.1 through Release 0.6, plus the init
 - Bridge Score v1 with a rotation signal and recommendation.
 - Basic static dashboard served by Spring Boot.
 - Source-tagged manual market data snapshots for prices and FX rates.
+- Bulk market data import for repeatable local setup.
 - DRAM snapshot creation from stored latest market data.
 - Basic health endpoint and deterministic unit tests for calculation logic.
 
@@ -70,7 +71,7 @@ The dashboard supports two snapshot workflows:
 - `Snapshot Entry`: paste or edit full manual snapshot JSON, then save it directly.
 - `Market Data Workflow`: store price and FX snapshots first, then generate a DRAM snapshot from holding identities and weights.
 
-For the market data workflow, use `Load Sample Market Data` to populate deterministic DRAM, SK hynix, Micron, Samsung, ASML, and KRW/USD records. Then use `Generate Snapshot` in the same panel. The generated snapshot becomes the latest dashboard snapshot and powers scenario and bridge score views.
+For the market data workflow, use `Load Sample Market Data` to bulk import deterministic DRAM, SK hynix, Micron, Samsung, ASML, and KRW/USD records. Then use `Generate Snapshot` in the same panel. The generated snapshot becomes the latest dashboard snapshot and powers scenario and bridge score views.
 
 These endpoints also work immediately:
 
@@ -171,6 +172,41 @@ Latest snapshot lookups:
 curl "$BASE_URL/api/market-data/prices/NASDAQ/MU/latest"
 curl "$BASE_URL/api/market-data/fx-rates/KRW/USD/latest"
 curl "$BASE_URL/api/market-data"
+```
+
+Bulk import:
+
+```bash
+curl -X POST "$BASE_URL/api/market-data/import" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "prices": [
+      {
+        "ticker": "DRAM",
+        "name": "Roundhill Memory ETF",
+        "exchange": "NYSEARCA",
+        "currency": "USD",
+        "price": 81.50,
+        "source": "manual"
+      },
+      {
+        "ticker": "MU",
+        "name": "Micron Technology",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "price": 108.25,
+        "source": "manual"
+      }
+    ],
+    "fxRates": [
+      {
+        "baseCurrency": "KRW",
+        "quoteCurrency": "USD",
+        "rate": 0.00081000,
+        "source": "manual"
+      }
+    ]
+  }'
 ```
 
 ### Create DRAM Snapshot From Stored Market Data
@@ -484,6 +520,7 @@ Current tests cover:
 - Bridge Score v1 and rotation signal selection.
 - API integration coverage for latest snapshot, scenario, bridge score, and missing snapshot behavior.
 - Market-data-driven snapshot creation through public API endpoints.
+- Bulk market data import.
 - Static dashboard resource coverage, including the market data workflow.
 - Invalid total holding weights.
 

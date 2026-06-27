@@ -10,10 +10,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -100,5 +102,69 @@ class MarketDataApiIntegrationTest {
         mockMvc.perform(get("/api/market-data/prices/NASDAQ/MU/latest"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", is("not_found")));
+    }
+
+    @Test
+    void importsBulkMarketDataAndSupportsLatestLookups() throws Exception {
+        BulkMarketDataImportRequest request = new BulkMarketDataImportRequest(
+                List.of(
+                        new PriceSnapshotRequest(
+                                "dram",
+                                "Roundhill Memory ETF",
+                                "nysearca",
+                                "usd",
+                                new BigDecimal("81.50"),
+                                "bulk-test",
+                                OBSERVED_AT
+                        ),
+                        new PriceSnapshotRequest(
+                                "000660",
+                                "SK hynix",
+                                "krx",
+                                "krw",
+                                new BigDecimal("114000.00"),
+                                "bulk-test",
+                                OBSERVED_AT
+                        )
+                ),
+                List.of(new FxRateSnapshotRequest(
+                        "krw",
+                        "usd",
+                        new BigDecimal("0.00081000"),
+                        "bulk-test",
+                        OBSERVED_AT
+                ))
+        );
+
+        mockMvc.perform(post("/api/market-data/import")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pricesImported", is(2)))
+                .andExpect(jsonPath("$.fxRatesImported", is(1)))
+                .andExpect(jsonPath("$.prices", hasSize(2)))
+                .andExpect(jsonPath("$.prices[0].ticker", is("DRAM")))
+                .andExpect(jsonPath("$.prices[1].ticker", is("000660")))
+                .andExpect(jsonPath("$.fxRates[0].baseCurrency", is("KRW")));
+
+        mockMvc.perform(get("/api/market-data/prices/NYSEARCA/DRAM/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.price", comparesEqualTo(81.50)));
+
+        mockMvc.perform(get("/api/market-data/fx-rates/KRW/USD/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rate", comparesEqualTo(0.00081000)));
+    }
+
+    @Test
+    void bulkImportRejectsEmptyPayload() throws Exception {
+        BulkMarketDataImportRequest request = new BulkMarketDataImportRequest(List.of(), List.of());
+
+        mockMvc.perform(post("/api/market-data/import")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("bad_request")))
+                .andExpect(jsonPath("$.message", is("At least one price or FX rate snapshot is required")));
     }
 }

@@ -18,6 +18,14 @@ export async function getMarketData() {
   return request('/api/market-data');
 }
 
+export async function importMarketData(payload) {
+  return request('/api/market-data/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
 export async function savePriceSnapshot(payload) {
   return request('/api/market-data/prices', {
     method: 'POST',

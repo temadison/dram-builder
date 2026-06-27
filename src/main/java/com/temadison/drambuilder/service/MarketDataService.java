@@ -3,6 +3,8 @@ package com.temadison.drambuilder.service;
 import com.temadison.drambuilder.domain.FxRateSnapshot;
 import com.temadison.drambuilder.domain.PriceSnapshot;
 import com.temadison.drambuilder.domain.Security;
+import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
+import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
@@ -12,6 +14,7 @@ import com.temadison.drambuilder.repository.FxRateSnapshotRepository;
 import com.temadison.drambuilder.repository.PriceSnapshotRepository;
 import com.temadison.drambuilder.repository.SecurityRepository;
 import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,6 +74,38 @@ public class MarketDataService {
                 now
         ));
         return toFxResponse(saved);
+    }
+
+    /**
+     * Imports a batch of price and FX snapshots as one transaction. This is
+     * intended for repeatable local setup, CSV-adapter output, and future
+     * provider ingestion jobs that can produce normalized request records.
+     *
+     * @param request price and FX snapshots to store
+     * @return counts and saved records from the import
+     */
+    @Transactional
+    public BulkMarketDataImportResponse importMarketData(BulkMarketDataImportRequest request) {
+        List<PriceSnapshotRequest> prices = request.prices() == null ? List.of() : request.prices();
+        List<FxRateSnapshotRequest> fxRates = request.fxRates() == null ? List.of() : request.fxRates();
+
+        if (prices.isEmpty() && fxRates.isEmpty()) {
+            throw new IllegalArgumentException("At least one price or FX rate snapshot is required");
+        }
+
+        List<PriceSnapshotResponse> importedPrices = prices.stream()
+                .map(this::createPriceSnapshot)
+                .toList();
+        List<FxRateSnapshotResponse> importedFxRates = fxRates.stream()
+                .map(this::createFxRateSnapshot)
+                .toList();
+
+        return new BulkMarketDataImportResponse(
+                importedPrices.size(),
+                importedFxRates.size(),
+                importedPrices,
+                importedFxRates
+        );
     }
 
     @Transactional(readOnly = true)

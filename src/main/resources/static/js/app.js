@@ -2,6 +2,7 @@ import {
   getBridgeScore,
   getLatestSnapshot,
   getMarketData,
+  importMarketData,
   runScenario,
   saveFxRateSnapshot,
   savePriceSnapshot,
@@ -177,12 +178,7 @@ async function saveSampleSnapshot() {
 
 async function loadSampleMarketData() {
   try {
-    for (const payload of sampleMarketData.prices) {
-      await savePriceSnapshot(payload);
-    }
-    for (const payload of sampleMarketData.fxRates) {
-      await saveFxRateSnapshot(payload);
-    }
+    await importMarketData(sampleMarketData);
     marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
     showStatus('Sample market data loaded.', 'success');
     await refreshMarketData();

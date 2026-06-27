@@ -77,7 +77,7 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 `DramBridgeScoreService` builds score inputs from the latest snapshot and applies default or request-provided placeholder assumptions.
 
-`MarketDataService` stores manual security prices and FX rates with source and observed timestamp metadata. Automated data providers should either call this service or implement a provider-specific ingestion service that writes the same tables.
+`MarketDataService` stores manual security prices and FX rates with source and observed timestamp metadata. It supports single-record writes and bulk import through the same request contracts. Automated data providers should either call this service or implement a provider-specific ingestion service that writes the same tables.
 
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
@@ -107,7 +107,7 @@ Unit tests use deterministic object fixtures and avoid persistence for calculati
 
 API integration tests use `@SpringBootTest`, `MockMvc`, the `test` profile, and fixture-driven snapshot creation through `POST /api/dram/snapshot`. This verifies controller, validation, service, repository, and JPA behavior together without opening a real server port.
 
-Market-data-driven snapshot tests seed price and FX records through `/api/market-data/*`, then create a snapshot through `/api/dram/snapshot/from-market-data`. This verifies the intended developer workflow without direct repository setup.
+Market-data-driven snapshot tests seed price and FX records through `/api/market-data/*`, then create a snapshot through `/api/dram/snapshot/from-market-data`. Bulk import tests verify repeatable setup through `/api/market-data/import`. These tests exercise the intended developer workflow without direct repository setup.
 
 Manual local seed data is opt-in with `app.seed.enabled=true` under the `local` profile. The `LocalSeedDataRunner` creates two sample DRAM snapshots only when no snapshot exists, allowing `/api/dram/latest`, `/api/dram/scenario`, and `/api/dram/bridge-score` to be exercised immediately after startup.
 
@@ -121,7 +121,7 @@ The Release 0.6 UI is intentionally static and build-free. `index.html` loads ES
 - `view.js`: DOM rendering.
 - `app.js`: UI orchestration and event handling.
 
-The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery. The UI keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX records and generates a snapshot through `/api/dram/snapshot/from-market-data`.
+The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery. The UI keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX records and generates a snapshot through `/api/dram/snapshot/from-market-data`. Sample market data loading uses the bulk import endpoint.
 
 ## Next Release
 

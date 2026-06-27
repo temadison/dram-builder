@@ -40,6 +40,7 @@ class UiResourceIntegrationTest {
         mockMvc.perform(get("/js/app.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("getLatestSnapshot")))
+                .andExpect(content().string(containsString("importMarketData")))
                 .andExpect(content().string(containsString("saveSnapshotFromMarketData")));
 
         mockMvc.perform(get("/assets/bridge-mark.svg"))
@@ -54,6 +55,7 @@ class UiResourceIntegrationTest {
                 .andExpect(jsonPath("$.name", is("DRAM Bridge Model API")))
                 .andExpect(jsonPath("$.ui", is("/")))
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/dram/latest")))
+                .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/dram/snapshot/from-market-data")));
     }
 }

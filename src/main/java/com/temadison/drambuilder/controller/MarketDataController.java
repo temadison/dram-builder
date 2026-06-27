@@ -1,5 +1,7 @@
 package com.temadison.drambuilder.controller;
 
+import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
+import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
@@ -32,6 +34,11 @@ public class MarketDataController {
     @PostMapping("/prices")
     public PriceSnapshotResponse createPriceSnapshot(@Valid @RequestBody PriceSnapshotRequest request) {
         return marketDataService.createPriceSnapshot(request);
+    }
+
+    @PostMapping("/import")
+    public BulkMarketDataImportResponse importMarketData(@Valid @RequestBody BulkMarketDataImportRequest request) {
+        return marketDataService.importMarketData(request);
     }
 
     @GetMapping("/prices/{exchange}/{ticker}/latest")
