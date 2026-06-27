@@ -35,6 +35,18 @@ Create a JSON file using `docs/dev-market-data.example.json` as the shape. The e
 
 `docs/dev-market-data-2026-06-01.json` is a partial sourced starter file for June 1, 2026. It uses StockAnalysis/S&P Global historical closes for DRAM, MU, SNDK, WDC, and STX, and Roundhill's published holdings weights for those U.S.-listed DRAM holdings. It intentionally omits SK hynix, Samsung, Kioxia, Nanya, and Winbond until a provider with Korea/Japan/Taiwan coverage is configured.
 
+Keep mutable local ingestion files under `data/ingest/`. JSON files in that directory are ignored by git so provider exports and local corrections do not become committed source files. Recommended local filename:
+
+```text
+data/ingest/dram-market-data-local.json
+```
+
+Start from a committed example:
+
+```bash
+cp docs/dev-market-data-2026-06-01.json data/ingest/dram-market-data-local.json
+```
+
 The ingestion file supports:
 
 - `prices`: security or ETF price snapshots.
@@ -50,6 +62,12 @@ Run this after MySQL is healthy:
 
 ```bash
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--app.ingest.enabled=true --app.ingest.file=file:/absolute/path/to/market-data.json --app.ingest.exit-after-run=true'
+```
+
+For this repository's default local path:
+
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--app.ingest.enabled=true --app.ingest.file=file:/Users/temadison/Development/Personal/GitHub/dram-builder/data/ingest/dram-market-data-local.json --app.ingest.exit-after-run=true'
 ```
 
 If MySQL is on a non-default host port, include the datasource override in the same `--args` string.
@@ -101,6 +119,8 @@ To enable scheduled file ingestion against the Docker MySQL database:
 ```bash
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC --server.port=8082 --app.ingest.file=file:/absolute/path/to/market-data.json --app.ingest.schedule.enabled=true'
 ```
+
+For IntelliJ, use the same `data/ingest/dram-market-data-local.json` path in `--app.ingest.file`.
 
 Default schedule:
 
