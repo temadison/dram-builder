@@ -54,7 +54,7 @@ The ingestion file supports:
 - `officialNavs`: issuer/provider ETF NAV snapshots.
 - `snapshot`: optional DRAM snapshot generation from the stored price and FX records.
 
-For current DRAM setup, use Roundhill as the issuer source for holdings and official NAV, then use a market data provider for live or prior-close prices and FX. Good provider candidates are Twelve Data, Polygon, Tiingo, or Alpha Vantage, depending on international equity coverage for Korea, Japan, and Taiwan.
+For current DRAM setup, use Roundhill as the issuer source for holdings and official NAV, then use Twelve Data as the first automated provider for live or prior-close prices and FX. See `docs/provider-selection.md` for the provider decision, assumptions, and symbol map.
 
 ## One-Shot Load Into MySQL
 
@@ -146,8 +146,8 @@ Until a `MarketDataProvider` implementation is configured, provider mode records
 
 Recommended next implementation:
 
-1. Pick one provider for prices and FX.
-2. Add API-key config under `app.provider`.
-3. Implement `MarketDataProvider` for that vendor so it resolves DRAM holdings, prices, FX, and official NAV.
+1. Add Twelve Data API-key config under `app.provider.twelvedata`.
+2. Implement `MarketDataProvider` for Twelve Data prices and FX.
+3. Keep Roundhill issuer data as the holdings and official NAV source.
 4. Map provider records into `MarketDataIngestionRequest`.
 5. Schedule the provider job for `02:00` and `16:30` Central Time.

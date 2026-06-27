@@ -126,7 +126,7 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 
 Configuration is in `src/main/resources/application-dev.yml`.
 
-For persistent market data loading, see `docs/mysql-ingestion.md`. The app includes a disabled-by-default ingestion runner that can load a JSON file into MySQL and optionally generate a DRAM snapshot.
+For persistent market data loading, see `docs/mysql-ingestion.md`. The app includes a disabled-by-default ingestion runner that can load a JSON file into MySQL and optionally generate a DRAM snapshot. Provider selection notes are in `docs/provider-selection.md`; the first planned adapter is Twelve Data for prices and FX, with Roundhill as the issuer source for holdings and official NAV.
 
 ## Database Migrations
 
