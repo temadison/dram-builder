@@ -53,10 +53,11 @@ export BASE_URL=http://localhost:8082
 
 ## Dashboard
 
-The dashboard is served from the Spring Boot app at `/`. If the app is running on port `8082`, open:
+The dashboard is served from the Spring Boot app at `/`, and data loading/management lives at `/data.html`. If the app is running on port `8082`, open:
 
 ```text
 http://localhost:8082/
+http://localhost:8082/data.html
 ```
 
 If you use another port, replace `8082` with that port. The dashboard uses the same backend APIs documented below, so it needs at least one snapshot before the main values populate. For the easiest local workflow, start with seed data:

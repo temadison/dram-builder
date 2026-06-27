@@ -32,25 +32,34 @@ const officialNavForm = document.getElementById('official-nav-form');
 const csvImportForm = document.getElementById('csv-import-form');
 const marketDataCsv = document.getElementById('market-data-csv');
 const marketSnapshotForm = document.getElementById('market-snapshot-form');
+const hasDashboard = Boolean(document.getElementById('market-price'));
+const hasMarketData = Boolean(document.getElementById('market-data-summary'));
 
-snapshotJson.value = JSON.stringify(sampleSnapshot, null, 2);
-marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
-marketDataCsv.value = sampleMarketDataCsv;
+if (snapshotJson) {
+  snapshotJson.value = JSON.stringify(sampleSnapshot, null, 2);
+}
+if (marketSnapshotJson) {
+  marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
+}
+if (marketDataCsv) {
+  marketDataCsv.value = sampleMarketDataCsv;
+}
 
-document.getElementById('refresh-button').addEventListener('click', refresh);
-document.getElementById('sample-button').addEventListener('click', saveSampleSnapshot);
-document.getElementById('load-market-sample-button').addEventListener('click', loadSampleMarketData);
-document.getElementById('reset-market-csv-button').addEventListener('click', () => {
+bindClick('refresh-button', refresh);
+bindClick('sample-button', saveSampleSnapshot);
+bindClick('load-market-sample-button', loadSampleMarketData);
+bindClick('reset-market-csv-button', () => {
   marketDataCsv.value = sampleMarketDataCsv;
 });
-document.getElementById('reset-json-button').addEventListener('click', () => {
+bindClick('reset-json-button', () => {
   snapshotJson.value = JSON.stringify(sampleSnapshot, null, 2);
 });
-document.getElementById('reset-market-json-button').addEventListener('click', () => {
+bindClick('reset-market-json-button', () => {
   marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
 });
 
-snapshotForm.addEventListener('submit', async event => {
+if (snapshotForm) {
+  snapshotForm.addEventListener('submit', async event => {
   event.preventDefault();
   try {
     const payload = JSON.parse(snapshotJson.value);
@@ -60,9 +69,11 @@ snapshotForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(error.message, 'error');
   }
-});
+  });
+}
 
-priceForm.addEventListener('submit', async event => {
+if (priceForm) {
+  priceForm.addEventListener('submit', async event => {
   event.preventDefault();
   const form = new FormData(priceForm);
   const payload = {
@@ -81,9 +92,11 @@ priceForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(error.message, 'error');
   }
-});
+  });
+}
 
-fxForm.addEventListener('submit', async event => {
+if (fxForm) {
+  fxForm.addEventListener('submit', async event => {
   event.preventDefault();
   const form = new FormData(fxForm);
   const payload = {
@@ -100,9 +113,11 @@ fxForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(error.message, 'error');
   }
-});
+  });
+}
 
-officialNavForm.addEventListener('submit', async event => {
+if (officialNavForm) {
+  officialNavForm.addEventListener('submit', async event => {
   event.preventDefault();
   const form = new FormData(officialNavForm);
   const payload = {
@@ -121,9 +136,11 @@ officialNavForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(error.message, 'error');
   }
-});
+  });
+}
 
-csvImportForm.addEventListener('submit', async event => {
+if (csvImportForm) {
+  csvImportForm.addEventListener('submit', async event => {
   event.preventDefault();
 
   try {
@@ -134,9 +151,11 @@ csvImportForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(error.message, 'error');
   }
-});
+  });
+}
 
-marketSnapshotForm.addEventListener('submit', async event => {
+if (marketSnapshotForm) {
+  marketSnapshotForm.addEventListener('submit', async event => {
   event.preventDefault();
 
   try {
@@ -153,9 +172,11 @@ marketSnapshotForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(error.message, 'error');
   }
-});
+  });
+}
 
-scenarioForm.addEventListener('submit', async event => {
+if (scenarioForm) {
+  scenarioForm.addEventListener('submit', async event => {
   event.preventDefault();
   const form = new FormData(scenarioForm);
   const payload = {
@@ -178,12 +199,20 @@ scenarioForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(error.message, 'error');
   }
-});
+  });
+}
 
 refresh();
 
 async function refresh() {
-  await refreshMarketData();
+  if (hasMarketData) {
+    await refreshMarketData();
+  }
+
+  if (!hasDashboard) {
+    clearStatus();
+    return;
+  }
 
   try {
     const [snapshot, bridgeScore] = await Promise.all([
@@ -205,6 +234,9 @@ async function refresh() {
 }
 
 async function refreshMarketData() {
+  if (!hasMarketData) {
+    return;
+  }
   const marketData = await getMarketData();
   renderMarketData(marketData);
 }
@@ -231,9 +263,19 @@ async function loadSampleMarketData() {
 }
 
 function setScenarioPurchasePrice(value) {
+  if (!scenarioForm) {
+    return;
+  }
   const input = scenarioForm.elements.namedItem('purchasePrice');
   if (input && value != null) {
     input.value = Number(value).toFixed(2);
+  }
+}
+
+function bindClick(id, handler) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.addEventListener('click', handler);
   }
 }
 

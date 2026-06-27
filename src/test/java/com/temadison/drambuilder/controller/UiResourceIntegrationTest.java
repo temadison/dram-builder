@@ -33,10 +33,19 @@ class UiResourceIntegrationTest {
         mockMvc.perform(get("/index.html"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("DRAM Bridge Model")))
+                .andExpect(content().string(containsString("href=\"/data.html\"")))
+                .andExpect(content().string(containsString("Dashboard")))
+                .andExpect(content().string(containsString("Holdings")))
+                .andExpect(content().string(containsString("Scenario")))
+                .andExpect(content().string(containsString("/js/app.js")));
+
+        mockMvc.perform(get("/data.html"))
+                .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Market Data Workflow")))
                 .andExpect(content().string(containsString("market-data-freshness")))
                 .andExpect(content().string(containsString("csv-import-form")))
                 .andExpect(content().string(containsString("official-nav-form")))
+                .andExpect(content().string(containsString("Snapshot Entry")))
                 .andExpect(content().string(containsString("market-snapshot-form")))
                 .andExpect(content().string(containsString("/js/app.js")));
 
@@ -45,6 +54,7 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("getLatestSnapshot")))
                 .andExpect(content().string(containsString("importMarketData")))
                 .andExpect(content().string(containsString("importMarketDataCsv")))
+                .andExpect(content().string(containsString("bindClick")))
                 .andExpect(content().string(containsString("saveOfficialNavSnapshot")))
                 .andExpect(content().string(containsString("saveSnapshotFromMarketData")));
 
