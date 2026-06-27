@@ -42,6 +42,14 @@ export async function importMarketDataCsv(csv) {
   });
 }
 
+export async function runProviderIngestion(window = 'manual') {
+  return request('/api/market-data/ingest/provider', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ window })
+  });
+}
+
 export async function savePriceSnapshot(payload) {
   return request('/api/market-data/prices', {
     method: 'POST',

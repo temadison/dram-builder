@@ -104,6 +104,16 @@ Every file ingestion run writes a `market_data_ingestion_run` record. Recent run
 
 The data page at `/data.html` also shows recent ingestion runs, so scheduled file/provider failures are visible without querying the API directly.
 
+For provider setup validation, the data page has a `Run Provider` button. It calls:
+
+```bash
+curl -X POST http://localhost:8082/api/market-data/ingest/provider \
+  -H 'Content-Type: application/json' \
+  -d '{"window":"manual"}'
+```
+
+This records the same ingestion run history as scheduled provider mode. Use it after setting `TWELVE_DATA_API_KEY` and enabling `app.provider.twelvedata.enabled=true`.
+
 `GET /api/market-data` includes a `freshness` block for the configured required price set. The default dev set is `BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX`; adjust `app.market-data.freshness.required-prices` when a provider can load Korea, Japan, and Taiwan holdings. `app.market-data.freshness.max-age-hours` controls when an observed price becomes stale.
 
 ## Remaining Provider Automation

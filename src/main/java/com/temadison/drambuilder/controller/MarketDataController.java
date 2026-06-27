@@ -11,9 +11,11 @@ import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
+import com.temadison.drambuilder.dto.ProviderIngestionRequest;
 import com.temadison.drambuilder.service.MarketDataCsvImportService;
 import com.temadison.drambuilder.service.MarketDataIngestionConfigService;
 import com.temadison.drambuilder.service.MarketDataIngestionRunService;
+import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
 import com.temadison.drambuilder.service.MarketDataService;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -33,17 +35,20 @@ public class MarketDataController {
     private final MarketDataCsvImportService marketDataCsvImportService;
     private final MarketDataIngestionRunService marketDataIngestionRunService;
     private final MarketDataIngestionConfigService marketDataIngestionConfigService;
+    private final MarketDataProviderIngestionService marketDataProviderIngestionService;
 
     public MarketDataController(
             MarketDataService marketDataService,
             MarketDataCsvImportService marketDataCsvImportService,
             MarketDataIngestionRunService marketDataIngestionRunService,
-            MarketDataIngestionConfigService marketDataIngestionConfigService
+            MarketDataIngestionConfigService marketDataIngestionConfigService,
+            MarketDataProviderIngestionService marketDataProviderIngestionService
     ) {
         this.marketDataService = marketDataService;
         this.marketDataCsvImportService = marketDataCsvImportService;
         this.marketDataIngestionRunService = marketDataIngestionRunService;
         this.marketDataIngestionConfigService = marketDataIngestionConfigService;
+        this.marketDataProviderIngestionService = marketDataProviderIngestionService;
     }
 
     @GetMapping
@@ -59,6 +64,15 @@ public class MarketDataController {
     @GetMapping("/ingestion-config")
     public MarketDataIngestionConfigResponse ingestionConfig() {
         return marketDataIngestionConfigService.config();
+    }
+
+    @PostMapping("/ingest/provider")
+    public List<MarketDataIngestionRunResponse> ingestProvider(@RequestBody(required = false) ProviderIngestionRequest request) {
+        String window = request == null || request.window() == null || request.window().isBlank()
+                ? "manual"
+                : request.window().trim();
+        marketDataProviderIngestionService.ingestProvider(window);
+        return marketDataIngestionRunService.recentRuns();
     }
 
     @PostMapping("/prices")

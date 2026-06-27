@@ -372,4 +372,21 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$[0].message", is("No market data provider is configured")))
                 .andExpect(jsonPath("$[0].completedAt", notNullValue()));
     }
+
+    @Test
+    void manualProviderIngestionEndpointCreatesFailedRunWhenNoProviderExists() throws Exception {
+        mockMvc.perform(post("/api/market-data/ingest/provider")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"window\":\"manual\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message", is("No market data provider is configured")));
+
+        mockMvc.perform(get("/api/market-data/ingestion-runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].source", is("provider-manual")))
+                .andExpect(jsonPath("$[0].status", is("FAILED")))
+                .andExpect(jsonPath("$[0].message", is("No market data provider is configured")))
+                .andExpect(jsonPath("$[0].completedAt", notNullValue()));
+    }
 }

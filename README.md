@@ -198,6 +198,8 @@ curl "$BASE_URL/api/market-data/ingestion-config"
 
 `GET /api/market-data/ingestion-config` returns non-secret runtime ingestion settings, including runner state, schedule mode, cron windows, configured file path, provider count, and freshness thresholds.
 
+`POST /api/market-data/ingest/provider` manually triggers provider ingestion for setup validation. It records the attempt in `/api/market-data/ingestion-runs`.
+
 `POST /api/market-data/official-navs`
 
 Stores issuer or provider supplied ETF NAV separately from synthetic NAV. `observedAt` is optional; `asOfDate` is required because official NAV is date-based.
