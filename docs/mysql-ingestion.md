@@ -33,6 +33,8 @@ When using a non-default host port, pass a matching datasource URL to Spring:
 
 Create a JSON file using `docs/dev-market-data.example.json` as the shape. The example is not a current market data source; replace its prices, FX rates, official NAV, dates, and holdings with values from your provider.
 
+`docs/dev-market-data-2026-06-01.json` is a partial sourced starter file for June 1, 2026. It uses StockAnalysis/S&P Global historical closes for DRAM, MU, SNDK, WDC, and STX, and Roundhill's published holdings weights for those U.S.-listed DRAM holdings. It intentionally omits SK hynix, Samsung, Kioxia, Nanya, and Winbond until a provider with Korea/Japan/Taiwan coverage is configured.
+
 The ingestion file supports:
 
 - `prices`: security or ETF price snapshots.
@@ -80,10 +82,19 @@ curl http://localhost:8082/api/dram/bridge-score
 
 The app now has a repeatable MySQL load path, but it does not yet fetch live provider APIs itself. To fully automate recent values, add a provider adapter that writes this ingestion file or calls `MarketDataService` directly.
 
+## Recommended Refresh Cadence
+
+DRAM holds securities across U.S. and Asia-Pacific markets. For a Central Time workstation, the useful refresh windows are the gaps after one region has closed and before the other region opens:
+
+- `02:00 America/Chicago`: after Korea/Japan/Taiwan regular sessions have closed during U.S. daylight time, and before the U.S. regular session opens.
+- `16:30 America/Chicago`: after the U.S. regular session has closed, and before Korea/Japan/Taiwan regular sessions open.
+
+These should be scheduler triggers, not hard-coded data assumptions. A provider-backed job should still check exchange holidays, early closes, and whether all expected quotes/NAV records are available before creating a new DRAM snapshot.
+
 Recommended next implementation:
 
 1. Pick one provider for prices and FX.
 2. Add API-key config under `app.provider`.
 3. Add a provider client that resolves DRAM holdings, prices, FX, and official NAV.
 4. Map provider records into `MarketDataIngestionRequest`.
-5. Schedule or trigger the runner after market close.
+5. Schedule the provider job for `02:00` and `16:30` Central Time.

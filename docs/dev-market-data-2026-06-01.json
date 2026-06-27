@@ -1,0 +1,132 @@
+{
+  "prices": [
+    {
+      "ticker": "DRAM",
+      "name": "Roundhill Memory ETF",
+      "exchange": "BATS",
+      "currency": "USD",
+      "price": 63.20,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-05-29T20:00:00Z"
+    },
+    {
+      "ticker": "DRAM",
+      "name": "Roundhill Memory ETF",
+      "exchange": "BATS",
+      "currency": "USD",
+      "price": 68.00,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-06-01T20:00:00Z"
+    },
+    {
+      "ticker": "MU",
+      "name": "Micron Technology",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 971.00,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-05-29T20:00:00Z"
+    },
+    {
+      "ticker": "MU",
+      "name": "Micron Technology",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 1035.50,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-06-01T20:00:00Z"
+    },
+    {
+      "ticker": "SNDK",
+      "name": "SanDisk",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 1694.98,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-05-29T20:00:00Z"
+    },
+    {
+      "ticker": "SNDK",
+      "name": "SanDisk",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 1761.43,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-06-01T20:00:00Z"
+    },
+    {
+      "ticker": "WDC",
+      "name": "Western Digital",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 531.21,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-05-29T20:00:00Z"
+    },
+    {
+      "ticker": "WDC",
+      "name": "Western Digital",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 546.20,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-06-01T20:00:00Z"
+    },
+    {
+      "ticker": "STX",
+      "name": "Seagate Technology",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 879.80,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-05-29T20:00:00Z"
+    },
+    {
+      "ticker": "STX",
+      "name": "Seagate Technology",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 921.26,
+      "source": "stockanalysis-spglobal",
+      "observedAt": "2026-06-01T20:00:00Z"
+    }
+  ],
+  "fxRates": [],
+  "officialNavs": [],
+  "snapshot": {
+    "asOfDate": "2026-06-01",
+    "purchasePrice": 68.00,
+    "etfTicker": "DRAM",
+    "etfExchange": "BATS",
+    "holdings": [
+      {
+        "ticker": "MU",
+        "name": "Micron Technology",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "weight": 0.2383
+      },
+      {
+        "ticker": "SNDK",
+        "name": "SanDisk",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "weight": 0.0466
+      },
+      {
+        "ticker": "WDC",
+        "name": "Western Digital",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "weight": 0.0464
+      },
+      {
+        "ticker": "STX",
+        "name": "Seagate Technology",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "weight": 0.0449
+      }
+    ]
+  }
+}
