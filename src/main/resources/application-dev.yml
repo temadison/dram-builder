@@ -13,3 +13,9 @@ spring:
         format_sql: true
   flyway:
     enabled: true
+
+app:
+  ingest:
+    enabled: false
+    file:
+    exit-after-run: false

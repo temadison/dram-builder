@@ -1,0 +1,107 @@
+{
+  "prices": [
+    {
+      "ticker": "DRAM",
+      "name": "Roundhill Memory ETF",
+      "exchange": "BZX",
+      "currency": "USD",
+      "price": 81.50,
+      "source": "example-file",
+      "observedAt": "2026-06-26T20:00:00Z"
+    },
+    {
+      "ticker": "DRAM",
+      "name": "Roundhill Memory ETF",
+      "exchange": "BZX",
+      "currency": "USD",
+      "price": 80.00,
+      "source": "example-file",
+      "observedAt": "2026-06-25T20:00:00Z"
+    },
+    {
+      "ticker": "000660",
+      "name": "SK hynix",
+      "exchange": "KRX",
+      "currency": "KRW",
+      "price": 114000.00,
+      "source": "example-file",
+      "observedAt": "2026-06-26T20:00:00Z"
+    },
+    {
+      "ticker": "000660",
+      "name": "SK hynix",
+      "exchange": "KRX",
+      "currency": "KRW",
+      "price": 110000.00,
+      "source": "example-file",
+      "observedAt": "2026-06-25T20:00:00Z"
+    },
+    {
+      "ticker": "MU",
+      "name": "Micron Technology",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 108.00,
+      "source": "example-file",
+      "observedAt": "2026-06-26T20:00:00Z"
+    },
+    {
+      "ticker": "MU",
+      "name": "Micron Technology",
+      "exchange": "NASDAQ",
+      "currency": "USD",
+      "price": 105.00,
+      "source": "example-file",
+      "observedAt": "2026-06-25T20:00:00Z"
+    }
+  ],
+  "fxRates": [
+    {
+      "baseCurrency": "KRW",
+      "quoteCurrency": "USD",
+      "rate": 0.00081000,
+      "source": "example-file",
+      "observedAt": "2026-06-26T20:00:00Z"
+    },
+    {
+      "baseCurrency": "KRW",
+      "quoteCurrency": "USD",
+      "rate": 0.00080000,
+      "source": "example-file",
+      "observedAt": "2026-06-25T20:00:00Z"
+    }
+  ],
+  "officialNavs": [
+    {
+      "ticker": "DRAM",
+      "name": "Roundhill Memory ETF",
+      "nav": 80.95,
+      "currency": "USD",
+      "source": "example-file",
+      "asOfDate": "2026-06-26",
+      "observedAt": "2026-06-26T20:00:00Z"
+    }
+  ],
+  "snapshot": {
+    "asOfDate": "2026-06-26",
+    "purchasePrice": 76.31,
+    "etfTicker": "DRAM",
+    "etfExchange": "BZX",
+    "holdings": [
+      {
+        "ticker": "000660",
+        "name": "SK hynix",
+        "exchange": "KRX",
+        "currency": "KRW",
+        "weight": 0.26
+      },
+      {
+        "ticker": "MU",
+        "name": "Micron Technology",
+        "exchange": "NASDAQ",
+        "currency": "USD",
+        "weight": 0.19
+      }
+    ]
+  }
+}

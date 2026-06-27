@@ -95,7 +95,21 @@ curl "$BASE_URL/actuator/health"
 
 ## Running With MySQL
 
-Create a local MySQL user/database or allow the configured URL to create the database:
+For the fastest local setup, start MySQL with Docker Compose:
+
+```bash
+docker compose up -d mysql
+```
+
+Then run with the `dev` profile:
+
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
+```
+
+The compose file matches `src/main/resources/application-dev.yml`.
+
+If you prefer a manually managed MySQL instance, create a local MySQL user/database or allow the configured URL to create the database:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS dram_bridge;
@@ -103,13 +117,15 @@ CREATE USER IF NOT EXISTS 'dram_bridge'@'localhost' IDENTIFIED BY 'dram_bridge';
 GRANT ALL PRIVILEGES ON dram_bridge.* TO 'dram_bridge'@'localhost';
 ```
 
-Run with the `dev` profile:
+Then run with the `dev` profile:
 
 ```bash
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
 Configuration is in `src/main/resources/application-dev.yml`.
+
+For persistent market data loading, see `docs/mysql-ingestion.md`. The app includes a disabled-by-default ingestion runner that can load a JSON file into MySQL and optionally generate a DRAM snapshot.
 
 ## Database Migrations
 
