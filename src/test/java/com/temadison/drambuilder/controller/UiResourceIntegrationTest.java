@@ -35,6 +35,7 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("DRAM Bridge Model")))
                 .andExpect(content().string(containsString("Market Data Workflow")))
                 .andExpect(content().string(containsString("csv-import-form")))
+                .andExpect(content().string(containsString("official-nav-form")))
                 .andExpect(content().string(containsString("market-snapshot-form")))
                 .andExpect(content().string(containsString("/js/app.js")));
 
@@ -43,6 +44,7 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("getLatestSnapshot")))
                 .andExpect(content().string(containsString("importMarketData")))
                 .andExpect(content().string(containsString("importMarketDataCsv")))
+                .andExpect(content().string(containsString("saveOfficialNavSnapshot")))
                 .andExpect(content().string(containsString("saveSnapshotFromMarketData")));
 
         mockMvc.perform(get("/assets/bridge-mark.svg"))
@@ -59,6 +61,7 @@ class UiResourceIntegrationTest {
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/dram/latest")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import/csv")))
+                .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/official-navs")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/dram/snapshot/from-market-data")));
     }
 }

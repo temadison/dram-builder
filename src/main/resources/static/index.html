@@ -207,6 +207,35 @@
             <button class="text-button primary" type="submit">Save FX</button>
           </form>
 
+          <h3>Store Official NAV</h3>
+          <form class="entry-form nav-form" id="official-nav-form">
+            <label>
+              ETF
+              <input name="ticker" value="DRAM" required>
+            </label>
+            <label>
+              Name
+              <input name="name" value="Roundhill Memory ETF" required>
+            </label>
+            <label>
+              NAV
+              <input name="nav" type="number" step="0.000001" value="80.95" required>
+            </label>
+            <label>
+              Currency
+              <input name="currency" value="USD" required>
+            </label>
+            <label>
+              As Of
+              <input name="asOfDate" type="date" value="2026-06-26" required>
+            </label>
+            <label>
+              Source
+              <input name="source" value="issuer-ui" required>
+            </label>
+            <button class="text-button primary" type="submit">Save NAV</button>
+          </form>
+
           <button class="text-button" id="load-market-sample-button" type="button">Load Sample Market Data</button>
 
           <h3>Import CSV</h3>

@@ -5,6 +5,8 @@ import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
 import com.temadison.drambuilder.service.MarketDataCsvImportService;
@@ -63,5 +65,15 @@ public class MarketDataController {
     @GetMapping("/fx-rates/{baseCurrency}/{quoteCurrency}/latest")
     public FxRateSnapshotResponse latestFxRate(@PathVariable String baseCurrency, @PathVariable String quoteCurrency) {
         return marketDataService.latestFxRate(baseCurrency, quoteCurrency);
+    }
+
+    @PostMapping("/official-navs")
+    public OfficialNavSnapshotResponse createOfficialNavSnapshot(@Valid @RequestBody OfficialNavSnapshotRequest request) {
+        return marketDataService.createOfficialNavSnapshot(request);
+    }
+
+    @GetMapping("/official-navs/{ticker}/latest")
+    public OfficialNavSnapshotResponse latestOfficialNav(@PathVariable String ticker) {
+        return marketDataService.latestOfficialNav(ticker);
     }
 }

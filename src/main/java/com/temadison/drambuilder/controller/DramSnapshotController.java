@@ -57,7 +57,8 @@ public class DramSnapshotController {
                         "POST /api/market-data/import",
                         "POST /api/market-data/import/csv",
                         "POST /api/market-data/prices",
-                        "POST /api/market-data/fx-rates"
+                        "POST /api/market-data/fx-rates",
+                        "POST /api/market-data/official-navs"
                 )
         );
     }

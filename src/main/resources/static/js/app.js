@@ -6,6 +6,7 @@ import {
   importMarketDataCsv,
   runScenario,
   saveFxRateSnapshot,
+  saveOfficialNavSnapshot,
   savePriceSnapshot,
   saveSnapshot,
   saveSnapshotFromMarketData
@@ -27,6 +28,7 @@ const scenarioForm = document.getElementById('scenario-form');
 const snapshotForm = document.getElementById('snapshot-form');
 const priceForm = document.getElementById('price-form');
 const fxForm = document.getElementById('fx-form');
+const officialNavForm = document.getElementById('official-nav-form');
 const csvImportForm = document.getElementById('csv-import-form');
 const marketDataCsv = document.getElementById('market-data-csv');
 const marketSnapshotForm = document.getElementById('market-snapshot-form');
@@ -94,6 +96,27 @@ fxForm.addEventListener('submit', async event => {
   try {
     await saveFxRateSnapshot(payload);
     showStatus('FX rate snapshot saved.', 'success');
+    await refreshMarketData();
+  } catch (error) {
+    showStatus(error.message, 'error');
+  }
+});
+
+officialNavForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const form = new FormData(officialNavForm);
+  const payload = {
+    ticker: text(form.get('ticker')),
+    name: text(form.get('name')),
+    nav: numeric(form.get('nav')),
+    currency: text(form.get('currency')),
+    source: text(form.get('source')),
+    asOfDate: text(form.get('asOfDate'))
+  };
+
+  try {
+    await saveOfficialNavSnapshot(payload);
+    showStatus('Official NAV snapshot saved.', 'success');
     await refreshMarketData();
   } catch (error) {
     showStatus(error.message, 'error');

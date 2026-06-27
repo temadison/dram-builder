@@ -76,8 +76,9 @@ export function renderScenario(scenario) {
 export function renderMarketData(marketData) {
   const prices = marketData.latestPrices || [];
   const fxRates = marketData.latestFxRates || [];
+  const officialNavs = marketData.latestOfficialNavs || [];
   document.getElementById('market-data-summary').textContent =
-    `${prices.length} prices / ${fxRates.length} FX`;
+    `${prices.length} prices / ${fxRates.length} FX / ${officialNavs.length} NAV`;
 
   const rows = [
     ...prices.map(price => ({
@@ -91,6 +92,12 @@ export function renderMarketData(marketData) {
       key: `${rate.baseCurrency}/${rate.quoteCurrency}`,
       value: decimal(rate.rate, 8),
       source: rate.source
+    })),
+    ...officialNavs.map(nav => ({
+      type: 'Official NAV',
+      key: `${nav.ticker} ${nav.asOfDate}`,
+      value: nav.currency === 'USD' ? money(nav.nav) : decimal(nav.nav, 4),
+      source: nav.source
     }))
   ];
 

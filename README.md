@@ -15,6 +15,7 @@ The current implementation covers Release 0.1 through Release 0.6, plus the init
 - Basic static dashboard served by Spring Boot.
 - Source-tagged manual market data snapshots for prices and FX rates.
 - Bulk market data import for repeatable local setup.
+- Official ETF NAV snapshot capture.
 - DRAM snapshot creation from stored latest market data.
 - Basic health endpoint and deterministic unit tests for calculation logic.
 
@@ -171,7 +172,25 @@ Latest snapshot lookups:
 ```bash
 curl "$BASE_URL/api/market-data/prices/NASDAQ/MU/latest"
 curl "$BASE_URL/api/market-data/fx-rates/KRW/USD/latest"
+curl "$BASE_URL/api/market-data/official-navs/DRAM/latest"
 curl "$BASE_URL/api/market-data"
+```
+
+`POST /api/market-data/official-navs`
+
+Stores issuer or provider supplied ETF NAV separately from synthetic NAV. `observedAt` is optional; `asOfDate` is required because official NAV is date-based.
+
+```bash
+curl -X POST "$BASE_URL/api/market-data/official-navs" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "ticker": "DRAM",
+    "name": "Roundhill Memory ETF",
+    "nav": 80.95,
+    "currency": "USD",
+    "source": "issuer",
+    "asOfDate": "2026-06-26"
+  }'
 ```
 
 Bulk import:

@@ -50,6 +50,14 @@ export async function saveFxRateSnapshot(payload) {
   });
 }
 
+export async function saveOfficialNavSnapshot(payload) {
+  return request('/api/market-data/official-navs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
 export async function saveSnapshot(payload) {
   return request('/api/dram/snapshot', {
     method: 'POST',

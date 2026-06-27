@@ -1,6 +1,8 @@
 package com.temadison.drambuilder.service;
 
 import com.temadison.drambuilder.domain.FxRateSnapshot;
+import com.temadison.drambuilder.domain.Etf;
+import com.temadison.drambuilder.domain.OfficialNavSnapshot;
 import com.temadison.drambuilder.domain.PriceSnapshot;
 import com.temadison.drambuilder.domain.Security;
 import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
@@ -8,9 +10,13 @@ import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
+import com.temadison.drambuilder.repository.EtfRepository;
 import com.temadison.drambuilder.repository.FxRateSnapshotRepository;
+import com.temadison.drambuilder.repository.OfficialNavSnapshotRepository;
 import com.temadison.drambuilder.repository.PriceSnapshotRepository;
 import com.temadison.drambuilder.repository.SecurityRepository;
 import java.time.Instant;
@@ -28,17 +34,23 @@ import org.springframework.transaction.annotation.Transactional;
 public class MarketDataService {
 
     private final SecurityRepository securityRepository;
+    private final EtfRepository etfRepository;
     private final PriceSnapshotRepository priceSnapshotRepository;
     private final FxRateSnapshotRepository fxRateSnapshotRepository;
+    private final OfficialNavSnapshotRepository officialNavSnapshotRepository;
 
     public MarketDataService(
             SecurityRepository securityRepository,
+            EtfRepository etfRepository,
             PriceSnapshotRepository priceSnapshotRepository,
-            FxRateSnapshotRepository fxRateSnapshotRepository
+            FxRateSnapshotRepository fxRateSnapshotRepository,
+            OfficialNavSnapshotRepository officialNavSnapshotRepository
     ) {
         this.securityRepository = securityRepository;
+        this.etfRepository = etfRepository;
         this.priceSnapshotRepository = priceSnapshotRepository;
         this.fxRateSnapshotRepository = fxRateSnapshotRepository;
+        this.officialNavSnapshotRepository = officialNavSnapshotRepository;
     }
 
     @Transactional
@@ -74,6 +86,26 @@ public class MarketDataService {
                 now
         ));
         return toFxResponse(saved);
+    }
+
+    @Transactional
+    public OfficialNavSnapshotResponse createOfficialNavSnapshot(OfficialNavSnapshotRequest request) {
+        Etf etf = etfRepository.findByTicker(normalizeTicker(request.ticker()))
+                .orElseGet(() -> etfRepository.save(new Etf(
+                        normalizeTicker(request.ticker()),
+                        request.name().trim()
+                )));
+        Instant now = Instant.now();
+        OfficialNavSnapshot saved = officialNavSnapshotRepository.save(new OfficialNavSnapshot(
+                etf,
+                request.nav(),
+                normalizeCurrency(request.currency()),
+                request.source().trim(),
+                request.asOfDate(),
+                request.observedAt() == null ? now : request.observedAt(),
+                now
+        ));
+        return toOfficialNavResponse(saved);
     }
 
     /**
@@ -129,6 +161,13 @@ public class MarketDataService {
     }
 
     @Transactional(readOnly = true)
+    public OfficialNavSnapshotResponse latestOfficialNav(String ticker) {
+        return officialNavSnapshotRepository.findFirstByEtfTickerOrderByObservedAtDesc(normalizeTicker(ticker))
+                .map(this::toOfficialNavResponse)
+                .orElseThrow(() -> new IllegalStateException("No official NAV snapshot exists for " + ticker));
+    }
+
+    @Transactional(readOnly = true)
     public MarketDataSummaryResponse summary() {
         return new MarketDataSummaryResponse(
                 priceSnapshotRepository.findTop20ByOrderByObservedAtDesc().stream()
@@ -136,6 +175,9 @@ public class MarketDataService {
                         .toList(),
                 fxRateSnapshotRepository.findTop20ByOrderByObservedAtDesc().stream()
                         .map(this::toFxResponse)
+                        .toList(),
+                officialNavSnapshotRepository.findTop20ByOrderByObservedAtDesc().stream()
+                        .map(this::toOfficialNavResponse)
                         .toList()
         );
     }
@@ -162,6 +204,21 @@ public class MarketDataService {
                 snapshot.getQuoteCurrency(),
                 snapshot.getRate(),
                 snapshot.getSource(),
+                snapshot.getObservedAt(),
+                snapshot.getCreatedAt()
+        );
+    }
+
+    private OfficialNavSnapshotResponse toOfficialNavResponse(OfficialNavSnapshot snapshot) {
+        Etf etf = snapshot.getEtf();
+        return new OfficialNavSnapshotResponse(
+                snapshot.getId(),
+                etf.getTicker(),
+                etf.getName(),
+                snapshot.getNav(),
+                snapshot.getCurrency(),
+                snapshot.getSource(),
+                snapshot.getAsOfDate(),
                 snapshot.getObservedAt(),
                 snapshot.getCreatedAt()
         );

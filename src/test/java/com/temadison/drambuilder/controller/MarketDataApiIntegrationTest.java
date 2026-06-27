@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -94,7 +95,43 @@ class MarketDataApiIntegrationTest {
         mockMvc.perform(get("/api/market-data"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.latestPrices", hasSize(0)))
-                .andExpect(jsonPath("$.latestFxRates", hasSize(1)));
+                .andExpect(jsonPath("$.latestFxRates", hasSize(1)))
+                .andExpect(jsonPath("$.latestOfficialNavs", hasSize(0)));
+    }
+
+    @Test
+    void storesAndReadsLatestOfficialNavSnapshotAndSummary() throws Exception {
+        OfficialNavSnapshotRequest request = new OfficialNavSnapshotRequest(
+                "dram",
+                "Roundhill Memory ETF",
+                new BigDecimal("80.95"),
+                "usd",
+                "issuer-test",
+                OBSERVED_AT.atZone(java.time.ZoneOffset.UTC).toLocalDate(),
+                OBSERVED_AT
+        );
+
+        mockMvc.perform(post("/api/market-data/official-navs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id", notNullValue()))
+                .andExpect(jsonPath("$.ticker", is("DRAM")))
+                .andExpect(jsonPath("$.name", is("Roundhill Memory ETF")))
+                .andExpect(jsonPath("$.nav", comparesEqualTo(80.95)))
+                .andExpect(jsonPath("$.currency", is("USD")))
+                .andExpect(jsonPath("$.source", is("issuer-test")))
+                .andExpect(jsonPath("$.asOfDate", is("2026-06-26")));
+
+        mockMvc.perform(get("/api/market-data/official-navs/DRAM/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.ticker", is("DRAM")))
+                .andExpect(jsonPath("$.nav", comparesEqualTo(80.95)));
+
+        mockMvc.perform(get("/api/market-data"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.latestOfficialNavs", hasSize(1)))
+                .andExpect(jsonPath("$.latestOfficialNavs[0].ticker", is("DRAM")));
     }
 
     @Test

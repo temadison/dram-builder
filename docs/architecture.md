@@ -18,6 +18,8 @@ Release 0.6 adds a basic static dashboard served by Spring Boot for latest snaps
 
 The current post-0.6 step connects stored market data to snapshot creation so manual price/FX entry can be separated from DRAM NAV calculation. It also adds a lightweight CSV adapter for repeatable local market data imports.
 
+The next post-0.6 increment captures official ETF NAV snapshots as market data. Official NAV is stored separately from synthetic NAV so later releases can compare issuer/provider NAV, synthetic NAV, and market price without conflating those concepts.
+
 ## Package Layout
 
 - `domain`: JPA entities for ETF, security, holding snapshots, holdings, and NAV snapshots.
@@ -41,11 +43,11 @@ Implemented tables:
 - `scenario_result`
 - `price_snapshot`
 - `fx_rate_snapshot`
+- `official_nav_snapshot`
 
 Planned tables:
 
 - provider ingestion run tables
-- official NAV snapshot tables
 
 ## Migrations
 
@@ -56,6 +58,8 @@ Hibernate uses `ddl-auto: validate` in local, test, and dev profiles. This keeps
 The initial migration `V1__initial_schema.sql` creates the current ETF, security, holdings, NAV, and scenario tables. Future schema changes should be added as new versioned migrations rather than editing existing applied migrations.
 
 `V2__market_data_snapshots.sql` adds source-tagged security price and FX rate snapshots. These tables are intentionally provider-neutral so manual entry, CSV import, or automated provider ingestion can all write the same normalized records.
+
+`V3__official_nav_snapshots.sql` adds source-tagged official ETF NAV snapshots keyed to `etf`. These records track issuer/provider NAV by `as_of_date` and `observed_at`, independent from calculated synthetic NAV snapshots.
 
 ## Domain Boundaries
 
@@ -81,6 +85,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 `MarketDataCsvImportService` parses combined price/FX CSV files into the same bulk import request contract. It is intentionally an adapter over `MarketDataService`, so CSV input, JSON input, and future provider jobs share the same persistence and validation path.
 
+Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer/provider NAV snapshots in their own table rather than attaching them to calculated DRAM snapshots.
+
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
 ## Financial Concepts
@@ -89,11 +95,11 @@ The current model explicitly tracks:
 
 - Market price: the actual DRAM trade price supplied by the user.
 - Synthetic NAV: normalized estimate from current/prior holding prices and FX rates.
+- Official NAV: issuer or provider supplied ETF NAV for a date.
 - Premium/discount: market price relative to synthetic NAV.
 
 Planned concepts:
 
-- Official NAV from issuer or market data provider.
 - Estimated fair value from richer holdings, cash, fees, stale quote logic, and market timing adjustments.
 - Bridge score and rotation signal.
 
@@ -123,8 +129,8 @@ The Release 0.6 UI is intentionally static and build-free. `index.html` loads ES
 - `view.js`: DOM rendering.
 - `app.js`: UI orchestration and event handling.
 
-The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery. The UI keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX records and generates a snapshot through `/api/dram/snapshot/from-market-data`. Sample market data loading uses the bulk import endpoint, and CSV import uses `/api/market-data/import/csv`.
+The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery. The UI keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX/NAV records and generates a snapshot through `/api/dram/snapshot/from-market-data`. Sample market data loading uses the bulk import endpoint, and CSV import uses `/api/market-data/import/csv`.
 
 ## Next Release
 
-Next releases should improve production hardening, including provider ingestion, official NAV capture, richer validation, and deeper dashboard support for stored market data.
+Next releases should improve production hardening, including provider ingestion, richer validation, and deeper dashboard support for stored market data.
