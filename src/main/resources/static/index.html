@@ -150,6 +150,110 @@
       </section>
     </section>
 
+    <section class="panel market-workflow">
+      <div class="section-heading">
+        <h2>Market Data Workflow</h2>
+        <span id="market-data-summary">No records loaded</span>
+      </div>
+      <div class="market-data-grid">
+        <section>
+          <h3>Store Price</h3>
+          <form class="entry-form" id="price-form">
+            <label>
+              Ticker
+              <input name="ticker" value="MU" required>
+            </label>
+            <label>
+              Name
+              <input name="name" value="Micron Technology" required>
+            </label>
+            <label>
+              Exchange
+              <input name="exchange" value="NASDAQ" required>
+            </label>
+            <label>
+              Currency
+              <input name="currency" value="USD" required>
+            </label>
+            <label>
+              Price
+              <input name="price" type="number" step="0.000001" value="108.25" required>
+            </label>
+            <label>
+              Source
+              <input name="source" value="manual-ui" required>
+            </label>
+            <button class="text-button primary" type="submit">Save Price</button>
+          </form>
+
+          <h3>Store FX</h3>
+          <form class="entry-form fx-form" id="fx-form">
+            <label>
+              Base
+              <input name="baseCurrency" value="KRW" required>
+            </label>
+            <label>
+              Quote
+              <input name="quoteCurrency" value="USD" required>
+            </label>
+            <label>
+              Rate
+              <input name="rate" type="number" step="0.00000001" value="0.00081000" required>
+            </label>
+            <label>
+              Source
+              <input name="source" value="manual-ui" required>
+            </label>
+            <button class="text-button primary" type="submit">Save FX</button>
+          </form>
+
+          <button class="text-button" id="load-market-sample-button" type="button">Load Sample Market Data</button>
+        </section>
+
+        <section>
+          <h3>Create Snapshot From Market Data</h3>
+          <form id="market-snapshot-form">
+            <div class="entry-form snapshot-meta-form">
+              <label>
+                As Of
+                <input name="asOfDate" type="date" value="2026-06-26">
+              </label>
+              <label>
+                Purchase Price
+                <input name="purchasePrice" type="number" step="0.01" value="76.31" required>
+              </label>
+              <label>
+                Market Price Override
+                <input name="marketPrice" type="number" step="0.01" placeholder="Latest DRAM price">
+              </label>
+            </div>
+            <textarea id="market-snapshot-json" spellcheck="false"></textarea>
+            <div class="form-actions">
+              <button class="text-button" id="reset-market-json-button" type="button">Reset Holdings</button>
+              <button class="text-button primary" type="submit">Generate Snapshot</button>
+            </div>
+          </form>
+        </section>
+
+        <section>
+          <h3>Recent Market Data</h3>
+          <div class="table-wrap compact market-summary-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Key</th>
+                  <th>Value</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="market-data-table"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </section>
+
     <section class="panel">
       <div class="section-heading">
         <h2>Snapshot Entry</h2>

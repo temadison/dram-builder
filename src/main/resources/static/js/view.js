@@ -73,6 +73,37 @@ export function renderScenario(scenario) {
   `);
 }
 
+export function renderMarketData(marketData) {
+  const prices = marketData.latestPrices || [];
+  const fxRates = marketData.latestFxRates || [];
+  document.getElementById('market-data-summary').textContent =
+    `${prices.length} prices / ${fxRates.length} FX`;
+
+  const rows = [
+    ...prices.map(price => ({
+      type: 'Price',
+      key: `${price.exchange}:${price.ticker}`,
+      value: price.currency === 'USD' ? money(price.price) : decimal(price.price, 4),
+      source: price.source
+    })),
+    ...fxRates.map(rate => ({
+      type: 'FX',
+      key: `${rate.baseCurrency}/${rate.quoteCurrency}`,
+      value: decimal(rate.rate, 8),
+      source: rate.source
+    }))
+  ];
+
+  renderRows('market-data-table', rows.slice(0, 10), row => `
+    <tr>
+      <td>${escapeHtml(row.type)}</td>
+      <td>${escapeHtml(row.key)}</td>
+      <td>${escapeHtml(row.value)}</td>
+      <td>${escapeHtml(row.source)}</td>
+    </tr>
+  `, 4);
+}
+
 export function renderAttribution(attribution) {
   const summary = document.getElementById('attribution-summary');
   if (!attribution || !attribution.hasPriorSnapshot) {
@@ -108,8 +139,8 @@ export function renderEmpty() {
   document.getElementById('score-components').innerHTML = '';
 }
 
-function renderRows(id, rows, mapper) {
-  document.getElementById(id).innerHTML = rows.length ? rows.map(mapper).join('') : emptyRow(1);
+function renderRows(id, rows, mapper, emptyColspan = 1) {
+  document.getElementById(id).innerHTML = rows.length ? rows.map(mapper).join('') : emptyRow(emptyColspan);
 }
 
 function emptyRow(colspan) {

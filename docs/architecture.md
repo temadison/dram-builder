@@ -117,11 +117,11 @@ The Release 0.6 UI is intentionally static and build-free. `index.html` loads ES
 
 - `api.js`: REST calls.
 - `format.js`: display formatting helpers.
-- `sampleData.js`: deterministic manual-entry sample snapshot.
+- `sampleData.js`: deterministic manual-entry sample snapshot and market data fixtures.
 - `view.js`: DOM rendering.
 - `app.js`: UI orchestration and event handling.
 
-The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery.
+The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery. The UI keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX records and generates a snapshot through `/api/dram/snapshot/from-market-data`.
 
 ## Next Release
 

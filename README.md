@@ -65,6 +65,13 @@ If you use another port, replace `8081` with that port. The dashboard uses the s
 
 With the seed flag enabled, the app creates two local DRAM snapshots if no snapshot exists. Then open the dashboard URL above.
 
+The dashboard supports two snapshot workflows:
+
+- `Snapshot Entry`: paste or edit full manual snapshot JSON, then save it directly.
+- `Market Data Workflow`: store price and FX snapshots first, then generate a DRAM snapshot from holding identities and weights.
+
+For the market data workflow, use `Load Sample Market Data` to populate deterministic DRAM, SK hynix, Micron, Samsung, ASML, and KRW/USD records. Then use `Generate Snapshot` in the same panel. The generated snapshot becomes the latest dashboard snapshot and powers scenario and bridge score views.
+
 These endpoints also work immediately:
 
 ```bash
@@ -477,7 +484,7 @@ Current tests cover:
 - Bridge Score v1 and rotation signal selection.
 - API integration coverage for latest snapshot, scenario, bridge score, and missing snapshot behavior.
 - Market-data-driven snapshot creation through public API endpoints.
-- Static dashboard resource coverage.
+- Static dashboard resource coverage, including the market data workflow.
 - Invalid total holding weights.
 
 ## Architecture

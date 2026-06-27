@@ -14,8 +14,36 @@ export async function runScenario(payload) {
   });
 }
 
+export async function getMarketData() {
+  return request('/api/market-data');
+}
+
+export async function savePriceSnapshot(payload) {
+  return request('/api/market-data/prices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function saveFxRateSnapshot(payload) {
+  return request('/api/market-data/fx-rates', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
 export async function saveSnapshot(payload) {
   return request('/api/dram/snapshot', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+}
+
+export async function saveSnapshotFromMarketData(payload) {
+  return request('/api/dram/snapshot/from-market-data', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
