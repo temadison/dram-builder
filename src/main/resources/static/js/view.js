@@ -77,6 +77,8 @@ export function renderMarketData(marketData) {
   const prices = marketData.latestPrices || [];
   const fxRates = marketData.latestFxRates || [];
   const officialNavs = marketData.latestOfficialNavs || [];
+  renderFreshness(marketData.freshness);
+
   document.getElementById('market-data-summary').textContent =
     `${prices.length} prices / ${fxRates.length} FX / ${officialNavs.length} NAV`;
 
@@ -109,6 +111,46 @@ export function renderMarketData(marketData) {
       <td>${escapeHtml(row.source)}</td>
     </tr>
   `, 4);
+}
+
+function renderFreshness(freshness) {
+  const status = freshness?.status || 'UNKNOWN';
+  const statusElement = document.getElementById('freshness-status');
+  statusElement.textContent = status;
+  statusElement.className = freshnessClass(status);
+
+  document.getElementById('freshness-checked').textContent = `Checked ${dateTime(freshness?.checkedAt)}`;
+  document.getElementById('freshness-threshold').textContent =
+    freshness?.maxAgeHours == null ? 'Threshold —' : `${freshness.maxAgeHours}h max age`;
+
+  const rows = freshness?.requiredPrices || [];
+  renderRows('freshness-table', rows, row => `
+    <tr>
+      <td>${escapeHtml(row.exchange)}:${escapeHtml(row.ticker)}</td>
+      <td>${dateTime(row.latestObservedAt)}</td>
+      <td class="${freshnessClass(rowStatus(row))}">${rowStatus(row)}</td>
+    </tr>
+  `, 3);
+}
+
+function rowStatus(row) {
+  if (row.missing) {
+    return 'MISSING';
+  }
+  if (row.stale) {
+    return 'STALE';
+  }
+  return 'FRESH';
+}
+
+function freshnessClass(status) {
+  if (status === 'FRESH') {
+    return 'positive';
+  }
+  if (status === 'STALE') {
+    return 'negative';
+  }
+  return 'neutral';
 }
 
 export function renderAttribution(attribution) {

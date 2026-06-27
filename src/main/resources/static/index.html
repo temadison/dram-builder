@@ -275,6 +275,28 @@
 
         <section>
           <h3>Recent Market Data</h3>
+          <div class="freshness-panel" id="market-data-freshness">
+            <div class="freshness-status">
+              <span>Freshness</span>
+              <strong id="freshness-status">—</strong>
+            </div>
+            <div class="freshness-meta">
+              <span id="freshness-checked">Checked —</span>
+              <span id="freshness-threshold">Threshold —</span>
+            </div>
+            <div class="table-wrap compact freshness-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Required</th>
+                    <th>Observed</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="freshness-table"></tbody>
+              </table>
+            </div>
+          </div>
           <div class="table-wrap compact market-summary-table">
             <table>
               <thead>

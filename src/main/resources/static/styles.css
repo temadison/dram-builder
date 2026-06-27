@@ -252,6 +252,41 @@ th {
   max-height: 340px;
 }
 
+.freshness-panel {
+  margin-bottom: 14px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.freshness-status,
+.freshness-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+.freshness-status span,
+.freshness-meta {
+  color: var(--muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.freshness-status strong {
+  font-size: 18px;
+}
+
+.freshness-meta {
+  margin: 5px 0 8px;
+}
+
+.freshness-table-wrap {
+  max-height: 190px;
+}
+
 .csv-textarea {
   min-height: 170px;
   margin-bottom: 10px;

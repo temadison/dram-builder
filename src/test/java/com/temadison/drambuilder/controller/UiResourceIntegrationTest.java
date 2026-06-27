@@ -34,6 +34,7 @@ class UiResourceIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("DRAM Bridge Model")))
                 .andExpect(content().string(containsString("Market Data Workflow")))
+                .andExpect(content().string(containsString("market-data-freshness")))
                 .andExpect(content().string(containsString("csv-import-form")))
                 .andExpect(content().string(containsString("official-nav-form")))
                 .andExpect(content().string(containsString("market-snapshot-form")))
@@ -46,6 +47,11 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("importMarketDataCsv")))
                 .andExpect(content().string(containsString("saveOfficialNavSnapshot")))
                 .andExpect(content().string(containsString("saveSnapshotFromMarketData")));
+
+        mockMvc.perform(get("/js/view.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("renderFreshness")))
+                .andExpect(content().string(containsString("freshness-status")));
 
         mockMvc.perform(get("/assets/bridge-mark.svg"))
                 .andExpect(status().isOk())
