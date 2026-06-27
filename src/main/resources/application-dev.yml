@@ -21,6 +21,7 @@ app:
     exit-after-run: false
     schedule:
       enabled: false
+      mode: file
       zone: America/Chicago
       morning-cron: "0 0 2 * * MON-FRI"
       evening-cron: "0 30 16 * * MON-FRI"

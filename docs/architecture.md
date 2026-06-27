@@ -98,6 +98,8 @@ Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer
 
 `ScheduledMarketDataIngestionJob` is a disabled-by-default scheduler for file ingestion. It runs at configurable Central Time windows and exists as the operational bridge before a provider-backed ingestion client replaces file-based inputs.
 
+`MarketDataProvider` is the vendor adapter contract for future automated ingestion. `MarketDataProviderIngestionService` invokes exactly one configured provider and maps its output through the same normalized ingestion path used by file loads. If provider mode is enabled before a provider exists, it records a failed ingestion run rather than silently skipping work.
+
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
 ## Financial Concepts

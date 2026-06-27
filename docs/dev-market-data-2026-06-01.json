@@ -23,7 +23,7 @@
       "name": "Micron Technology",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 971.00,
+      "price": 97.10,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-05-29T20:00:00Z"
     },
@@ -32,7 +32,7 @@
       "name": "Micron Technology",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 1035.50,
+      "price": 103.55,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-06-01T20:00:00Z"
     },
@@ -41,7 +41,7 @@
       "name": "SanDisk",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 1694.98,
+      "price": 169.498,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-05-29T20:00:00Z"
     },
@@ -50,7 +50,7 @@
       "name": "SanDisk",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 1761.43,
+      "price": 176.143,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-06-01T20:00:00Z"
     },
@@ -59,7 +59,7 @@
       "name": "Western Digital",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 531.21,
+      "price": 53.121,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-05-29T20:00:00Z"
     },
@@ -68,7 +68,7 @@
       "name": "Western Digital",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 546.20,
+      "price": 54.620,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-06-01T20:00:00Z"
     },
@@ -77,7 +77,7 @@
       "name": "Seagate Technology",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 879.80,
+      "price": 87.980,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-05-29T20:00:00Z"
     },
@@ -86,7 +86,7 @@
       "name": "Seagate Technology",
       "exchange": "NASDAQ",
       "currency": "USD",
-      "price": 921.26,
+      "price": 92.126,
       "source": "stockanalysis-spglobal",
       "observedAt": "2026-06-01T20:00:00Z"
     }

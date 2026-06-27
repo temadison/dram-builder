@@ -124,14 +124,23 @@ For IntelliJ, use the same `data/ingest/dram-market-data-local.json` path in `--
 
 Default schedule:
 
+- `app.ingest.schedule.mode`: `file`
 - `app.ingest.schedule.morning-cron`: `0 0 2 * * MON-FRI`
 - `app.ingest.schedule.evening-cron`: `0 30 16 * * MON-FRI`
 - `app.ingest.schedule.zone`: `America/Chicago`
+
+Provider mode is scaffolded but not connected to a vendor yet:
+
+```bash
+--app.ingest.schedule.mode=provider
+```
+
+Until a `MarketDataProvider` implementation is configured, provider mode records a failed ingestion run with `No market data provider is configured`. This is intentional so scheduler wiring can be verified before provider credentials are added.
 
 Recommended next implementation:
 
 1. Pick one provider for prices and FX.
 2. Add API-key config under `app.provider`.
-3. Add a provider client that resolves DRAM holdings, prices, FX, and official NAV.
+3. Implement `MarketDataProvider` for that vendor so it resolves DRAM holdings, prices, FX, and official NAV.
 4. Map provider records into `MarketDataIngestionRequest`.
 5. Schedule the provider job for `02:00` and `16:30` Central Time.

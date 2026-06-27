@@ -1,6 +1,7 @@
 package com.temadison.drambuilder.config;
 
 import com.temadison.drambuilder.service.MarketDataFileIngestionService;
+import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,15 +17,21 @@ public class ScheduledMarketDataIngestionJob {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledMarketDataIngestionJob.class);
 
     private final MarketDataFileIngestionService marketDataFileIngestionService;
+    private final MarketDataProviderIngestionService marketDataProviderIngestionService;
     private final String ingestionFile;
+    private final String mode;
     private final AtomicBoolean running = new AtomicBoolean(false);
 
     public ScheduledMarketDataIngestionJob(
             MarketDataFileIngestionService marketDataFileIngestionService,
-            @Value("${app.ingest.file:}") String ingestionFile
+            MarketDataProviderIngestionService marketDataProviderIngestionService,
+            @Value("${app.ingest.file:}") String ingestionFile,
+            @Value("${app.ingest.schedule.mode:file}") String mode
     ) {
         this.marketDataFileIngestionService = marketDataFileIngestionService;
+        this.marketDataProviderIngestionService = marketDataProviderIngestionService;
         this.ingestionFile = ingestionFile;
+        this.mode = mode;
     }
 
     @Scheduled(cron = "${app.ingest.schedule.morning-cron}", zone = "${app.ingest.schedule.zone}")
@@ -45,7 +52,13 @@ public class ScheduledMarketDataIngestionJob {
 
         try {
             LOGGER.info("Starting {} scheduled market data ingestion", window);
-            marketDataFileIngestionService.ingestFile("scheduled-file-" + window, ingestionFile);
+            if ("provider".equalsIgnoreCase(mode)) {
+                marketDataProviderIngestionService.ingestProvider(window);
+            } else if ("file".equalsIgnoreCase(mode)) {
+                marketDataFileIngestionService.ingestFile("scheduled-file-" + window, ingestionFile);
+            } else {
+                throw new IllegalArgumentException("Unsupported scheduled ingestion mode: " + mode);
+            }
         } catch (Exception exception) {
             LOGGER.error("{} scheduled market data ingestion failed", window, exception);
         } finally {

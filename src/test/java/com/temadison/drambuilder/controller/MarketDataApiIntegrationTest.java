@@ -16,6 +16,7 @@ import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.service.MarketDataFileIngestionService;
 import com.temadison.drambuilder.service.MarketDataIngestionRunService;
+import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -47,6 +48,9 @@ class MarketDataApiIntegrationTest {
 
     @Autowired
     private MarketDataFileIngestionService marketDataFileIngestionService;
+
+    @Autowired
+    private MarketDataProviderIngestionService marketDataProviderIngestionService;
 
     @Test
     void storesAndReadsLatestPriceSnapshot() throws Exception {
@@ -291,6 +295,23 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$[0].status", is("FAILED")))
                 .andExpect(jsonPath("$[0].requestedFile", is("file:/tmp/missing-dram-market-data.json")))
                 .andExpect(jsonPath("$[0].message", is("Ingestion file does not exist: file:/tmp/missing-dram-market-data.json")))
+                .andExpect(jsonPath("$[0].completedAt", notNullValue()));
+    }
+
+    @Test
+    void providerIngestionWithoutProviderCreatesFailedRun() throws Exception {
+        try {
+            marketDataProviderIngestionService.ingestProvider("morning");
+        } catch (IllegalStateException ignored) {
+            // Expected until a provider adapter is configured.
+        }
+
+        mockMvc.perform(get("/api/market-data/ingestion-runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].source", is("provider-morning")))
+                .andExpect(jsonPath("$[0].status", is("FAILED")))
+                .andExpect(jsonPath("$[0].message", is("No market data provider is configured")))
                 .andExpect(jsonPath("$[0].completedAt", notNullValue()));
     }
 }
