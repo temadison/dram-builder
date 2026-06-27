@@ -110,6 +110,28 @@ class DramMarketDataSnapshotIntegrationTest {
                 .andExpect(jsonPath("$.message", is("No price snapshot exists for MU on NASDAQ")));
     }
 
+    @Test
+    void fromMarketDataRejectsDuplicateHoldingsBeforeMarketDataLookup() throws Exception {
+        MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                new BigDecimal("81.50"),
+                new BigDecimal("76.31"),
+                null,
+                null,
+                List.of(
+                        new MarketDataHoldingRequest("mu", "Micron Technology", "nasdaq", "usd", new BigDecimal("0.19")),
+                        new MarketDataHoldingRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("0.18"))
+                )
+        );
+
+        mockMvc.perform(post("/api/dram/snapshot/from-market-data")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("bad_request")))
+                .andExpect(jsonPath("$.message", is("Duplicate holding in snapshot: MU:NASDAQ")));
+    }
+
     private void createPrice(String ticker, String name, String exchange, String currency, String price, Instant observedAt)
             throws Exception {
         PriceSnapshotRequest request = new PriceSnapshotRequest(

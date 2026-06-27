@@ -20,6 +20,8 @@ The current post-0.6 step connects stored market data to snapshot creation so ma
 
 The next post-0.6 increment captures official ETF NAV snapshots as market data. Official NAV is stored separately from synthetic NAV so later releases can compare issuer/provider NAV, synthetic NAV, and market price without conflating those concepts.
 
+Snapshot creation now applies shared service-level validation for manual and market-data-generated snapshots. This catches cross-field issues that bean validation cannot express, including duplicate holdings and total holding weights above 100%.
+
 ## Package Layout
 
 - `domain`: JPA entities for ETF, security, holding snapshots, holdings, and NAV snapshots.
@@ -77,6 +79,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 `DramMarketDataSnapshotService` converts latest stored security prices and FX rates into the existing snapshot input contract, then delegates persistence and NAV math to `DramSnapshotService`.
 
+`SnapshotInputValidator` enforces snapshot-level invariants before persistence or market data lookup. Manual and market-data snapshot workflows both use it so duplicated holdings, malformed currency codes, and overweight holding sets fail consistently.
+
 `DramScenarioService` coordinates scenario execution against the latest snapshot and persists scenario runs and holding-level scenario results.
 
 `DramBridgeScoreService` builds score inputs from the latest snapshot and applies default or request-provided placeholder assumptions.
@@ -133,4 +137,4 @@ The dashboard is served at `/`, and `GET /api/dram` returns an API index for man
 
 ## Next Release
 
-Next releases should improve production hardening, including provider ingestion, richer validation, and deeper dashboard support for stored market data.
+Next releases should improve production hardening, including provider ingestion, stale data detection, and deeper dashboard support for stored market data.

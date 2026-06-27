@@ -11,7 +11,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.temadison.drambuilder.dto.HoldingInput;
+import com.temadison.drambuilder.dto.SnapshotRequest;
 import com.temadison.drambuilder.fixtures.DramFixtures;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -79,10 +84,44 @@ class DramApiIntegrationTest {
                 .andExpect(jsonPath("$.error", is("not_found")));
     }
 
+    @Test
+    void manualSnapshotRejectsTotalHoldingWeightAboveOne() throws Exception {
+        SnapshotRequest request = new SnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                new BigDecimal("81.50"),
+                DramFixtures.PURCHASE_PRICE,
+                List.of(
+                        holding("000660", "SK hynix", "KRX", "KRW", "0.70"),
+                        holding("MU", "Micron Technology", "NASDAQ", "USD", "0.40")
+                )
+        );
+
+        mockMvc.perform(post("/api/dram/snapshot")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("bad_request")))
+                .andExpect(jsonPath("$.message", is("Total holding weight must not exceed 1.0")));
+    }
+
     private void createSnapshot(Object snapshot) throws Exception {
         mockMvc.perform(post("/api/dram/snapshot")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(snapshot)))
                 .andExpect(status().isOk());
+    }
+
+    private HoldingInput holding(String ticker, String name, String exchange, String currency, String weight) {
+        return new HoldingInput(
+                ticker,
+                name,
+                exchange,
+                currency,
+                new BigDecimal(weight),
+                new BigDecimal("100"),
+                new BigDecimal("100"),
+                BigDecimal.ONE,
+                BigDecimal.ONE
+        );
     }
 }

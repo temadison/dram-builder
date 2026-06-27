@@ -31,15 +31,18 @@ public class DramMarketDataSnapshotService {
     private final PriceSnapshotRepository priceSnapshotRepository;
     private final FxRateSnapshotRepository fxRateSnapshotRepository;
     private final DramSnapshotService dramSnapshotService;
+    private final SnapshotInputValidator snapshotInputValidator;
 
     public DramMarketDataSnapshotService(
             PriceSnapshotRepository priceSnapshotRepository,
             FxRateSnapshotRepository fxRateSnapshotRepository,
-            DramSnapshotService dramSnapshotService
+            DramSnapshotService dramSnapshotService,
+            SnapshotInputValidator snapshotInputValidator
     ) {
         this.priceSnapshotRepository = priceSnapshotRepository;
         this.fxRateSnapshotRepository = fxRateSnapshotRepository;
         this.dramSnapshotService = dramSnapshotService;
+        this.snapshotInputValidator = snapshotInputValidator;
     }
 
     /**
@@ -52,6 +55,8 @@ public class DramMarketDataSnapshotService {
      * @return persisted snapshot response with synthetic NAV and attribution
      */
     public SnapshotResponse createSnapshot(MarketDataSnapshotRequest request) {
+        snapshotInputValidator.validate(request);
+
         BigDecimal marketPrice = request.marketPrice() == null
                 ? latestEtfPrice(request)
                 : request.marketPrice();

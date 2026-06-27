@@ -37,6 +37,7 @@ public class DramSnapshotService {
     private final NavSnapshotRepository navSnapshotRepository;
     private final SyntheticNavCalculator syntheticNavCalculator;
     private final AttributionCalculator attributionCalculator;
+    private final SnapshotInputValidator snapshotInputValidator;
 
     public DramSnapshotService(
             EtfRepository etfRepository,
@@ -44,7 +45,8 @@ public class DramSnapshotService {
             EtfHoldingSnapshotRepository holdingSnapshotRepository,
             NavSnapshotRepository navSnapshotRepository,
             SyntheticNavCalculator syntheticNavCalculator,
-            AttributionCalculator attributionCalculator
+            AttributionCalculator attributionCalculator,
+            SnapshotInputValidator snapshotInputValidator
     ) {
         this.etfRepository = etfRepository;
         this.securityRepository = securityRepository;
@@ -52,10 +54,13 @@ public class DramSnapshotService {
         this.navSnapshotRepository = navSnapshotRepository;
         this.syntheticNavCalculator = syntheticNavCalculator;
         this.attributionCalculator = attributionCalculator;
+        this.snapshotInputValidator = snapshotInputValidator;
     }
 
     @Transactional
     public SnapshotResponse createSnapshot(SnapshotRequest request) {
+        snapshotInputValidator.validate(request);
+
         Etf etf = etfRepository.findByTicker(DRAM_TICKER)
                 .orElseGet(() -> etfRepository.save(new Etf(DRAM_TICKER, DRAM_NAME)));
         NavSnapshot priorSnapshot = navSnapshotRepository.findFirstByHoldingSnapshotEtfTickerOrderByCreatedAtDesc(DRAM_TICKER)

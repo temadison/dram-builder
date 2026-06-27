@@ -534,7 +534,7 @@ bridge_score =
   + timing_risk_score * 10%
 ```
 
-The model distinguishes market price and synthetic NAV. Official NAV and estimated fair value will be added as separate concepts in later releases when official data ingestion exists.
+The model distinguishes market price, synthetic NAV, and official NAV. Estimated fair value will be added as a separate concept in a later release when richer holdings and stale quote logic exist.
 
 ## Testing
 
