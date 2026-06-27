@@ -13,9 +13,21 @@ The compose file creates:
 - database: `dram_bridge`
 - user: `dram_bridge`
 - password: `dram_bridge`
-- port: `3306`
+- default host port: `3306`
 
 The Spring `dev` profile is already configured for those values in `src/main/resources/application-dev.yml`. Flyway applies all migrations on startup.
+
+If port `3306` is already in use, choose another host port:
+
+```bash
+DRAM_MYSQL_PORT=3307 docker compose up -d mysql
+```
+
+When using a non-default host port, pass a matching datasource URL to Spring:
+
+```bash
+--spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true\&useSSL=false\&allowPublicKeyRetrieval=true\&serverTimezone=UTC
+```
 
 ## Prepare Ingestion Data
 
@@ -38,6 +50,8 @@ Run this after MySQL is healthy:
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--app.ingest.enabled=true --app.ingest.file=file:/absolute/path/to/market-data.json --app.ingest.exit-after-run=true'
 ```
 
+If MySQL is on a non-default host port, include the datasource override in the same `--args` string.
+
 The runner validates the file, stores price/FX/NAV snapshots through the same service paths used by the API, optionally creates a DRAM snapshot, and exits when `app.ingest.exit-after-run=true`.
 
 ## Run the App Against MySQL
@@ -45,21 +59,21 @@ The runner validates the file, stores price/FX/NAV snapshots through the same se
 After loading data:
 
 ```bash
-SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--server.port=8081'
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--server.port=8082'
 ```
 
 Then open:
 
 ```text
-http://localhost:8081/
+http://localhost:8082/
 ```
 
 Useful checks:
 
 ```bash
-curl http://localhost:8081/api/market-data
-curl http://localhost:8081/api/dram/latest
-curl http://localhost:8081/api/dram/bridge-score
+curl http://localhost:8082/api/market-data
+curl http://localhost:8082/api/dram/latest
+curl http://localhost:8082/api/dram/bridge-score
 ```
 
 ## Remaining Provider Automation

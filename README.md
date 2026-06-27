@@ -36,33 +36,33 @@ The default `local` profile uses an in-memory H2 database so the API can run wit
 By default Spring Boot uses port `8080`, configured in `src/main/resources/application.yml`. If that port is already in use, run on another port:
 
 ```bash
-./gradlew bootRun --args='--server.port=8081'
+./gradlew bootRun --args='--server.port=8082'
 ```
 
 In IntelliJ, add the same value as a program argument:
 
 ```text
---server.port=8081
+--server.port=8082
 ```
 
 The examples below use a `BASE_URL` variable so the port is explicit. Set it to the port your app actually started on:
 
 ```bash
-export BASE_URL=http://localhost:8081
+export BASE_URL=http://localhost:8082
 ```
 
 ## Dashboard
 
-The dashboard is served from the Spring Boot app at `/`. If the app is running on port `8081`, open:
+The dashboard is served from the Spring Boot app at `/`. If the app is running on port `8082`, open:
 
 ```text
-http://localhost:8081/
+http://localhost:8082/
 ```
 
-If you use another port, replace `8081` with that port. The dashboard uses the same backend APIs documented below, so it needs at least one snapshot before the main values populate. For the easiest local workflow, start with seed data:
+If you use another port, replace `8082` with that port. The dashboard uses the same backend APIs documented below, so it needs at least one snapshot before the main values populate. For the easiest local workflow, start with seed data:
 
 ```bash
-./gradlew bootRun --args='--server.port=8081 --app.seed.enabled=true'
+./gradlew bootRun --args='--server.port=8082 --app.seed.enabled=true'
 ```
 
 With the seed flag enabled, the app creates two local DRAM snapshots if no snapshot exists. Then open the dashboard URL above.
