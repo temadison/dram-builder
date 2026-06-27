@@ -46,6 +46,7 @@ Implemented tables:
 - `price_snapshot`
 - `fx_rate_snapshot`
 - `official_nav_snapshot`
+- `market_data_ingestion_run`
 
 Planned tables:
 
@@ -62,6 +63,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 `V2__market_data_snapshots.sql` adds source-tagged security price and FX rate snapshots. These tables are intentionally provider-neutral so manual entry, CSV import, or automated provider ingestion can all write the same normalized records.
 
 `V3__official_nav_snapshots.sql` adds source-tagged official ETF NAV snapshots keyed to `etf`. These records track issuer/provider NAV by `as_of_date` and `observed_at`, independent from calculated synthetic NAV snapshots.
+
+`V4__market_data_ingestion_runs.sql` adds ingestion run tracking. File and provider ingestion jobs should write status, source, row counts, snapshot creation state, and timing there so operational failures are visible.
 
 ## Domain Boundaries
 
@@ -90,6 +93,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 `MarketDataCsvImportService` parses combined price/FX CSV files into the same bulk import request contract. It is intentionally an adapter over `MarketDataService`, so CSV input, JSON input, and future provider jobs share the same persistence and validation path.
 
 Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer/provider NAV snapshots in their own table rather than attaching them to calculated DRAM snapshots.
+
+`MarketDataIngestionRunService` records ingestion attempts independently from the market data writes. It uses short transactions for start/success/failure updates so a failed data load still leaves an operational trail.
 
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 

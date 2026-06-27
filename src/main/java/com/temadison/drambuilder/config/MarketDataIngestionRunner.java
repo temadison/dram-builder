@@ -7,6 +7,7 @@ import com.temadison.drambuilder.dto.MarketDataIngestionRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.service.DramMarketDataSnapshotService;
+import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import com.temadison.drambuilder.service.MarketDataService;
 import jakarta.validation.Valid;
 import jakarta.validation.Validator;
@@ -36,6 +37,7 @@ public class MarketDataIngestionRunner implements CommandLineRunner {
     private final ConfigurableApplicationContext applicationContext;
     private final MarketDataService marketDataService;
     private final DramMarketDataSnapshotService dramMarketDataSnapshotService;
+    private final MarketDataIngestionRunService marketDataIngestionRunService;
     private final String ingestionFile;
     private final boolean exitAfterRun;
 
@@ -46,6 +48,7 @@ public class MarketDataIngestionRunner implements CommandLineRunner {
             ConfigurableApplicationContext applicationContext,
             MarketDataService marketDataService,
             DramMarketDataSnapshotService dramMarketDataSnapshotService,
+            MarketDataIngestionRunService marketDataIngestionRunService,
             @Value("${app.ingest.file:}") String ingestionFile,
             @Value("${app.ingest.exit-after-run:false}") boolean exitAfterRun
     ) {
@@ -55,6 +58,7 @@ public class MarketDataIngestionRunner implements CommandLineRunner {
         this.applicationContext = applicationContext;
         this.marketDataService = marketDataService;
         this.dramMarketDataSnapshotService = dramMarketDataSnapshotService;
+        this.marketDataIngestionRunService = marketDataIngestionRunService;
         this.ingestionFile = ingestionFile;
         this.exitAfterRun = exitAfterRun;
     }
@@ -65,17 +69,31 @@ public class MarketDataIngestionRunner implements CommandLineRunner {
             throw new IllegalArgumentException("app.ingest.file is required when app.ingest.enabled=true");
         }
 
-        Resource resource = resourceLoader.getResource(ingestionFile);
-        if (!resource.exists()) {
-            throw new IllegalArgumentException("Ingestion file does not exist: " + ingestionFile);
-        }
+        Long runId = marketDataIngestionRunService.startFileRun(ingestionFile).getId();
 
-        MarketDataIngestionRequest request;
-        try (InputStream inputStream = resource.getInputStream()) {
-            request = objectMapper.readValue(inputStream, MarketDataIngestionRequest.class);
+        try {
+            Resource resource = resourceLoader.getResource(ingestionFile);
+            if (!resource.exists()) {
+                throw new IllegalArgumentException("Ingestion file does not exist: " + ingestionFile);
+            }
+
+            MarketDataIngestionRequest request;
+            try (InputStream inputStream = resource.getInputStream()) {
+                request = objectMapper.readValue(inputStream, MarketDataIngestionRequest.class);
+            }
+            validate(request);
+            IngestionCounts counts = ingest(request);
+            marketDataIngestionRunService.complete(
+                    runId,
+                    counts.pricesImported(),
+                    counts.fxRatesImported(),
+                    counts.officialNavsImported(),
+                    counts.snapshotCreated()
+            );
+        } catch (Exception exception) {
+            marketDataIngestionRunService.fail(runId, exception);
+            throw exception;
         }
-        validate(request);
-        ingest(request);
 
         if (exitAfterRun) {
             Thread shutdownThread = new Thread(() -> SpringApplication.exit(applicationContext, () -> 0));
@@ -95,7 +113,7 @@ public class MarketDataIngestionRunner implements CommandLineRunner {
         }
     }
 
-    private void ingest(@Valid MarketDataIngestionRequest request) {
+    private IngestionCounts ingest(@Valid MarketDataIngestionRequest request) {
         List<PriceSnapshotRequest> prices = request.prices() == null ? List.of() : request.prices();
         List<FxRateSnapshotRequest> fxRates = request.fxRates() == null ? List.of() : request.fxRates();
         List<OfficialNavSnapshotRequest> officialNavs = request.officialNavs() == null ? List.of() : request.officialNavs();
@@ -117,5 +135,14 @@ public class MarketDataIngestionRunner implements CommandLineRunner {
                 officialNavs.size(),
                 request.snapshot() != null
         );
+        return new IngestionCounts(prices.size(), fxRates.size(), officialNavs.size(), request.snapshot() != null);
+    }
+
+    private record IngestionCounts(
+            int pricesImported,
+            int fxRatesImported,
+            int officialNavsImported,
+            boolean snapshotCreated
+    ) {
     }
 }

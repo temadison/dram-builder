@@ -14,6 +14,7 @@ import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
+import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -39,6 +40,9 @@ class MarketDataApiIntegrationTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private MarketDataIngestionRunService marketDataIngestionRunService;
 
     @Test
     void storesAndReadsLatestPriceSnapshot() throws Exception {
@@ -246,5 +250,25 @@ class MarketDataApiIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("bad_request")))
                 .andExpect(jsonPath("$.message", is("Invalid price on line 2: not-a-number")));
+    }
+
+    @Test
+    void listsRecentIngestionRuns() throws Exception {
+        Long runId = marketDataIngestionRunService.startFileRun("file:/tmp/dram-market-data.json").getId();
+        marketDataIngestionRunService.complete(runId, 10, 2, 1, true);
+
+        mockMvc.perform(get("/api/market-data/ingestion-runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].id", is(runId.intValue())))
+                .andExpect(jsonPath("$[0].source", is("file")))
+                .andExpect(jsonPath("$[0].status", is("SUCCESS")))
+                .andExpect(jsonPath("$[0].requestedFile", is("file:/tmp/dram-market-data.json")))
+                .andExpect(jsonPath("$[0].pricesImported", is(10)))
+                .andExpect(jsonPath("$[0].fxRatesImported", is(2)))
+                .andExpect(jsonPath("$[0].officialNavsImported", is(1)))
+                .andExpect(jsonPath("$[0].snapshotCreated", is(true)))
+                .andExpect(jsonPath("$[0].startedAt", notNullValue()))
+                .andExpect(jsonPath("$[0].completedAt", notNullValue()));
     }
 }

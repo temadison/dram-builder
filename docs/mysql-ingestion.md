@@ -74,9 +74,12 @@ Useful checks:
 
 ```bash
 curl http://localhost:8082/api/market-data
+curl http://localhost:8082/api/market-data/ingestion-runs
 curl http://localhost:8082/api/dram/latest
 curl http://localhost:8082/api/dram/bridge-score
 ```
+
+Every file ingestion run writes a `market_data_ingestion_run` record. Recent runs are available at `/api/market-data/ingestion-runs` with status, source, requested file, imported row counts, snapshot creation status, and timing.
 
 ## Remaining Provider Automation
 

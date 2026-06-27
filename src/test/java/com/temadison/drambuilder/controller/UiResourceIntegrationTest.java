@@ -59,6 +59,7 @@ class UiResourceIntegrationTest {
                 .andExpect(jsonPath("$.name", is("DRAM Bridge Model API")))
                 .andExpect(jsonPath("$.ui", is("/")))
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/dram/latest")))
+                .andExpect(jsonPath("$.endpoints", hasItem("GET /api/market-data/ingestion-runs")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import/csv")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/official-navs")))

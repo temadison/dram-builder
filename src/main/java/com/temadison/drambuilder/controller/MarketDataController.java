@@ -4,14 +4,17 @@ import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
+import com.temadison.drambuilder.dto.MarketDataIngestionRunResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
 import com.temadison.drambuilder.service.MarketDataCsvImportService;
+import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import com.temadison.drambuilder.service.MarketDataService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,15 +29,26 @@ public class MarketDataController {
 
     private final MarketDataService marketDataService;
     private final MarketDataCsvImportService marketDataCsvImportService;
+    private final MarketDataIngestionRunService marketDataIngestionRunService;
 
-    public MarketDataController(MarketDataService marketDataService, MarketDataCsvImportService marketDataCsvImportService) {
+    public MarketDataController(
+            MarketDataService marketDataService,
+            MarketDataCsvImportService marketDataCsvImportService,
+            MarketDataIngestionRunService marketDataIngestionRunService
+    ) {
         this.marketDataService = marketDataService;
         this.marketDataCsvImportService = marketDataCsvImportService;
+        this.marketDataIngestionRunService = marketDataIngestionRunService;
     }
 
     @GetMapping
     public MarketDataSummaryResponse summary() {
         return marketDataService.summary();
+    }
+
+    @GetMapping("/ingestion-runs")
+    public List<MarketDataIngestionRunResponse> ingestionRuns() {
+        return marketDataIngestionRunService.recentRuns();
     }
 
     @PostMapping("/prices")
