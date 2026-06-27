@@ -14,6 +14,7 @@ import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
+import com.temadison.drambuilder.service.MarketDataFileIngestionService;
 import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -43,6 +44,9 @@ class MarketDataApiIntegrationTest {
 
     @Autowired
     private MarketDataIngestionRunService marketDataIngestionRunService;
+
+    @Autowired
+    private MarketDataFileIngestionService marketDataFileIngestionService;
 
     @Test
     void storesAndReadsLatestPriceSnapshot() throws Exception {
@@ -269,6 +273,24 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$[0].officialNavsImported", is(1)))
                 .andExpect(jsonPath("$[0].snapshotCreated", is(true)))
                 .andExpect(jsonPath("$[0].startedAt", notNullValue()))
+                .andExpect(jsonPath("$[0].completedAt", notNullValue()));
+    }
+
+    @Test
+    void failedFileIngestionCreatesFailedRun() throws Exception {
+        try {
+            marketDataFileIngestionService.ingestFile("scheduled-file-morning", "file:/tmp/missing-dram-market-data.json");
+        } catch (IllegalArgumentException ignored) {
+            // Expected: the service should still leave a failed run record.
+        }
+
+        mockMvc.perform(get("/api/market-data/ingestion-runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].source", is("scheduled-file-morning")))
+                .andExpect(jsonPath("$[0].status", is("FAILED")))
+                .andExpect(jsonPath("$[0].requestedFile", is("file:/tmp/missing-dram-market-data.json")))
+                .andExpect(jsonPath("$[0].message", is("Ingestion file does not exist: file:/tmp/missing-dram-market-data.json")))
                 .andExpect(jsonPath("$[0].completedAt", notNullValue()));
     }
 }

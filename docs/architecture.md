@@ -96,6 +96,8 @@ Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer
 
 `MarketDataIngestionRunService` records ingestion attempts independently from the market data writes. It uses short transactions for start/success/failure updates so a failed data load still leaves an operational trail.
 
+`ScheduledMarketDataIngestionJob` is a disabled-by-default scheduler for file ingestion. It runs at configurable Central Time windows and exists as the operational bridge before a provider-backed ingestion client replaces file-based inputs.
+
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
 ## Financial Concepts

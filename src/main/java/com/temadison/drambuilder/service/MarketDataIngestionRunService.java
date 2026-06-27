@@ -20,7 +20,12 @@ public class MarketDataIngestionRunService {
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public MarketDataIngestionRun startFileRun(String requestedFile) {
-        return marketDataIngestionRunRepository.save(new MarketDataIngestionRun("file", requestedFile, Instant.now()));
+        return startRun("file", requestedFile);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public MarketDataIngestionRun startRun(String source, String requestedFile) {
+        return marketDataIngestionRunRepository.save(new MarketDataIngestionRun(source, requestedFile, Instant.now()));
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

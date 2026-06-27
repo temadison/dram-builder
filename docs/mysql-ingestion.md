@@ -94,6 +94,20 @@ DRAM holds securities across U.S. and Asia-Pacific markets. For a Central Time w
 
 These should be scheduler triggers, not hard-coded data assumptions. A provider-backed job should still check exchange holidays, early closes, and whether all expected quotes/NAV records are available before creating a new DRAM snapshot.
 
+The app includes a disabled-by-default file scheduler using those windows. It reuses the JSON ingestion file path and records each scheduled attempt in `/api/market-data/ingestion-runs`.
+
+To enable scheduled file ingestion against the Docker MySQL database:
+
+```bash
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC --server.port=8082 --app.ingest.file=file:/absolute/path/to/market-data.json --app.ingest.schedule.enabled=true'
+```
+
+Default schedule:
+
+- `app.ingest.schedule.morning-cron`: `0 0 2 * * MON-FRI`
+- `app.ingest.schedule.evening-cron`: `0 30 16 * * MON-FRI`
+- `app.ingest.schedule.zone`: `America/Chicago`
+
 Recommended next implementation:
 
 1. Pick one provider for prices and FX.
