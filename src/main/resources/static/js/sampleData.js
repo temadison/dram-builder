@@ -80,6 +80,19 @@ export const sampleMarketData = {
   ]
 };
 
+export const sampleMarketDataCsv = `type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,source,observedAt
+price,DRAM,Roundhill Memory ETF,NYSEARCA,USD,81.50,,,,ui-csv-sample,2026-06-26T20:00:00Z
+price,000660,SK hynix,KRX,KRW,110000,,,,ui-csv-sample,2026-06-25T20:00:00Z
+price,000660,SK hynix,KRX,KRW,114000,,,,ui-csv-sample,2026-06-26T20:00:00Z
+price,MU,Micron Technology,NASDAQ,USD,105,,,,ui-csv-sample,2026-06-25T20:00:00Z
+price,MU,Micron Technology,NASDAQ,USD,108,,,,ui-csv-sample,2026-06-26T20:00:00Z
+price,005930,Samsung Electronics,KRX,KRW,77600,,,,ui-csv-sample,2026-06-25T20:00:00Z
+price,005930,Samsung Electronics,KRX,KRW,79000,,,,ui-csv-sample,2026-06-26T20:00:00Z
+price,ASML,ASML Holding,NASDAQ,USD,1020,,,,ui-csv-sample,2026-06-25T20:00:00Z
+price,ASML,ASML Holding,NASDAQ,USD,1015,,,,ui-csv-sample,2026-06-26T20:00:00Z
+fx,,,,,,KRW,USD,0.00080,ui-csv-sample,2026-06-25T20:00:00Z
+fx,,,,,,KRW,USD,0.00081,ui-csv-sample,2026-06-26T20:00:00Z`;
+
 function price(ticker, name, exchange, currency, priceValue, observedAt) {
   return {
     ticker,

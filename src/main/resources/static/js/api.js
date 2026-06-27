@@ -26,6 +26,14 @@ export async function importMarketData(payload) {
   });
 }
 
+export async function importMarketDataCsv(csv) {
+  return request('/api/market-data/import/csv', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/csv' },
+    body: csv
+  });
+}
+
 export async function savePriceSnapshot(payload) {
   return request('/api/market-data/prices', {
     method: 'POST',

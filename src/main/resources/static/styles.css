@@ -252,6 +252,11 @@ th {
   max-height: 340px;
 }
 
+.csv-textarea {
+  min-height: 170px;
+  margin-bottom: 10px;
+}
+
 label {
   display: grid;
   gap: 4px;

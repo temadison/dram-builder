@@ -16,7 +16,7 @@ Release 0.5 adds Bridge Score v1 and a rotation signal based on target exposure,
 
 Release 0.6 adds a basic static dashboard served by Spring Boot for latest snapshot, holdings, attribution, scenarios, bridge score, and manual snapshot entry.
 
-The current post-0.6 step connects stored market data to snapshot creation so manual price/FX entry can be separated from DRAM NAV calculation.
+The current post-0.6 step connects stored market data to snapshot creation so manual price/FX entry can be separated from DRAM NAV calculation. It also adds a lightweight CSV adapter for repeatable local market data imports.
 
 ## Package Layout
 
@@ -79,6 +79,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 `MarketDataService` stores manual security prices and FX rates with source and observed timestamp metadata. It supports single-record writes and bulk import through the same request contracts. Automated data providers should either call this service or implement a provider-specific ingestion service that writes the same tables.
 
+`MarketDataCsvImportService` parses combined price/FX CSV files into the same bulk import request contract. It is intentionally an adapter over `MarketDataService`, so CSV input, JSON input, and future provider jobs share the same persistence and validation path.
+
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 
 ## Financial Concepts
@@ -121,8 +123,8 @@ The Release 0.6 UI is intentionally static and build-free. `index.html` loads ES
 - `view.js`: DOM rendering.
 - `app.js`: UI orchestration and event handling.
 
-The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery. The UI keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX records and generates a snapshot through `/api/dram/snapshot/from-market-data`. Sample market data loading uses the bulk import endpoint.
+The dashboard is served at `/`, and `GET /api/dram` returns an API index for manual discovery. The UI keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX records and generates a snapshot through `/api/dram/snapshot/from-market-data`. Sample market data loading uses the bulk import endpoint, and CSV import uses `/api/market-data/import/csv`.
 
 ## Next Release
 
-Next releases should improve data management and production hardening, including CSV/provider ingestion, official NAV capture, richer validation, and dashboard support for stored market data.
+Next releases should improve production hardening, including provider ingestion, official NAV capture, richer validation, and deeper dashboard support for stored market data.

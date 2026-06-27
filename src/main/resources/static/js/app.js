@@ -3,13 +3,14 @@ import {
   getLatestSnapshot,
   getMarketData,
   importMarketData,
+  importMarketDataCsv,
   runScenario,
   saveFxRateSnapshot,
   savePriceSnapshot,
   saveSnapshot,
   saveSnapshotFromMarketData
 } from './api.js';
-import { sampleMarketData, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js';
+import { sampleMarketData, sampleMarketDataCsv, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js';
 import {
   clearStatus,
   renderBridgeScore,
@@ -26,14 +27,20 @@ const scenarioForm = document.getElementById('scenario-form');
 const snapshotForm = document.getElementById('snapshot-form');
 const priceForm = document.getElementById('price-form');
 const fxForm = document.getElementById('fx-form');
+const csvImportForm = document.getElementById('csv-import-form');
+const marketDataCsv = document.getElementById('market-data-csv');
 const marketSnapshotForm = document.getElementById('market-snapshot-form');
 
 snapshotJson.value = JSON.stringify(sampleSnapshot, null, 2);
 marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
+marketDataCsv.value = sampleMarketDataCsv;
 
 document.getElementById('refresh-button').addEventListener('click', refresh);
 document.getElementById('sample-button').addEventListener('click', saveSampleSnapshot);
 document.getElementById('load-market-sample-button').addEventListener('click', loadSampleMarketData);
+document.getElementById('reset-market-csv-button').addEventListener('click', () => {
+  marketDataCsv.value = sampleMarketDataCsv;
+});
 document.getElementById('reset-json-button').addEventListener('click', () => {
   snapshotJson.value = JSON.stringify(sampleSnapshot, null, 2);
 });
@@ -87,6 +94,19 @@ fxForm.addEventListener('submit', async event => {
   try {
     await saveFxRateSnapshot(payload);
     showStatus('FX rate snapshot saved.', 'success');
+    await refreshMarketData();
+  } catch (error) {
+    showStatus(error.message, 'error');
+  }
+});
+
+csvImportForm.addEventListener('submit', async event => {
+  event.preventDefault();
+
+  try {
+    await importMarketDataCsv(marketDataCsv.value);
+    marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
+    showStatus('CSV market data imported.', 'success');
     await refreshMarketData();
   } catch (error) {
     showStatus(error.message, 'error');

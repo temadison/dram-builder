@@ -209,6 +209,23 @@ curl -X POST "$BASE_URL/api/market-data/import" \
   }'
 ```
 
+CSV import:
+
+```bash
+curl -X POST "$BASE_URL/api/market-data/import/csv" \
+  -H 'Content-Type: text/csv' \
+  --data-binary @market-data.csv
+```
+
+The CSV import accepts a combined price and FX file. Header names are case-insensitive and may use camel case, snake case, or kebab case. `observedAt` is optional; when omitted the server uses the current timestamp.
+
+```csv
+type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,source,observedAt
+price,DRAM,Roundhill Memory ETF,NYSEARCA,USD,81.50,,,,csv-import,2026-06-26T20:00:00Z
+price,000660,SK hynix,KRX,KRW,114000,,,,csv-import,2026-06-26T20:00:00Z
+fx,,,,,,KRW,USD,0.00081000,csv-import,2026-06-26T20:00:00Z
+```
+
 ### Create DRAM Snapshot From Stored Market Data
 
 `POST /api/dram/snapshot/from-market-data`

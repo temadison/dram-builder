@@ -7,8 +7,10 @@ import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
+import com.temadison.drambuilder.service.MarketDataCsvImportService;
 import com.temadison.drambuilder.service.MarketDataService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class MarketDataController {
 
     private final MarketDataService marketDataService;
+    private final MarketDataCsvImportService marketDataCsvImportService;
 
-    public MarketDataController(MarketDataService marketDataService) {
+    public MarketDataController(MarketDataService marketDataService, MarketDataCsvImportService marketDataCsvImportService) {
         this.marketDataService = marketDataService;
+        this.marketDataCsvImportService = marketDataCsvImportService;
     }
 
     @GetMapping
@@ -39,6 +43,11 @@ public class MarketDataController {
     @PostMapping("/import")
     public BulkMarketDataImportResponse importMarketData(@Valid @RequestBody BulkMarketDataImportRequest request) {
         return marketDataService.importMarketData(request);
+    }
+
+    @PostMapping(value = "/import/csv", consumes = { "text/csv", MediaType.TEXT_PLAIN_VALUE })
+    public BulkMarketDataImportResponse importMarketDataCsv(@RequestBody String csv) {
+        return marketDataCsvImportService.importCsv(csv);
     }
 
     @GetMapping("/prices/{exchange}/{ticker}/latest")
