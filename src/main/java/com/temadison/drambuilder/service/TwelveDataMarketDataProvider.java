@@ -1,7 +1,14 @@
 package com.temadison.drambuilder.service;
 
 import com.temadison.drambuilder.config.TwelveDataProviderProperties;
+import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.MarketDataIngestionRequest;
+import com.temadison.drambuilder.dto.PriceSnapshotRequest;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -9,10 +16,14 @@ import org.springframework.stereotype.Component;
 @ConditionalOnProperty(prefix = "app.provider.twelvedata", name = "enabled", havingValue = "true")
 public class TwelveDataMarketDataProvider implements MarketDataProvider {
 
-    private final TwelveDataProviderProperties properties;
+    private static final String SOURCE = "twelvedata";
 
-    public TwelveDataMarketDataProvider(TwelveDataProviderProperties properties) {
+    private final TwelveDataProviderProperties properties;
+    private final TwelveDataClient twelveDataClient;
+
+    public TwelveDataMarketDataProvider(TwelveDataProviderProperties properties, TwelveDataClient twelveDataClient) {
         this.properties = properties;
+        this.twelveDataClient = twelveDataClient;
     }
 
     @Override
@@ -23,7 +34,40 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
     @Override
     public MarketDataIngestionRequest latestIngestionRequest() {
         validateConfigured();
-        throw new IllegalStateException("Twelve Data HTTP ingestion is not implemented yet");
+
+        List<PriceSnapshotRequest> prices = new ArrayList<>();
+        Set<String> fxCurrencies = new LinkedHashSet<>();
+
+        for (TwelveDataProviderProperties.Symbol symbol : properties.getSymbols().values()) {
+            List<TwelveDataClient.DailyClose> closes = twelveDataClient.dailyCloses(
+                    symbol.getSymbol(),
+                    symbol.getExchange(),
+                    2
+            );
+            if (closes.size() < 2) {
+                throw new IllegalStateException("Twelve Data returned fewer than two daily closes for " + symbol.getSymbol());
+            }
+
+            prices.add(toPriceRequest(symbol, closes.get(0)));
+            prices.add(toPriceRequest(symbol, closes.get(1)));
+
+            String currency = normalize(symbol.getCurrency());
+            if (!"USD".equals(currency)) {
+                fxCurrencies.add(currency);
+            }
+        }
+
+        List<FxRateSnapshotRequest> fxRates = new ArrayList<>();
+        for (String currency : fxCurrencies) {
+            List<TwelveDataClient.DailyClose> closes = twelveDataClient.dailyCloses(currency + "/USD", null, 2);
+            if (closes.size() < 2) {
+                throw new IllegalStateException("Twelve Data returned fewer than two daily FX closes for " + currency + "/USD");
+            }
+            fxRates.add(toFxRequest(currency, closes.get(0)));
+            fxRates.add(toFxRequest(currency, closes.get(1)));
+        }
+
+        return new MarketDataIngestionRequest(prices, fxRates, List.of(), null);
     }
 
     private void validateConfigured() {
@@ -33,5 +77,34 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
         if (properties.getSymbols().isEmpty()) {
             throw new IllegalStateException("At least one Twelve Data symbol mapping is required");
         }
+    }
+
+    private PriceSnapshotRequest toPriceRequest(
+            TwelveDataProviderProperties.Symbol symbol,
+            TwelveDataClient.DailyClose close
+    ) {
+        return new PriceSnapshotRequest(
+                symbol.getSymbol(),
+                symbol.getName(),
+                symbol.getExchange(),
+                normalize(symbol.getCurrency()),
+                close.close(),
+                SOURCE,
+                close.observedAt()
+        );
+    }
+
+    private FxRateSnapshotRequest toFxRequest(String currency, TwelveDataClient.DailyClose close) {
+        return new FxRateSnapshotRequest(
+                currency,
+                "USD",
+                close.close(),
+                SOURCE,
+                close.observedAt()
+        );
+    }
+
+    private String normalize(String value) {
+        return value.trim().toUpperCase(Locale.ROOT);
     }
 }
