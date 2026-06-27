@@ -18,6 +18,10 @@ export async function getMarketData() {
   return request('/api/market-data');
 }
 
+export async function getIngestionRuns() {
+  return request('/api/market-data/ingestion-runs');
+}
+
 export async function importMarketData(payload) {
   return request('/api/market-data/import', {
     method: 'POST',

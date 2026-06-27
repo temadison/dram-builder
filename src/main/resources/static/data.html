@@ -195,6 +195,28 @@
 
     <section class="panel">
       <div class="section-heading">
+        <h2>Ingestion Runs</h2>
+        <span id="ingestion-run-summary">No runs</span>
+      </div>
+      <div class="table-wrap compact ingestion-run-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Source</th>
+              <th>Completed</th>
+              <th>Price / FX / NAV</th>
+              <th>Snapshot</th>
+              <th>Message</th>
+            </tr>
+          </thead>
+          <tbody id="ingestion-run-table"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
         <h2>Snapshot Entry</h2>
         <span>Manual JSON</span>
       </div>

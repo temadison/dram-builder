@@ -47,10 +47,12 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("official-nav-form")))
                 .andExpect(content().string(containsString("Snapshot Entry")))
                 .andExpect(content().string(containsString("market-snapshot-form")))
+                .andExpect(content().string(containsString("ingestion-run-table")))
                 .andExpect(content().string(containsString("/js/app.js")));
 
         mockMvc.perform(get("/js/app.js"))
                 .andExpect(status().isOk())
+                .andExpect(content().string(containsString("getIngestionRuns")))
                 .andExpect(content().string(containsString("getLatestSnapshot")))
                 .andExpect(content().string(containsString("importMarketData")))
                 .andExpect(content().string(containsString("importMarketDataCsv")))
@@ -61,6 +63,7 @@ class UiResourceIntegrationTest {
         mockMvc.perform(get("/js/view.js"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("renderFreshness")))
+                .andExpect(content().string(containsString("renderIngestionRuns")))
                 .andExpect(content().string(containsString("freshness-status")));
 
         mockMvc.perform(get("/assets/bridge-mark.svg"))

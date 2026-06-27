@@ -113,6 +113,26 @@ export function renderMarketData(marketData) {
   `, 4);
 }
 
+export function renderIngestionRuns(runs) {
+  const recentRuns = runs || [];
+  const summary = document.getElementById('ingestion-run-summary');
+  if (summary) {
+    const latest = recentRuns[0];
+    summary.textContent = latest ? `${latest.status} ${dateTime(latest.completedAt || latest.startedAt)}` : 'No runs';
+  }
+
+  renderRows('ingestion-run-table', recentRuns, run => `
+    <tr>
+      <td class="${runStatusClass(run.status)}">${escapeHtml(run.status)}</td>
+      <td>${escapeHtml(run.source)}</td>
+      <td>${dateTime(run.completedAt || run.startedAt)}</td>
+      <td>${run.pricesImported} / ${run.fxRatesImported} / ${run.officialNavsImported}</td>
+      <td>${run.snapshotCreated ? 'Yes' : 'No'}</td>
+      <td>${escapeHtml(run.message || run.requestedFile || '—')}</td>
+    </tr>
+  `, 6);
+}
+
 function renderFreshness(freshness) {
   const status = freshness?.status || 'UNKNOWN';
   const statusElement = document.getElementById('freshness-status');
@@ -148,6 +168,16 @@ function freshnessClass(status) {
     return 'positive';
   }
   if (status === 'STALE') {
+    return 'negative';
+  }
+  return 'neutral';
+}
+
+function runStatusClass(status) {
+  if (status === 'SUCCESS') {
+    return 'positive';
+  }
+  if (status === 'FAILED') {
     return 'negative';
   }
   return 'neutral';

@@ -144,7 +144,7 @@ The Release 0.6 UI is intentionally static and build-free. `index.html` loads ES
 - `view.js`: DOM rendering.
 - `app.js`: UI orchestration and event handling.
 
-The dashboard is served at `/`, and data management is served at `/data.html`. `GET /api/dram` returns an API index for manual discovery. The data page keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX/NAV records and generates a snapshot through `/api/dram/snapshot/from-market-data`. Sample market data loading uses the bulk import endpoint, and CSV import uses `/api/market-data/import/csv`.
+The dashboard is served at `/`, and data management is served at `/data.html`. `GET /api/dram` returns an API index for manual discovery. The data page keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX/NAV records and generates a snapshot through `/api/dram/snapshot/from-market-data`. It also renders market data freshness and recent ingestion run history from `/api/market-data/ingestion-runs`. Sample market data loading uses the bulk import endpoint, and CSV import uses `/api/market-data/import/csv`.
 
 ## Next Release
 

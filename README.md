@@ -53,7 +53,7 @@ export BASE_URL=http://localhost:8082
 
 ## Dashboard
 
-The dashboard is served from the Spring Boot app at `/`, and data loading/management lives at `/data.html`. If the app is running on port `8082`, open:
+The dashboard is served from the Spring Boot app at `/`, and data loading/management lives at `/data.html`. The data page includes market data freshness, recent ingestion runs, manual price/FX/NAV entry, CSV import, and snapshot generation from stored market data. If the app is running on port `8082`, open:
 
 ```text
 http://localhost:8082/

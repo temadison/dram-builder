@@ -1,5 +1,6 @@
 import {
   getBridgeScore,
+  getIngestionRuns,
   getLatestSnapshot,
   getMarketData,
   importMarketData,
@@ -16,6 +17,7 @@ import {
   clearStatus,
   renderBridgeScore,
   renderEmpty,
+  renderIngestionRuns,
   renderMarketData,
   renderScenario,
   renderSnapshot,
@@ -237,8 +239,12 @@ async function refreshMarketData() {
   if (!hasMarketData) {
     return;
   }
-  const marketData = await getMarketData();
+  const [marketData, ingestionRuns] = await Promise.all([
+    getMarketData(),
+    getIngestionRuns()
+  ]);
   renderMarketData(marketData);
+  renderIngestionRuns(ingestionRuns);
 }
 
 async function saveSampleSnapshot() {

@@ -280,6 +280,10 @@ th {
   max-height: 340px;
 }
 
+.ingestion-run-table-wrap {
+  max-height: 300px;
+}
+
 .freshness-panel {
   margin-bottom: 14px;
   padding: 10px;
