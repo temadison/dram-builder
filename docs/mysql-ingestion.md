@@ -147,7 +147,7 @@ Twelve Data provider configuration is scaffolded under `app.provider.twelvedata`
 Recommended next implementation:
 
 1. Validate each configured Twelve Data symbol with a real API key.
-2. Validate direct FX pairs such as `KRW/USD`; if unavailable, add inverse pair handling.
+2. Validate direct and inverse FX pairs such as `KRW/USD` and `USD/KRW` for the chosen plan.
 3. Keep Roundhill issuer data as the holdings and official NAV source.
 4. Add Roundhill holdings/NAV automation or a repeatable issuer export.
 5. Schedule the provider job for `02:00` and `16:30` Central Time.

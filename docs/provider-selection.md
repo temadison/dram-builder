@@ -67,7 +67,7 @@ app:
 
 Enable it only after the API key and symbol map have been validated. If `enabled=true` without an API key, provider ingestion records a failed run with a clear configuration message.
 
-The current adapter calls Twelve Data `time_series` with `interval=1day` and `outputsize=2` for each configured equity symbol. It also fetches direct non-USD currency pairs such as `KRW/USD` for FX snapshots. The provider currently writes price and FX records only; DRAM snapshot creation remains a separate step until Roundhill holdings/NAV ingestion is automated.
+The current adapter calls Twelve Data `time_series` with `interval=1day` and `outputsize=2` for each configured equity symbol. It first tries direct non-USD currency pairs such as `KRW/USD` for FX snapshots; if a direct pair is unavailable, it falls back to the inverse pair such as `USD/KRW` and stores the inverted USD conversion rate. The provider currently writes price and FX records only; DRAM snapshot creation remains a separate step until Roundhill holdings/NAV ingestion is automated.
 
 ## Subscription Assumption
 
@@ -80,7 +80,7 @@ Before using the provider in scheduled mode, confirm with a Twelve Data API key:
 1. The exact symbol/exchange pair for each DRAM holding.
 2. Whether DRAM ETF quotes resolve as `DRAM` on the expected U.S. exchange.
 3. Whether Kioxia, Nanya, and Winbond resolve on their primary local exchanges.
-4. Whether direct FX pairs like `KRW/USD`, `JPY/USD`, and `TWD/USD` are available, or whether the adapter should invert `USD/KRW`, `USD/JPY`, and `USD/TWD`.
+4. Whether direct FX pairs like `KRW/USD`, `JPY/USD`, and `TWD/USD` are available for the chosen plan; the adapter can fall back to inverted `USD/KRW`, `USD/JPY`, and `USD/TWD`.
 5. Rate limits for the chosen plan.
 
 If any required holding is unavailable, keep Twelve Data for prices/FX where available and add a second provider only for the missing exchange rather than replacing the whole adapter.

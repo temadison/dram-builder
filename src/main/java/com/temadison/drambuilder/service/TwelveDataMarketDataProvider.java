@@ -4,6 +4,8 @@ import com.temadison.drambuilder.config.TwelveDataProviderProperties;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.MarketDataIngestionRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -59,9 +61,9 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
 
         List<FxRateSnapshotRequest> fxRates = new ArrayList<>();
         for (String currency : fxCurrencies) {
-            List<TwelveDataClient.DailyClose> closes = twelveDataClient.dailyCloses(currency + "/USD", null, 2);
+            List<TwelveDataClient.DailyClose> closes = usdFxCloses(currency);
             if (closes.size() < 2) {
-                throw new IllegalStateException("Twelve Data returned fewer than two daily FX closes for " + currency + "/USD");
+                throw new IllegalStateException("Twelve Data returned fewer than two daily FX closes for " + currency);
             }
             fxRates.add(toFxRequest(currency, closes.get(0)));
             fxRates.add(toFxRequest(currency, closes.get(1)));
@@ -91,6 +93,33 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
                 close.close(),
                 SOURCE,
                 close.observedAt()
+        );
+    }
+
+    private List<TwelveDataClient.DailyClose> usdFxCloses(String currency) {
+        try {
+            return twelveDataClient.dailyCloses(currency + "/USD", null, 2);
+        } catch (IllegalStateException directException) {
+            try {
+                return twelveDataClient.dailyCloses("USD/" + currency, null, 2).stream()
+                        .map(this::invertClose)
+                        .toList();
+            } catch (IllegalStateException inverseException) {
+                throw new IllegalStateException(
+                        "Twelve Data returned no usable FX closes for " + currency + "/USD or USD/" + currency,
+                        inverseException
+                );
+            }
+        }
+    }
+
+    private TwelveDataClient.DailyClose invertClose(TwelveDataClient.DailyClose close) {
+        if (BigDecimal.ZERO.compareTo(close.close()) == 0) {
+            throw new IllegalStateException("Cannot invert zero FX close");
+        }
+        return new TwelveDataClient.DailyClose(
+                close.observedAt(),
+                BigDecimal.ONE.divide(close.close(), 12, RoundingMode.HALF_UP)
         );
     }
 

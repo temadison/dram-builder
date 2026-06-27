@@ -53,6 +53,35 @@ class TwelveDataMarketDataProviderTest {
         assertThat(request.snapshot()).isNull();
     }
 
+    @Test
+    void fallsBackToInverseUsdFxPairWhenDirectPairIsUnavailable() {
+        TwelveDataProviderProperties properties = new TwelveDataProviderProperties();
+        properties.setApiKey("test-key");
+        Map<String, TwelveDataProviderProperties.Symbol> symbols = new LinkedHashMap<>();
+        symbols.put("sk-hynix", symbol("000660", "XKRX", "SK hynix", "KRW"));
+        properties.setSymbols(symbols);
+        TwelveDataClient client = mock(TwelveDataClient.class);
+        Instant current = Instant.parse("2026-06-01T00:00:00Z");
+        Instant prior = Instant.parse("2026-05-29T00:00:00Z");
+        when(client.dailyCloses("000660", "XKRX", 2)).thenReturn(List.of(
+                new TwelveDataClient.DailyClose(current, new BigDecimal("314000")),
+                new TwelveDataClient.DailyClose(prior, new BigDecimal("301000"))
+        ));
+        when(client.dailyCloses("KRW/USD", null, 2)).thenThrow(new IllegalStateException("unsupported pair"));
+        when(client.dailyCloses("USD/KRW", null, 2)).thenReturn(List.of(
+                new TwelveDataClient.DailyClose(current, new BigDecimal("1362.3978201635")),
+                new TwelveDataClient.DailyClose(prior, new BigDecimal("1358.6956521739"))
+        ));
+
+        MarketDataIngestionRequest request = new TwelveDataMarketDataProvider(properties, client).latestIngestionRequest();
+
+        assertThat(request.fxRates()).hasSize(2);
+        assertThat(request.fxRates().get(0).baseCurrency()).isEqualTo("KRW");
+        assertThat(request.fxRates().get(0).quoteCurrency()).isEqualTo("USD");
+        assertThat(request.fxRates().get(0).rate()).isEqualByComparingTo(new BigDecimal("0.000734000000"));
+        assertThat(request.fxRates().get(1).rate()).isEqualByComparingTo(new BigDecimal("0.000736000000"));
+    }
+
     private TwelveDataProviderProperties.Symbol symbol(String ticker, String exchange, String name, String currency) {
         TwelveDataProviderProperties.Symbol symbol = new TwelveDataProviderProperties.Symbol();
         symbol.setSymbol(ticker);
