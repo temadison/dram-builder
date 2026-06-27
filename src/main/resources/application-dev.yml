@@ -15,6 +15,47 @@ spring:
     enabled: true
 
 app:
+  provider:
+    twelvedata:
+      enabled: false
+      api-key: ${TWELVE_DATA_API_KEY:}
+      base-url: https://api.twelvedata.com
+      symbols:
+        dram:
+          symbol: DRAM
+          exchange: BATS
+          name: Roundhill Memory ETF
+          currency: USD
+        mu:
+          symbol: MU
+          exchange: NASDAQ
+          name: Micron Technology
+          currency: USD
+        sndk:
+          symbol: SNDK
+          exchange: NASDAQ
+          name: SanDisk
+          currency: USD
+        wdc:
+          symbol: WDC
+          exchange: NASDAQ
+          name: Western Digital
+          currency: USD
+        stx:
+          symbol: STX
+          exchange: NASDAQ
+          name: Seagate Technology
+          currency: USD
+        sk-hynix:
+          symbol: "000660"
+          exchange: XKRX
+          name: SK hynix
+          currency: KRW
+        samsung:
+          symbol: "005930"
+          exchange: XKRX
+          name: Samsung Electronics
+          currency: KRW
   ingest:
     enabled: false
     file:

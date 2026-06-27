@@ -33,7 +33,14 @@ public class MarketDataProviderIngestionService {
         }
 
         MarketDataProvider provider = marketDataProviders.getFirst();
-        MarketDataIngestionRequest request = provider.latestIngestionRequest();
-        marketDataIngestionService.ingest(source + "-" + provider.name(), null, request);
+        String providerSource = source + "-" + provider.name();
+        MarketDataIngestionRequest request;
+        try {
+            request = provider.latestIngestionRequest();
+        } catch (Exception exception) {
+            marketDataIngestionService.recordFailure(providerSource, null, exception);
+            throw exception;
+        }
+        marketDataIngestionService.ingest(providerSource, null, request);
     }
 }

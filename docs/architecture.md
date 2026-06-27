@@ -104,7 +104,7 @@ Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer
 
 `MarketDataProvider` is the vendor adapter contract for future automated ingestion. `MarketDataProviderIngestionService` invokes exactly one configured provider and maps its output through the same normalized ingestion path used by file loads. If provider mode is enabled before a provider exists, it records a failed ingestion run rather than silently skipping work.
 
-The selected first provider is Twelve Data for prices and FX. Roundhill remains the issuer source for DRAM holdings, weights, and official NAV. See `docs/provider-selection.md` for the decision record and initial symbol map.
+The selected first provider is Twelve Data for prices and FX. A disabled-by-default Twelve Data provider bean is scaffolded under `app.provider.twelvedata`; when enabled without a key, it records a failed provider run instead of silently skipping. Roundhill remains the issuer source for DRAM holdings, weights, and official NAV. See `docs/provider-selection.md` for the decision record and initial symbol map.
 
 Future releases should extract generic ETF application services when additional bridge trades or ETFs are supported.
 

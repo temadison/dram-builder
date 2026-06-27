@@ -142,12 +142,12 @@ Provider mode is scaffolded but not connected to a vendor yet:
 --app.ingest.schedule.mode=provider
 ```
 
-Until a `MarketDataProvider` implementation is configured, provider mode records a failed ingestion run with `No market data provider is configured`. This is intentional so scheduler wiring can be verified before provider credentials are added.
+Twelve Data provider configuration is scaffolded under `app.provider.twelvedata`. Keep `app.provider.twelvedata.enabled=false` until the API key and symbol map are validated. If provider mode is enabled without an active provider, ingestion records `No market data provider is configured`; if Twelve Data is enabled without an API key, ingestion records `Twelve Data API key is required when app.provider.twelvedata.enabled=true`.
 
 Recommended next implementation:
 
-1. Add Twelve Data API-key config under `app.provider.twelvedata`.
-2. Implement `MarketDataProvider` for Twelve Data prices and FX.
+1. Validate each configured Twelve Data symbol with a real API key.
+2. Implement HTTP calls for Twelve Data prices and FX.
 3. Keep Roundhill issuer data as the holdings and official NAV source.
 4. Map provider records into `MarketDataIngestionRequest`.
 5. Schedule the provider job for `02:00` and `16:30` Central Time.

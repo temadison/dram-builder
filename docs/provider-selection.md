@@ -46,6 +46,27 @@ The first adapter should fetch:
 
 The adapter should not fetch or infer holdings. Holdings should come from Roundhill issuer data or a local issuer export until a reliable official machine-readable feed is added.
 
+## App Configuration
+
+The application now has a disabled-by-default Twelve Data provider scaffold:
+
+```yaml
+app:
+  provider:
+    twelvedata:
+      enabled: false
+      api-key: ${TWELVE_DATA_API_KEY:}
+      base-url: https://api.twelvedata.com
+      symbols:
+        dram:
+          symbol: DRAM
+          exchange: BATS
+          name: Roundhill Memory ETF
+          currency: USD
+```
+
+Enable it only after the API key and symbol map have been validated. If `enabled=true` without an API key, provider ingestion records a failed run with a clear configuration message.
+
 ## Subscription Assumption
 
 Plan for Twelve Data Pro or better. The required Asia-Pacific exchanges are not all Basic-plan markets.
