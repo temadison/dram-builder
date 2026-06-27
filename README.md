@@ -192,6 +192,8 @@ curl "$BASE_URL/api/market-data/official-navs/DRAM/latest"
 curl "$BASE_URL/api/market-data"
 ```
 
+`GET /api/market-data` also includes a `freshness` block. By default it checks DRAM plus the currently loadable U.S.-listed holdings (`BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX`) and marks the set `FRESH`, `STALE`, or `MISSING` using `app.market-data.freshness.max-age-hours`.
+
 `POST /api/market-data/official-navs`
 
 Stores issuer or provider supplied ETF NAV separately from synthetic NAV. `observedAt` is optional; `asOfDate` is required because official NAV is date-based.

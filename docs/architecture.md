@@ -90,6 +90,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 `MarketDataService` stores manual security prices and FX rates with source and observed timestamp metadata. It supports single-record writes and bulk import through the same request contracts. Automated data providers should either call this service or implement a provider-specific ingestion service that writes the same tables.
 
+`MarketDataFreshnessService` checks configured required price snapshots and reports `FRESH`, `STALE`, or `MISSING` through the market data summary. This gives scheduled ingestion and local seed loads an immediate operational signal before a provider adapter exists.
+
 `MarketDataCsvImportService` parses combined price/FX CSV files into the same bulk import request contract. It is intentionally an adapter over `MarketDataService`, so CSV input, JSON input, and future provider jobs share the same persistence and validation path.
 
 Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer/provider NAV snapshots in their own table rather than attaching them to calculated DRAM snapshots.
@@ -146,4 +148,4 @@ The dashboard is served at `/`, and `GET /api/dram` returns an API index for man
 
 ## Next Release
 
-Next releases should improve production hardening, including provider ingestion, stale data detection, and deeper dashboard support for stored market data.
+Next releases should improve production hardening, including provider ingestion and deeper dashboard support for stored market data.

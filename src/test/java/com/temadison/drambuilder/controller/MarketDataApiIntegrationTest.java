@@ -147,6 +147,47 @@ class MarketDataApiIntegrationTest {
     }
 
     @Test
+    void summaryReportsFreshnessForRequiredPrices() throws Exception {
+        Instant observedAt = Instant.now();
+        BulkMarketDataImportRequest request = new BulkMarketDataImportRequest(
+                List.of(
+                        new PriceSnapshotRequest("DRAM", "Roundhill Memory ETF", "BATS", "USD", new BigDecimal("68.00"), "freshness-test", observedAt),
+                        new PriceSnapshotRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("103.55"), "freshness-test", observedAt),
+                        new PriceSnapshotRequest("SNDK", "SanDisk", "NASDAQ", "USD", new BigDecimal("176.143"), "freshness-test", observedAt),
+                        new PriceSnapshotRequest("WDC", "Western Digital", "NASDAQ", "USD", new BigDecimal("54.620"), "freshness-test", observedAt),
+                        new PriceSnapshotRequest("STX", "Seagate Technology", "NASDAQ", "USD", new BigDecimal("92.126"), "freshness-test", observedAt)
+                ),
+                List.of()
+        );
+
+        mockMvc.perform(post("/api/market-data/import")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/market-data"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.freshness.status", is("FRESH")))
+                .andExpect(jsonPath("$.freshness.maxAgeHours", is(18)))
+                .andExpect(jsonPath("$.freshness.requiredPrices", hasSize(5)))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].ticker", is("DRAM")))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].exchange", is("BATS")))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].missing", is(false)))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].stale", is(false)));
+    }
+
+    @Test
+    void summaryReportsMissingRequiredPrices() throws Exception {
+        mockMvc.perform(get("/api/market-data"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.freshness.status", is("MISSING")))
+                .andExpect(jsonPath("$.freshness.requiredPrices", hasSize(5)))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].ticker", is("DRAM")))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].missing", is(true)))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].stale", is(false)));
+    }
+
+    @Test
     void latestPriceReturnsNotFoundWhenMissing() throws Exception {
         mockMvc.perform(get("/api/market-data/prices/NASDAQ/MU/latest"))
                 .andExpect(status().isNotFound())

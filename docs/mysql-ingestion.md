@@ -99,6 +99,8 @@ curl http://localhost:8082/api/dram/bridge-score
 
 Every file ingestion run writes a `market_data_ingestion_run` record. Recent runs are available at `/api/market-data/ingestion-runs` with status, source, requested file, imported row counts, snapshot creation status, and timing.
 
+`GET /api/market-data` includes a `freshness` block for the configured required price set. The default dev set is `BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX`; adjust `app.market-data.freshness.required-prices` when a provider can load Korea, Japan, and Taiwan holdings. `app.market-data.freshness.max-age-hours` controls when an observed price becomes stale.
+
 ## Remaining Provider Automation
 
 The app now has a repeatable MySQL load path, but it does not yet fetch live provider APIs itself. To fully automate recent values, add a provider adapter that writes this ingestion file or calls `MarketDataService` directly.

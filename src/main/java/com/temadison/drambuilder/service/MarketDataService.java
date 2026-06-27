@@ -38,19 +38,22 @@ public class MarketDataService {
     private final PriceSnapshotRepository priceSnapshotRepository;
     private final FxRateSnapshotRepository fxRateSnapshotRepository;
     private final OfficialNavSnapshotRepository officialNavSnapshotRepository;
+    private final MarketDataFreshnessService marketDataFreshnessService;
 
     public MarketDataService(
             SecurityRepository securityRepository,
             EtfRepository etfRepository,
             PriceSnapshotRepository priceSnapshotRepository,
             FxRateSnapshotRepository fxRateSnapshotRepository,
-            OfficialNavSnapshotRepository officialNavSnapshotRepository
+            OfficialNavSnapshotRepository officialNavSnapshotRepository,
+            MarketDataFreshnessService marketDataFreshnessService
     ) {
         this.securityRepository = securityRepository;
         this.etfRepository = etfRepository;
         this.priceSnapshotRepository = priceSnapshotRepository;
         this.fxRateSnapshotRepository = fxRateSnapshotRepository;
         this.officialNavSnapshotRepository = officialNavSnapshotRepository;
+        this.marketDataFreshnessService = marketDataFreshnessService;
     }
 
     @Transactional
@@ -178,7 +181,8 @@ public class MarketDataService {
                         .toList(),
                 officialNavSnapshotRepository.findTop20ByOrderByObservedAtDesc().stream()
                         .map(this::toOfficialNavResponse)
-                        .toList()
+                        .toList(),
+                marketDataFreshnessService.freshness()
         );
     }
 

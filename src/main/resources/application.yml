@@ -12,3 +12,9 @@ management:
     web:
       exposure:
         include: health,info
+
+app:
+  market-data:
+    freshness:
+      max-age-hours: 18
+      required-prices: BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX
