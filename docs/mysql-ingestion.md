@@ -33,7 +33,7 @@ When using a non-default host port, pass a matching datasource URL to Spring:
 
 Create a JSON file using `docs/dev-market-data.example.json` as the shape. The example is not a current market data source; replace its prices, FX rates, official NAV, dates, and holdings with values from your provider.
 
-`docs/dev-market-data-2026-06-01.json` is a partial sourced starter file for June 1, 2026. It uses StockAnalysis/S&P Global historical closes for DRAM, MU, SNDK, WDC, and STX, and Roundhill's published holdings weights for those U.S.-listed DRAM holdings. It intentionally omits SK hynix, Samsung, Kioxia, Nanya, and Winbond until a provider with Korea/Japan/Taiwan coverage is configured.
+`docs/dev-market-data-2026-06-01.json` is a partial sourced starter file for June 1, 2026. It uses StockAnalysis/S&P Global historical closes for DRAM, MU, SNDK, WDC, and STX, and Roundhill's published holdings weights for those U.S.-listed DRAM holdings. For a full local real baseline, use `data/ingest/dram-market-data-local.json`; that ignored local file should be refreshed from Roundhill issuer exports and provider prices rather than committed.
 
 Keep mutable local ingestion files under `data/ingest/`. JSON files in that directory are ignored by git so provider exports and local corrections do not become committed source files. Recommended local filename:
 
@@ -54,7 +54,7 @@ The ingestion file supports:
 - `officialNavs`: issuer/provider ETF NAV snapshots.
 - `snapshot`: optional DRAM snapshot generation from the stored price and FX records.
 
-For current DRAM setup, use Roundhill as the issuer source for holdings and official NAV, then use Twelve Data as the first automated provider for live or prior-close prices and FX. See `docs/provider-selection.md` for the provider decision, assumptions, and symbol map.
+For current DRAM setup, use Roundhill as the issuer source for holdings and official NAV, then use Twelve Data as the automated provider for live or prior-close prices and FX. See `docs/provider-selection.md` for the provider decision, assumptions, validated symbol map, and the remaining API-key validation step. See `docs/roundhill-issuer-data.md` for the repeatable Roundhill issuer export workflow.
 
 ## CSV Imports
 
@@ -146,11 +146,13 @@ curl -X POST http://localhost:8082/api/market-data/ingest/provider \
 
 This records the same ingestion run history as scheduled provider mode. Use it after setting `TWELVE_DATA_API_KEY` and enabling `app.provider.twelvedata.enabled=true`.
 
-`GET /api/market-data` includes a `freshness` block for the configured required price set. The default dev set is `BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX`; adjust `app.market-data.freshness.required-prices` when a provider can load Korea, Japan, and Taiwan holdings. `app.market-data.freshness.max-age-hours` controls when an observed price becomes stale.
+`GET /api/market-data` includes a `freshness` block for the configured required price set. The dev profile checks the full configured provider universe: `NYSE:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,JPX:285A,TWSE:2408,TWSE:2344,TWSE:2337,TWSE:8299,SSE:603986`. `app.market-data.freshness.max-age-hours` controls when an observed price becomes stale.
 
-## Remaining Provider Automation
+## Provider Automation
 
-The app now has a repeatable MySQL load path, but it does not yet fetch live provider APIs itself. To fully automate recent values, add a provider adapter that writes this ingestion file or calls `MarketDataService` directly.
+The app can fetch current/prior price and FX rows through the Twelve Data provider when `app.provider.twelvedata.enabled=true` and `TWELVE_DATA_API_KEY` is set. Provider ingestion records the same run history as file ingestion and can create a snapshot when `app.dram.snapshot.enabled=true`.
+
+The dev profile contains the full June 26, 2026 Roundhill-derived snapshot holding set, but snapshot creation remains disabled by default. Enable it only after the provider run has successfully loaded every required price and FX row.
 
 ## Recommended Refresh Cadence
 
@@ -178,7 +180,7 @@ Default schedule:
 - `app.ingest.schedule.evening-cron`: `0 30 16 * * MON-FRI`
 - `app.ingest.schedule.zone`: `America/Chicago`
 
-Provider mode is scaffolded but not connected to a vendor yet:
+To run scheduled provider ingestion after validating the key and symbols:
 
 ```bash
 --app.ingest.schedule.mode=provider
@@ -186,12 +188,12 @@ Provider mode is scaffolded but not connected to a vendor yet:
 
 Twelve Data provider configuration is scaffolded under `app.provider.twelvedata`. Keep `app.provider.twelvedata.enabled=false` until the API key and symbol map are validated. If provider mode is enabled without an active provider, ingestion records `No market data provider is configured`; if Twelve Data is enabled without an API key, ingestion records `Twelve Data API key is required when app.provider.twelvedata.enabled=true`.
 
-Provider runs can also create a DRAM snapshot when `app.dram.snapshot.enabled=true`. This uses the latest stored DRAM market price plus the configured purchase price and holdings. Keep it disabled until the complete Roundhill holdings export has been loaded into `app.dram.snapshot.holdings`; the dev profile only includes a partial starter set for local validation.
+Provider runs can also create a DRAM snapshot when `app.dram.snapshot.enabled=true`. This uses the latest stored DRAM market price plus the configured purchase price and holdings. Keep it disabled until the complete provider price/FX run succeeds and Roundhill issuer holdings/NAV have been refreshed.
 
 Recommended next implementation:
 
-1. Validate each configured Twelve Data symbol with a real API key.
+1. Validate Twelve Data `time_series` closes with a real API key.
 2. Validate direct and inverse FX pairs such as `KRW/USD` and `USD/KRW` for the chosen plan.
 3. Keep Roundhill issuer data as the holdings and official NAV source.
-4. Add Roundhill holdings/NAV automation or a repeatable issuer export.
+4. Add Roundhill holdings/NAV automation from the public issuer CSV files.
 5. Schedule the provider job for `02:00` and `16:30` Central Time.

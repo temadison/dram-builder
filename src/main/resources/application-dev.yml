@@ -18,30 +18,70 @@ app:
   dram:
     snapshot:
       enabled: false
-      purchase-price:
+      purchase-price: 71.88
       etf-ticker: DRAM
-      etf-exchange: BATS
+      etf-exchange: NYSE
       holdings:
+        - ticker: "000660"
+          name: SK hynix
+          exchange: KRX
+          currency: KRW
+          weight: 0.2475
+        - ticker: "005930"
+          name: Samsung Electronics
+          exchange: KRX
+          currency: KRW
+          weight: 0.2517
+        - ticker: "2337"
+          name: Macronix International
+          exchange: TWSE
+          currency: TWD
+          weight: 0.0034
+        - ticker: "2344"
+          name: Winbond Electronics
+          exchange: TWSE
+          currency: TWD
+          weight: 0.0110
+        - ticker: "2408"
+          name: Nanya Technology
+          exchange: TWSE
+          currency: TWD
+          weight: 0.0178
+        - ticker: "285A"
+          name: Kioxia Holdings
+          exchange: JPX
+          currency: JPY
+          weight: 0.0474
+        - ticker: "603986"
+          name: GigaDevice Semiconductor
+          exchange: SSE
+          currency: CNY
+          weight: 0.0272
+        - ticker: "8299"
+          name: Phison Electronics
+          exchange: TWSE
+          currency: TWD
+          weight: 0.0061
         - ticker: MU
           name: Micron Technology
           exchange: NASDAQ
           currency: USD
-          weight: 0.2383
+          weight: 0.2533
         - ticker: SNDK
           name: SanDisk
           exchange: NASDAQ
           currency: USD
-          weight: 0.0466
+          weight: 0.0500
         - ticker: WDC
           name: Western Digital
           exchange: NASDAQ
           currency: USD
-          weight: 0.0464
+          weight: 0.0424
         - ticker: STX
           name: Seagate Technology
           exchange: NASDAQ
           currency: USD
-          weight: 0.0449
+          weight: 0.0416
   provider:
     twelvedata:
       enabled: false
@@ -50,7 +90,7 @@ app:
       symbols:
         dram:
           symbol: DRAM
-          exchange: BATS
+          exchange: NYSE
           name: Roundhill Memory ETF
           currency: USD
         mu:
@@ -75,14 +115,47 @@ app:
           currency: USD
         sk-hynix:
           symbol: "000660"
-          exchange: XKRX
+          exchange: KRX
           name: SK hynix
           currency: KRW
         samsung:
           symbol: "005930"
-          exchange: XKRX
+          exchange: KRX
           name: Samsung Electronics
           currency: KRW
+        kioxia:
+          symbol: "285A"
+          exchange: JPX
+          name: Kioxia Holdings
+          currency: JPY
+        nanya:
+          symbol: "2408"
+          exchange: TWSE
+          name: Nanya Technology
+          currency: TWD
+        winbond:
+          symbol: "2344"
+          exchange: TWSE
+          name: Winbond Electronics
+          currency: TWD
+        macronix:
+          symbol: "2337"
+          exchange: TWSE
+          name: Macronix International
+          currency: TWD
+        phison:
+          symbol: "8299"
+          exchange: TWSE
+          name: Phison Electronics
+          currency: TWD
+        gigadevice:
+          symbol: "603986"
+          exchange: SSE
+          name: GigaDevice Semiconductor
+          currency: CNY
+  market-data:
+    freshness:
+      required-prices: NYSE:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,JPX:285A,TWSE:2408,TWSE:2344,TWSE:2337,TWSE:8299,SSE:603986
   ingest:
     enabled: false
     file:

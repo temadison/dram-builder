@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.temadison.drambuilder.config.DramSnapshotProperties;
 import com.temadison.drambuilder.config.TwelveDataProviderProperties;
+import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.MarketDataIngestionRequest;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -89,6 +90,76 @@ class TwelveDataMarketDataProviderTest {
         assertThat(request.fxRates().get(0).quoteCurrency()).isEqualTo("USD");
         assertThat(request.fxRates().get(0).rate()).isEqualByComparingTo(new BigDecimal("0.000734000000"));
         assertThat(request.fxRates().get(1).rate()).isEqualByComparingTo(new BigDecimal("0.000736000000"));
+    }
+
+    @Test
+    void mapsFullDramUniverseToPricesAndUniqueFxCurrencies() {
+        TwelveDataProviderProperties properties = new TwelveDataProviderProperties();
+        properties.setApiKey("test-key");
+        Map<String, TwelveDataProviderProperties.Symbol> symbols = new LinkedHashMap<>();
+        symbols.put("dram", symbol("DRAM", "NYSE", "Roundhill Memory ETF", "USD"));
+        symbols.put("mu", symbol("MU", "NASDAQ", "Micron Technology", "USD"));
+        symbols.put("sndk", symbol("SNDK", "NASDAQ", "SanDisk", "USD"));
+        symbols.put("wdc", symbol("WDC", "NASDAQ", "Western Digital", "USD"));
+        symbols.put("stx", symbol("STX", "NASDAQ", "Seagate Technology", "USD"));
+        symbols.put("sk-hynix", symbol("000660", "KRX", "SK hynix", "KRW"));
+        symbols.put("samsung", symbol("005930", "KRX", "Samsung Electronics", "KRW"));
+        symbols.put("kioxia", symbol("285A", "JPX", "Kioxia Holdings", "JPY"));
+        symbols.put("nanya", symbol("2408", "TWSE", "Nanya Technology", "TWD"));
+        symbols.put("winbond", symbol("2344", "TWSE", "Winbond Electronics", "TWD"));
+        symbols.put("macronix", symbol("2337", "TWSE", "Macronix International", "TWD"));
+        symbols.put("phison", symbol("8299", "TWSE", "Phison Electronics", "TWD"));
+        symbols.put("gigadevice", symbol("603986", "SSE", "GigaDevice Semiconductor", "CNY"));
+        properties.setSymbols(symbols);
+
+        TwelveDataClient client = mock(TwelveDataClient.class);
+        Instant current = Instant.parse("2026-06-26T00:00:00Z");
+        Instant prior = Instant.parse("2026-06-25T00:00:00Z");
+        symbols.values().forEach(symbol -> when(client.dailyCloses(symbol.getSymbol(), symbol.getExchange(), 2))
+                .thenReturn(List.of(
+                        new TwelveDataClient.DailyClose(current, new BigDecimal("2.00")),
+                        new TwelveDataClient.DailyClose(prior, new BigDecimal("1.00"))
+                )));
+        when(client.dailyCloses("KRW/USD", null, 2)).thenReturn(fxCloses(current, prior, "0.000648130145", "0.000648403307"));
+        when(client.dailyCloses("JPY/USD", null, 2)).thenReturn(fxCloses(current, prior, "0.006185439475", "0.006180278731"));
+        when(client.dailyCloses("TWD/USD", null, 2)).thenReturn(fxCloses(current, prior, "0.031393231619", "0.031452475310"));
+        when(client.dailyCloses("CNY/USD", null, 2)).thenReturn(fxCloses(current, prior, "0.147073963496", "0.146963729353"));
+
+        MarketDataIngestionRequest request = new TwelveDataMarketDataProvider(
+                properties,
+                client,
+                disabledSnapshotFactory()
+        ).latestIngestionRequest();
+
+        assertThat(request.prices()).hasSize(26);
+        assertThat(request.prices())
+                .extracting(price -> price.exchange() + ":" + price.ticker())
+                .contains(
+                        "NYSE:DRAM",
+                        "NASDAQ:MU",
+                        "NASDAQ:SNDK",
+                        "NASDAQ:WDC",
+                        "NASDAQ:STX",
+                        "KRX:000660",
+                        "KRX:005930",
+                        "JPX:285A",
+                        "TWSE:2408",
+                        "TWSE:2344",
+                        "TWSE:2337",
+                        "TWSE:8299",
+                        "SSE:603986"
+                );
+        assertThat(request.fxRates()).hasSize(8);
+        assertThat(request.fxRates())
+                .extracting(FxRateSnapshotRequest::baseCurrency)
+                .containsExactly("KRW", "KRW", "JPY", "JPY", "TWD", "TWD", "CNY", "CNY");
+    }
+
+    private List<TwelveDataClient.DailyClose> fxCloses(Instant current, Instant prior, String currentRate, String priorRate) {
+        return List.of(
+                new TwelveDataClient.DailyClose(current, new BigDecimal(currentRate)),
+                new TwelveDataClient.DailyClose(prior, new BigDecimal(priorRate))
+        );
     }
 
     private TwelveDataProviderProperties.Symbol symbol(String ticker, String exchange, String name, String currency) {
