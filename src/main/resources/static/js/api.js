@@ -50,6 +50,14 @@ export async function runProviderIngestion(window = 'manual') {
   });
 }
 
+export async function runFileIngestion(window = 'manual') {
+  return request('/api/market-data/ingest/file', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ window })
+  });
+}
+
 export async function savePriceSnapshot(payload) {
   return request('/api/market-data/prices', {
     method: 'POST',

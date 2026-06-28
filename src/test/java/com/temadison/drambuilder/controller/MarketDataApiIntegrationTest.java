@@ -395,6 +395,23 @@ class MarketDataApiIntegrationTest {
     }
 
     @Test
+    void manualFileIngestionEndpointCreatesFailedRunWhenFileIsNotConfigured() throws Exception {
+        mockMvc.perform(post("/api/market-data/ingest/file")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"window\":\"manual\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", is("app.ingest.file is required")));
+
+        mockMvc.perform(get("/api/market-data/ingestion-runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].source", is("file-manual")))
+                .andExpect(jsonPath("$[0].status", is("FAILED")))
+                .andExpect(jsonPath("$[0].message", is("app.ingest.file is required")))
+                .andExpect(jsonPath("$[0].completedAt", notNullValue()));
+    }
+
+    @Test
     void providerIngestionWithoutProviderCreatesFailedRun() throws Exception {
         try {
             marketDataProviderIngestionService.ingestProvider("morning");

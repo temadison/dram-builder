@@ -48,6 +48,7 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("Snapshot Entry")))
                 .andExpect(content().string(containsString("market-snapshot-form")))
                 .andExpect(content().string(containsString("ingestion-config-table")))
+                .andExpect(content().string(containsString("run-file-ingestion-button")))
                 .andExpect(content().string(containsString("run-provider-ingestion-button")))
                 .andExpect(content().string(containsString("ingestion-run-table")))
                 .andExpect(content().string(containsString("/js/app.js")));
@@ -59,6 +60,7 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("getLatestSnapshot")))
                 .andExpect(content().string(containsString("importMarketData")))
                 .andExpect(content().string(containsString("importMarketDataCsv")))
+                .andExpect(content().string(containsString("runFileIngestion")))
                 .andExpect(content().string(containsString("runProviderIngestion")))
                 .andExpect(content().string(containsString("bindClick")))
                 .andExpect(content().string(containsString("importSummary")))
@@ -91,6 +93,7 @@ class UiResourceIntegrationTest {
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/dram/latest")))
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/market-data/ingestion-config")))
                 .andExpect(jsonPath("$.endpoints", hasItem("GET /api/market-data/ingestion-runs")))
+                .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/ingest/file")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/ingest/provider")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import")))
                 .andExpect(jsonPath("$.endpoints", hasItem("POST /api/market-data/import/csv")))

@@ -87,6 +87,24 @@ If MySQL is on a non-default host port, include the datasource override in the s
 
 The runner validates the file, stores price/FX/NAV snapshots through the same service paths used by the API, optionally creates a DRAM snapshot, and exits when `app.ingest.exit-after-run=true`.
 
+## Manual App-Triggered File Load
+
+When the app is already running, the data page has a `Run File` button that loads the configured `app.ingest.file` and records the result in ingestion history. This is useful for reloading `data/ingest/dram-market-data-local.json` without restarting the app in one-shot mode.
+
+The equivalent request is:
+
+```bash
+curl -X POST http://localhost:8082/api/market-data/ingest/file \
+  -H 'Content-Type: application/json' \
+  -d '{"window":"manual"}'
+```
+
+For IntelliJ, keep the normal app run configuration on port `8082` and include the file argument when you want `Run File` to work:
+
+```text
+--server.port=8082 --spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC --app.ingest.file=file:/Users/temadison/Development/Personal/GitHub/dram-builder/data/ingest/dram-market-data-local.json
+```
+
 ## Run the App Against MySQL
 
 After loading data:
@@ -115,7 +133,7 @@ curl http://localhost:8082/api/dram/bridge-score
 
 Every file ingestion run writes a `market_data_ingestion_run` record. Recent runs are available at `/api/market-data/ingestion-runs` with status, source, requested file, imported row counts, snapshot creation status, and timing.
 
-The data page at `/data.html` also shows recent ingestion runs, so scheduled file/provider failures are visible without querying the API directly.
+The data page at `/data.html` also shows recent ingestion runs, so manual, scheduled file, and provider failures are visible without querying the API directly.
 
 For provider setup validation, the data page has a `Run Provider` button. It calls:
 

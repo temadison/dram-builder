@@ -7,6 +7,7 @@ import {
   importMarketData,
   importMarketDataCsv,
   runScenario,
+  runFileIngestion,
   runProviderIngestion,
   saveFxRateSnapshot,
   saveOfficialNavSnapshot,
@@ -62,6 +63,7 @@ bindClick('reset-json-button', () => {
 bindClick('reset-market-json-button', () => {
   marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
 });
+bindClick('run-file-ingestion-button', runFileIngestionFromUi);
 bindClick('run-provider-ingestion-button', runProviderIngestionFromUi);
 
 if (snapshotForm) {
@@ -278,6 +280,17 @@ async function runProviderIngestionFromUi() {
   try {
     await runProviderIngestion();
     showStatus('Provider ingestion completed.', 'success');
+  } catch (error) {
+    showStatus(error.message, 'error');
+  } finally {
+    await refreshMarketData();
+  }
+}
+
+async function runFileIngestionFromUi() {
+  try {
+    await runFileIngestion();
+    showStatus('File ingestion completed.', 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   } finally {

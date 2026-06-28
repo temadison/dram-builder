@@ -2,6 +2,7 @@ package com.temadison.drambuilder.controller;
 
 import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
+import com.temadison.drambuilder.dto.FileIngestionRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
 import com.temadison.drambuilder.dto.MarketDataIngestionConfigResponse;
@@ -14,12 +15,14 @@ import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
 import com.temadison.drambuilder.dto.ProviderIngestionRequest;
 import com.temadison.drambuilder.service.MarketDataCsvImportService;
+import com.temadison.drambuilder.service.MarketDataFileIngestionService;
 import com.temadison.drambuilder.service.MarketDataIngestionConfigService;
 import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
 import com.temadison.drambuilder.service.MarketDataService;
 import jakarta.validation.Valid;
 import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,19 +40,25 @@ public class MarketDataController {
     private final MarketDataIngestionRunService marketDataIngestionRunService;
     private final MarketDataIngestionConfigService marketDataIngestionConfigService;
     private final MarketDataProviderIngestionService marketDataProviderIngestionService;
+    private final MarketDataFileIngestionService marketDataFileIngestionService;
+    private final String ingestionFile;
 
     public MarketDataController(
             MarketDataService marketDataService,
             MarketDataCsvImportService marketDataCsvImportService,
             MarketDataIngestionRunService marketDataIngestionRunService,
             MarketDataIngestionConfigService marketDataIngestionConfigService,
-            MarketDataProviderIngestionService marketDataProviderIngestionService
+            MarketDataProviderIngestionService marketDataProviderIngestionService,
+            MarketDataFileIngestionService marketDataFileIngestionService,
+            @Value("${app.ingest.file:}") String ingestionFile
     ) {
         this.marketDataService = marketDataService;
         this.marketDataCsvImportService = marketDataCsvImportService;
         this.marketDataIngestionRunService = marketDataIngestionRunService;
         this.marketDataIngestionConfigService = marketDataIngestionConfigService;
         this.marketDataProviderIngestionService = marketDataProviderIngestionService;
+        this.marketDataFileIngestionService = marketDataFileIngestionService;
+        this.ingestionFile = ingestionFile;
     }
 
     @GetMapping
@@ -73,6 +82,15 @@ public class MarketDataController {
                 ? "manual"
                 : request.window().trim();
         marketDataProviderIngestionService.ingestProvider(window);
+        return marketDataIngestionRunService.recentRuns();
+    }
+
+    @PostMapping("/ingest/file")
+    public List<MarketDataIngestionRunResponse> ingestFile(@RequestBody(required = false) FileIngestionRequest request) throws Exception {
+        String window = request == null || request.window() == null || request.window().isBlank()
+                ? "manual"
+                : request.window().trim();
+        marketDataFileIngestionService.ingestFile("file-" + window, ingestionFile);
         return marketDataIngestionRunService.recentRuns();
     }
 
