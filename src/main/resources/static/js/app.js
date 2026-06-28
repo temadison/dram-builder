@@ -150,9 +150,9 @@ if (csvImportForm) {
   event.preventDefault();
 
   try {
-    await importMarketDataCsv(marketDataCsv.value);
+    const result = await importMarketDataCsv(marketDataCsv.value);
     marketSnapshotJson.value = JSON.stringify(sampleMarketDataSnapshot.holdings, null, 2);
-    showStatus('CSV market data imported.', 'success');
+    showStatus(importSummary(result), 'success');
     await refreshMarketData();
   } catch (error) {
     showStatus(error.message, 'error');
@@ -300,6 +300,13 @@ function bindClick(id, handler) {
   if (element) {
     element.addEventListener('click', handler);
   }
+}
+
+function importSummary(result) {
+  const prices = result?.pricesImported ?? 0;
+  const fxRates = result?.fxRatesImported ?? 0;
+  const officialNavs = result?.officialNavsImported ?? 0;
+  return `CSV imported: ${prices} prices / ${fxRates} FX / ${officialNavs} NAV.`;
 }
 
 function optionalNumeric(value) {

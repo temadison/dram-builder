@@ -61,8 +61,14 @@ class UiResourceIntegrationTest {
                 .andExpect(content().string(containsString("importMarketDataCsv")))
                 .andExpect(content().string(containsString("runProviderIngestion")))
                 .andExpect(content().string(containsString("bindClick")))
+                .andExpect(content().string(containsString("importSummary")))
                 .andExpect(content().string(containsString("saveOfficialNavSnapshot")))
                 .andExpect(content().string(containsString("saveSnapshotFromMarketData")));
+
+        mockMvc.perform(get("/js/sampleData.js"))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("official_nav")))
+                .andExpect(content().string(containsString("ui-csv-sample")));
 
         mockMvc.perform(get("/js/view.js"))
                 .andExpect(status().isOk())
