@@ -134,9 +134,11 @@ curl http://localhost:8082/api/dram/bridge-score
 
 `/api/market-data/ingestion-config` returns non-secret runtime settings for the current app process. Use it to confirm IntelliJ or command-line flags such as `app.ingest.file`, `app.ingest.schedule.enabled`, `app.ingest.schedule.mode`, and the two cron windows.
 
+`/api/market-data` includes `snapshotReadiness`. Use it before enabling scheduled snapshot creation; `READY` means the configured snapshot holdings have current/prior prices, required FX, and official NAV, while `BLOCKED` lists concrete missing or stale inputs.
+
 Every file ingestion run writes a `market_data_ingestion_run` record. Recent runs are available at `/api/market-data/ingestion-runs` with status, source, requested file, imported row counts, snapshot creation status, and timing.
 
-The data page at `/data.html` also shows recent ingestion runs, so manual, scheduled file, and provider failures are visible without querying the API directly.
+The data page at `/data.html` also shows snapshot readiness and recent ingestion runs, so manual, scheduled file, and provider failures are visible without querying the API directly.
 
 For provider setup validation, the data page has a `Run Provider` button. It calls:
 

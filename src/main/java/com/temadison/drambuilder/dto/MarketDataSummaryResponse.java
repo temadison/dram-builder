@@ -6,6 +6,7 @@ public record MarketDataSummaryResponse(
         List<PriceSnapshotResponse> latestPrices,
         List<FxRateSnapshotResponse> latestFxRates,
         List<OfficialNavSnapshotResponse> latestOfficialNavs,
-        MarketDataFreshnessResponse freshness
+        MarketDataFreshnessResponse freshness,
+        MarketDataSnapshotReadinessResponse snapshotReadiness
 ) {
 }

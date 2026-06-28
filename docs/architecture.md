@@ -98,6 +98,8 @@ Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer
 
 `MarketDataSnapshotReadinessValidator` owns pre-snapshot data quality gates for market-data-driven snapshots. It requires current ETF and holding prices for the snapshot date, prior holding prices, FX and prior FX for non-USD holdings, and official NAV for the ETF/as-of date before `DramMarketDataSnapshotService` can persist a snapshot.
 
+`MarketDataSnapshotReadinessService` exposes the same operational concept as a read-only summary for the Data page. It reports configured snapshot readiness as `READY`, `BLOCKED`, or `NOT_CONFIGURED` with concrete issue rows so operators can diagnose missing market data before running ingestion or snapshot generation.
+
 `MarketDataIngestionRunService` records ingestion attempts independently from the market data writes. It uses short transactions for start/success/failure updates so a failed data load still leaves an operational trail.
 
 `MarketDataIngestionConfigService` exposes non-secret runtime ingestion settings for operational checks. It reports file/scheduler mode, cron windows, provider count, and freshness configuration without surfacing database credentials or API keys.
@@ -152,7 +154,7 @@ The Release 0.6 UI is intentionally static and build-free. `index.html` loads ES
 - `view.js`: DOM rendering.
 - `app.js`: UI orchestration and event handling.
 
-The dashboard is served at `/`, and data management is served at `/data.html`. `GET /api/dram` returns an API index for manual discovery. The data page keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX/NAV records and generates a snapshot through `/api/dram/snapshot/from-market-data`. It also renders market data freshness, runtime ingestion configuration, and recent ingestion run history from `/api/market-data/ingestion-runs`. Sample market data loading uses the bulk import endpoint, and CSV import uses `/api/market-data/import/csv`.
+The dashboard is served at `/`, and data management is served at `/data.html`. `GET /api/dram` returns an API index for manual discovery. The data page keeps full manual snapshot JSON entry available, while adding a market data workflow that stores price/FX/NAV records and generates a snapshot through `/api/dram/snapshot/from-market-data`. It also renders snapshot readiness, market data freshness, runtime ingestion configuration, and recent ingestion run history from `/api/market-data` and `/api/market-data/ingestion-runs`. Sample market data loading uses the bulk import endpoint, and CSV import uses `/api/market-data/import/csv`.
 
 ## Next Release
 

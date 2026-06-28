@@ -78,6 +78,7 @@ export function renderMarketData(marketData) {
   const fxRates = marketData.latestFxRates || [];
   const officialNavs = marketData.latestOfficialNavs || [];
   renderFreshness(marketData.freshness);
+  renderSnapshotReadiness(marketData.snapshotReadiness, officialNavs[0]);
 
   document.getElementById('market-data-summary').textContent =
     `${prices.length} prices / ${fxRates.length} FX / ${officialNavs.length} NAV`;
@@ -87,19 +88,19 @@ export function renderMarketData(marketData) {
       type: 'Price',
       key: `${price.exchange}:${price.ticker}`,
       value: price.currency === 'USD' ? money(price.price) : decimal(price.price, 4),
-      source: price.source
+      source: `${price.source} ${dateTime(price.observedAt)}`
     })),
     ...fxRates.map(rate => ({
       type: 'FX',
       key: `${rate.baseCurrency}/${rate.quoteCurrency}`,
       value: decimal(rate.rate, 8),
-      source: rate.source
+      source: `${rate.source} ${dateTime(rate.observedAt)}`
     })),
     ...officialNavs.map(nav => ({
       type: 'Official NAV',
       key: `${nav.ticker} ${nav.asOfDate}`,
       value: nav.currency === 'USD' ? money(nav.nav) : decimal(nav.nav, 4),
-      source: nav.source
+      source: `${nav.source} ${dateTime(nav.observedAt)}`
     }))
   ];
 
@@ -178,6 +179,30 @@ function renderFreshness(freshness) {
   `, 3);
 }
 
+function renderSnapshotReadiness(readiness, latestOfficialNav) {
+  const status = readiness?.status || 'UNKNOWN';
+  const statusElement = document.getElementById('snapshot-readiness-status');
+  if (!statusElement) {
+    return;
+  }
+
+  statusElement.textContent = status;
+  statusElement.className = readinessClass(status);
+  document.getElementById('snapshot-readiness-date').textContent = `As of ${readiness?.asOfDate || '—'}`;
+  document.getElementById('snapshot-readiness-nav').textContent = latestOfficialNav
+    ? `Official NAV ${money(latestOfficialNav.nav)} ${latestOfficialNav.asOfDate}`
+    : 'Official NAV —';
+
+  const issues = readiness?.issues || [];
+  const issueElement = document.getElementById('snapshot-readiness-issues');
+  issueElement.innerHTML = issues.length ? issues.slice(0, 8).map(issue => `
+    <div class="readiness-issue">
+      <strong>${escapeHtml(issue.category)}</strong>
+      <span>${escapeHtml(issue.key)} · ${escapeHtml(issue.message)}</span>
+    </div>
+  `).join('') : '<div class="readiness-issue ready">All configured snapshot inputs are present.</div>';
+}
+
 function rowStatus(row) {
   if (row.missing) {
     return 'MISSING';
@@ -186,6 +211,16 @@ function rowStatus(row) {
     return 'STALE';
   }
   return 'FRESH';
+}
+
+function readinessClass(status) {
+  if (status === 'READY') {
+    return 'positive';
+  }
+  if (status === 'BLOCKED') {
+    return 'negative';
+  }
+  return 'neutral';
 }
 
 function freshnessClass(status) {

@@ -126,7 +126,7 @@ SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 
 Configuration is in `src/main/resources/application-dev.yml`.
 
-For persistent market data loading, see `docs/mysql-ingestion.md`. The app includes a disabled-by-default ingestion runner that can load a JSON file into MySQL and optionally generate a DRAM snapshot. Provider selection notes are in `docs/provider-selection.md`; the first planned adapter is Twelve Data for prices and FX, with Roundhill as the issuer source for holdings and official NAV. Twelve Data config is scaffolded under `app.provider.twelvedata`.
+For persistent market data loading, see `docs/mysql-ingestion.md`. The app includes a disabled-by-default ingestion runner that can load a JSON file into MySQL and optionally generate a DRAM snapshot. Provider selection notes are in `docs/provider-selection.md`; the first adapter is Twelve Data for prices and FX, with Roundhill as the issuer source for holdings and official NAV. Twelve Data config is disabled by default under `app.provider.twelvedata` until `TWELVE_DATA_API_KEY` and live close retrieval are validated.
 
 ## Database Migrations
 
@@ -194,7 +194,7 @@ curl "$BASE_URL/api/market-data"
 curl "$BASE_URL/api/market-data/ingestion-config"
 ```
 
-`GET /api/market-data` also includes a `freshness` block. By default it checks DRAM plus the currently loadable U.S.-listed holdings (`BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX`) and marks the set `FRESH`, `STALE`, or `MISSING` using `app.market-data.freshness.max-age-hours`.
+`GET /api/market-data` also includes `freshness` and `snapshotReadiness` blocks. Freshness marks configured prices `FRESH`, `STALE`, or `MISSING` using `app.market-data.freshness.max-age-hours`. Snapshot readiness reports whether configured snapshot inputs have current/prior prices, required FX, and official NAV before snapshot creation is attempted.
 
 `GET /api/market-data/ingestion-config` returns non-secret runtime ingestion settings, including runner state, schedule mode, cron windows, configured file path, provider count, and freshness thresholds.
 
@@ -277,8 +277,9 @@ This endpoint uses previously stored market data instead of requiring every hold
 
 - DRAM market price from the latest `DRAM` / `NYSEARCA` price snapshot, unless `marketPrice` is provided.
 - Current holding price from the latest matching security price snapshot.
-- Prior holding price from the previous matching security price snapshot, or the latest value when only one exists.
-- Current/prior FX from the latest two `currency` / `USD` FX snapshots, or the latest value when only one exists. USD holdings use `1`.
+- Prior holding price from the previous matching security price snapshot.
+- Current/prior FX from the latest two `currency` / `USD` FX snapshots. USD holdings use `1`.
+- Official DRAM NAV for the snapshot date.
 
 Example market data setup:
 

@@ -284,7 +284,8 @@ th {
   max-height: 300px;
 }
 
-.freshness-panel {
+.freshness-panel,
+.readiness-panel {
   margin-bottom: 14px;
   padding: 10px;
   border: 1px solid var(--line);
@@ -317,6 +318,38 @@ th {
 
 .freshness-table-wrap {
   max-height: 190px;
+}
+
+.readiness-issues {
+  display: grid;
+  gap: 6px;
+  max-height: 170px;
+  overflow: auto;
+}
+
+.readiness-issue {
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.readiness-issue strong {
+  color: var(--ink);
+}
+
+.readiness-issue span {
+  overflow-wrap: anywhere;
+}
+
+.readiness-issue.ready {
+  display: block;
+  color: var(--green);
 }
 
 .csv-textarea {

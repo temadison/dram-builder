@@ -181,6 +181,7 @@ class MarketDataApiIntegrationTest {
         mockMvc.perform(get("/api/market-data"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.freshness.status", is("MISSING")))
+                .andExpect(jsonPath("$.snapshotReadiness.status", is("NOT_CONFIGURED")))
                 .andExpect(jsonPath("$.freshness.requiredPrices", hasSize(5)))
                 .andExpect(jsonPath("$.freshness.requiredPrices[0].ticker", is("DRAM")))
                 .andExpect(jsonPath("$.freshness.requiredPrices[0].missing", is(true)))
