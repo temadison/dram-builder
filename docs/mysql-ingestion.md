@@ -56,6 +56,19 @@ The ingestion file supports:
 
 For current DRAM setup, use Roundhill as the issuer source for holdings and official NAV, then use Twelve Data as the first automated provider for live or prior-close prices and FX. See `docs/provider-selection.md` for the provider decision, assumptions, and symbol map.
 
+## CSV Imports
+
+Use `/api/market-data/import/csv` for quick provider or issuer exports. The CSV parser accepts `price`, `fx`/`fx_rate`, and `official_nav`/`nav` rows. Official NAV rows can be imported by themselves, which is useful when updating Roundhill issuer NAV separately from price and FX data.
+
+```csv
+type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,nav,asOfDate,source,observedAt
+price,DRAM,Roundhill Memory ETF,BATS,USD,68.00,,,,,,stockanalysis-spglobal,2026-06-01T20:00:00Z
+fx,,,,,,KRW,USD,0.00073400,,,twelvedata,2026-06-01T20:00:00Z
+official_nav,DRAM,Roundhill Memory ETF,,USD,,,,,68.00,2026-06-01,roundhill,2026-06-01T20:00:00Z
+```
+
+The June 1 starter JSON intentionally leaves `officialNavs` empty until the exact Roundhill official NAV is copied from an issuer export. Do not add an estimated NAV to `officialNavs`; the app validates this as an official issuer/provider fact.
+
 ## One-Shot Load Into MySQL
 
 Run this after MySQL is healthy:

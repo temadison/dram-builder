@@ -3,9 +3,13 @@ package com.temadison.drambuilder.service;
 import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
+import com.temadison.drambuilder.dto.MarketDataCsvImportResponse;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -22,7 +26,7 @@ public class MarketDataCsvImportService {
         this.marketDataService = marketDataService;
     }
 
-    public BulkMarketDataImportResponse importCsv(String csv) {
+    public MarketDataCsvImportResponse importCsv(String csv) {
         List<List<String>> rows = parse(csv);
         if (rows.isEmpty()) {
             throw new IllegalArgumentException("CSV import requires a header row");
@@ -31,6 +35,7 @@ public class MarketDataCsvImportService {
         Map<String, Integer> headers = headers(rows.getFirst());
         List<PriceSnapshotRequest> prices = new ArrayList<>();
         List<FxRateSnapshotRequest> fxRates = new ArrayList<>();
+        List<OfficialNavSnapshotRequest> officialNavs = new ArrayList<>();
 
         for (int i = 1; i < rows.size(); i++) {
             List<String> row = rows.get(i);
@@ -58,12 +63,40 @@ public class MarketDataCsvImportService {
                         required(row, headers, "source", lineNumber),
                         optionalInstant(value(row, headers, "observedat"), lineNumber)
                 ));
+            } else if ("official_nav".equals(type) || "officialnav".equals(type) || "nav".equals(type)) {
+                officialNavs.add(new OfficialNavSnapshotRequest(
+                        required(row, headers, "ticker", lineNumber),
+                        required(row, headers, "name", lineNumber),
+                        decimal(required(row, headers, "nav", lineNumber), "nav", lineNumber),
+                        required(row, headers, "currency", lineNumber),
+                        required(row, headers, "source", lineNumber),
+                        date(required(row, headers, "asofdate", lineNumber), "asOfDate", lineNumber),
+                        optionalInstant(value(row, headers, "observedat"), lineNumber)
+                ));
             } else {
                 throw new IllegalArgumentException("Unsupported market data CSV type on line " + lineNumber + ": " + type);
             }
         }
 
-        return marketDataService.importMarketData(new BulkMarketDataImportRequest(prices, fxRates));
+        if (prices.isEmpty() && fxRates.isEmpty() && officialNavs.isEmpty()) {
+            throw new IllegalArgumentException("At least one price, FX rate, or official NAV snapshot is required");
+        }
+
+        BulkMarketDataImportResponse importedMarketData = prices.isEmpty() && fxRates.isEmpty()
+                ? new BulkMarketDataImportResponse(0, 0, List.of(), List.of())
+                : marketDataService.importMarketData(new BulkMarketDataImportRequest(prices, fxRates));
+        List<OfficialNavSnapshotResponse> importedOfficialNavs = officialNavs.stream()
+                .map(marketDataService::createOfficialNavSnapshot)
+                .toList();
+
+        return new MarketDataCsvImportResponse(
+                importedMarketData.pricesImported(),
+                importedMarketData.fxRatesImported(),
+                importedOfficialNavs.size(),
+                importedMarketData.prices(),
+                importedMarketData.fxRates(),
+                importedOfficialNavs
+        );
     }
 
     private List<List<String>> parse(String csv) {
@@ -167,6 +200,14 @@ public class MarketDataCsvImportService {
             return Instant.parse(value);
         } catch (RuntimeException exception) {
             throw new IllegalArgumentException("Invalid observedAt on line " + lineNumber + ": " + value);
+        }
+    }
+
+    private LocalDate date(String value, String column, int lineNumber) {
+        try {
+            return LocalDate.parse(value);
+        } catch (RuntimeException exception) {
+            throw new IllegalArgumentException("Invalid " + column + " on line " + lineNumber + ": " + value);
         }
     }
 

@@ -278,10 +278,11 @@ class MarketDataApiIntegrationTest {
     @Test
     void importsCsvMarketDataAndSupportsLatestLookups() throws Exception {
         String csv = """
-                type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,source,observedAt
-                price,DRAM,Roundhill Memory ETF,NYSEARCA,USD,81.50,,,,csv-test,2026-06-26T20:00:00Z
-                price,000660,SK hynix,KRX,KRW,114000,,,,csv-test,2026-06-26T20:00:00Z
-                fx,,,,,,KRW,USD,0.00081000,csv-test,2026-06-26T20:00:00Z
+                type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,nav,asOfDate,source,observedAt
+                price,DRAM,Roundhill Memory ETF,NYSEARCA,USD,81.50,,,,,,csv-test,2026-06-26T20:00:00Z
+                price,000660,SK hynix,KRX,KRW,114000,,,,,,csv-test,2026-06-26T20:00:00Z
+                fx,,,,,,KRW,USD,0.00081000,,,csv-test,2026-06-26T20:00:00Z
+                official_nav,DRAM,Roundhill Memory ETF,,USD,,,,,80.95,2026-06-26,csv-test,2026-06-26T20:00:00Z
                 """;
 
         mockMvc.perform(post("/api/market-data/import/csv")
@@ -290,9 +291,12 @@ class MarketDataApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pricesImported", is(2)))
                 .andExpect(jsonPath("$.fxRatesImported", is(1)))
+                .andExpect(jsonPath("$.officialNavsImported", is(1)))
                 .andExpect(jsonPath("$.prices[0].ticker", is("DRAM")))
                 .andExpect(jsonPath("$.prices[1].ticker", is("000660")))
-                .andExpect(jsonPath("$.fxRates[0].baseCurrency", is("KRW")));
+                .andExpect(jsonPath("$.fxRates[0].baseCurrency", is("KRW")))
+                .andExpect(jsonPath("$.officialNavs[0].ticker", is("DRAM")))
+                .andExpect(jsonPath("$.officialNavs[0].nav", comparesEqualTo(80.95)));
 
         mockMvc.perform(get("/api/market-data/prices/KRX/000660/latest"))
                 .andExpect(status().isOk())
@@ -301,6 +305,28 @@ class MarketDataApiIntegrationTest {
         mockMvc.perform(get("/api/market-data/fx-rates/KRW/USD/latest"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.rate", comparesEqualTo(0.00081000)));
+
+        mockMvc.perform(get("/api/market-data/official-navs/DRAM/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nav", comparesEqualTo(80.95)));
+    }
+
+    @Test
+    void importsOfficialNavOnlyCsv() throws Exception {
+        String csv = """
+                type,ticker,name,currency,nav,asOfDate,source,observedAt
+                official_nav,DRAM,Roundhill Memory ETF,USD,80.95,2026-06-26,issuer-csv,2026-06-26T20:00:00Z
+                """;
+
+        mockMvc.perform(post("/api/market-data/import/csv")
+                        .contentType("text/csv")
+                        .content(csv))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pricesImported", is(0)))
+                .andExpect(jsonPath("$.fxRatesImported", is(0)))
+                .andExpect(jsonPath("$.officialNavsImported", is(1)))
+                .andExpect(jsonPath("$.officialNavs[0].ticker", is("DRAM")))
+                .andExpect(jsonPath("$.officialNavs[0].source", is("issuer-csv")));
     }
 
     @Test
@@ -316,6 +342,18 @@ class MarketDataApiIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("bad_request")))
                 .andExpect(jsonPath("$.message", is("Invalid price on line 2: not-a-number")));
+    }
+
+    @Test
+    void csvImportRejectsHeaderOnlyPayload() throws Exception {
+        String csv = "type,ticker,name,currency,nav,asOfDate,source,observedAt\n";
+
+        mockMvc.perform(post("/api/market-data/import/csv")
+                        .contentType("text/csv")
+                        .content(csv))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("bad_request")))
+                .andExpect(jsonPath("$.message", is("At least one price, FX rate, or official NAV snapshot is required")));
     }
 
     @Test

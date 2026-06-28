@@ -7,6 +7,7 @@ import com.temadison.drambuilder.dto.FxRateSnapshotResponse;
 import com.temadison.drambuilder.dto.MarketDataIngestionConfigResponse;
 import com.temadison.drambuilder.dto.MarketDataIngestionRunResponse;
 import com.temadison.drambuilder.dto.MarketDataSummaryResponse;
+import com.temadison.drambuilder.dto.MarketDataCsvImportResponse;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
@@ -86,7 +87,7 @@ public class MarketDataController {
     }
 
     @PostMapping(value = "/import/csv", consumes = { "text/csv", MediaType.TEXT_PLAIN_VALUE })
-    public BulkMarketDataImportResponse importMarketDataCsv(@RequestBody String csv) {
+    public MarketDataCsvImportResponse importMarketDataCsv(@RequestBody String csv) {
         return marketDataCsvImportService.importCsv(csv);
     }
 
