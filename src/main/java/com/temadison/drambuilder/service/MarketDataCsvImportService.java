@@ -3,7 +3,9 @@ package com.temadison.drambuilder.service;
 import com.temadison.drambuilder.dto.BulkMarketDataImportRequest;
 import com.temadison.drambuilder.dto.BulkMarketDataImportResponse;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
+import com.temadison.drambuilder.dto.MarketDataHoldingRequest;
 import com.temadison.drambuilder.dto.MarketDataCsvImportResponse;
+import com.temadison.drambuilder.dto.MarketDataSnapshotRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
@@ -21,9 +23,14 @@ import org.springframework.stereotype.Service;
 public class MarketDataCsvImportService {
 
     private final MarketDataService marketDataService;
+    private final DramMarketDataSnapshotService dramMarketDataSnapshotService;
 
-    public MarketDataCsvImportService(MarketDataService marketDataService) {
+    public MarketDataCsvImportService(
+            MarketDataService marketDataService,
+            DramMarketDataSnapshotService dramMarketDataSnapshotService
+    ) {
         this.marketDataService = marketDataService;
+        this.dramMarketDataSnapshotService = dramMarketDataSnapshotService;
     }
 
     public MarketDataCsvImportResponse importCsv(String csv) {
@@ -36,6 +43,7 @@ public class MarketDataCsvImportService {
         List<PriceSnapshotRequest> prices = new ArrayList<>();
         List<FxRateSnapshotRequest> fxRates = new ArrayList<>();
         List<OfficialNavSnapshotRequest> officialNavs = new ArrayList<>();
+        SnapshotCsvState snapshot = new SnapshotCsvState();
 
         for (int i = 1; i < rows.size(); i++) {
             List<String> row = rows.get(i);
@@ -73,13 +81,26 @@ public class MarketDataCsvImportService {
                         date(required(row, headers, "asofdate", lineNumber), "asOfDate", lineNumber),
                         optionalInstant(value(row, headers, "observedat"), lineNumber)
                 ));
+            } else if ("snapshot_holding".equals(type) || "snapshotholding".equals(type) || "holding".equals(type)) {
+                snapshot.addHolding(new MarketDataHoldingRequest(
+                        required(row, headers, "ticker", lineNumber),
+                        required(row, headers, "name", lineNumber),
+                        required(row, headers, "exchange", lineNumber),
+                        required(row, headers, "currency", lineNumber),
+                        decimal(required(row, headers, "weight", lineNumber), "weight", lineNumber)
+                ));
+                snapshot.captureDate(optionalDate(value(row, headers, "asofdate"), "asOfDate", lineNumber));
+                snapshot.captureMarketPrice(optionalDecimal(value(row, headers, "marketprice"), "marketPrice", lineNumber));
+                snapshot.capturePurchasePrice(optionalDecimal(value(row, headers, "purchaseprice"), "purchasePrice", lineNumber));
+                snapshot.captureEtfTicker(value(row, headers, "etfticker"));
+                snapshot.captureEtfExchange(value(row, headers, "etfexchange"));
             } else {
                 throw new IllegalArgumentException("Unsupported market data CSV type on line " + lineNumber + ": " + type);
             }
         }
 
-        if (prices.isEmpty() && fxRates.isEmpty() && officialNavs.isEmpty()) {
-            throw new IllegalArgumentException("At least one price, FX rate, or official NAV snapshot is required");
+        if (prices.isEmpty() && fxRates.isEmpty() && officialNavs.isEmpty() && !snapshot.hasHoldings()) {
+            throw new IllegalArgumentException("At least one price, FX rate, official NAV, or snapshot holding row is required");
         }
 
         BulkMarketDataImportResponse importedMarketData = prices.isEmpty() && fxRates.isEmpty()
@@ -88,11 +109,17 @@ public class MarketDataCsvImportService {
         List<OfficialNavSnapshotResponse> importedOfficialNavs = officialNavs.stream()
                 .map(marketDataService::createOfficialNavSnapshot)
                 .toList();
+        boolean snapshotCreated = false;
+        if (snapshot.hasHoldings()) {
+            dramMarketDataSnapshotService.createSnapshot(snapshot.toRequest());
+            snapshotCreated = true;
+        }
 
         return new MarketDataCsvImportResponse(
                 importedMarketData.pricesImported(),
                 importedMarketData.fxRatesImported(),
                 importedOfficialNavs.size(),
+                snapshotCreated,
                 importedMarketData.prices(),
                 importedMarketData.fxRates(),
                 importedOfficialNavs
@@ -192,6 +219,13 @@ public class MarketDataCsvImportService {
         }
     }
 
+    private BigDecimal optionalDecimal(String value, String column, int lineNumber) {
+        if (value.isBlank()) {
+            return null;
+        }
+        return decimal(value, column, lineNumber);
+    }
+
     private Instant optionalInstant(String value, int lineNumber) {
         if (value.isBlank()) {
             return null;
@@ -211,11 +245,80 @@ public class MarketDataCsvImportService {
         }
     }
 
+    private LocalDate optionalDate(String value, String column, int lineNumber) {
+        if (value.isBlank()) {
+            return null;
+        }
+        return date(value, column, lineNumber);
+    }
+
     private boolean isBlankRow(List<String> row) {
         return row.stream().allMatch(String::isBlank);
     }
 
     private String normalizeHeader(String header) {
         return header.trim().replace("_", "").replace("-", "").toLowerCase(Locale.ROOT);
+    }
+
+    private static class SnapshotCsvState {
+
+        private final List<MarketDataHoldingRequest> holdings = new ArrayList<>();
+        private LocalDate asOfDate;
+        private BigDecimal marketPrice;
+        private BigDecimal purchasePrice;
+        private String etfTicker;
+        private String etfExchange;
+
+        private boolean hasHoldings() {
+            return !holdings.isEmpty();
+        }
+
+        private void addHolding(MarketDataHoldingRequest holding) {
+            holdings.add(holding);
+        }
+
+        private void captureDate(LocalDate value) {
+            if (value != null) {
+                this.asOfDate = value;
+            }
+        }
+
+        private void captureMarketPrice(BigDecimal value) {
+            if (value != null) {
+                this.marketPrice = value;
+            }
+        }
+
+        private void capturePurchasePrice(BigDecimal value) {
+            if (value != null) {
+                this.purchasePrice = value;
+            }
+        }
+
+        private void captureEtfTicker(String value) {
+            if (!value.isBlank()) {
+                this.etfTicker = value;
+            }
+        }
+
+        private void captureEtfExchange(String value) {
+            if (!value.isBlank()) {
+                this.etfExchange = value;
+            }
+        }
+
+        private MarketDataSnapshotRequest toRequest() {
+            if (purchasePrice == null) {
+                throw new IllegalArgumentException("purchasePrice is required when CSV includes snapshot holding rows");
+            }
+            return new MarketDataSnapshotRequest(
+                    asOfDate,
+                    marketPrice,
+                    purchasePrice,
+                    etfTicker,
+                    etfExchange,
+                    holdings
+            );
+        }
     }
 }

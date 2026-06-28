@@ -80,19 +80,25 @@ export const sampleMarketData = {
   ]
 };
 
-export const sampleMarketDataCsv = `type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,nav,asOfDate,source,observedAt
-price,DRAM,Roundhill Memory ETF,NYSEARCA,USD,81.50,,,,,,ui-csv-sample,2026-06-26T20:00:00Z
-price,000660,SK hynix,KRX,KRW,110000,,,,,,ui-csv-sample,2026-06-25T20:00:00Z
-price,000660,SK hynix,KRX,KRW,114000,,,,,,ui-csv-sample,2026-06-26T20:00:00Z
-price,MU,Micron Technology,NASDAQ,USD,105,,,,,,ui-csv-sample,2026-06-25T20:00:00Z
-price,MU,Micron Technology,NASDAQ,USD,108,,,,,,ui-csv-sample,2026-06-26T20:00:00Z
-price,005930,Samsung Electronics,KRX,KRW,77600,,,,,,ui-csv-sample,2026-06-25T20:00:00Z
-price,005930,Samsung Electronics,KRX,KRW,79000,,,,,,ui-csv-sample,2026-06-26T20:00:00Z
-price,ASML,ASML Holding,NASDAQ,USD,1020,,,,,,ui-csv-sample,2026-06-25T20:00:00Z
-price,ASML,ASML Holding,NASDAQ,USD,1015,,,,,,ui-csv-sample,2026-06-26T20:00:00Z
-fx,,,,,,KRW,USD,0.00080,,,ui-csv-sample,2026-06-25T20:00:00Z
-fx,,,,,,KRW,USD,0.00081,,,ui-csv-sample,2026-06-26T20:00:00Z
-official_nav,DRAM,Roundhill Memory ETF,,USD,,,,,80.95,2026-06-26,ui-csv-sample,2026-06-26T20:00:00Z`;
+export const sampleMarketDataCsv = [
+  ['type', 'ticker', 'name', 'exchange', 'currency', 'price', 'baseCurrency', 'quoteCurrency', 'rate', 'nav', 'weight', 'purchasePrice', 'etfTicker', 'etfExchange', 'asOfDate', 'source', 'observedAt'],
+  ['price', 'DRAM', 'Roundhill Memory ETF', 'NYSEARCA', 'USD', '81.50', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-26T20:00:00Z'],
+  ['price', '000660', 'SK hynix', 'KRX', 'KRW', '110000', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-25T20:00:00Z'],
+  ['price', '000660', 'SK hynix', 'KRX', 'KRW', '114000', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-26T20:00:00Z'],
+  ['price', 'MU', 'Micron Technology', 'NASDAQ', 'USD', '105', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-25T20:00:00Z'],
+  ['price', 'MU', 'Micron Technology', 'NASDAQ', 'USD', '108', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-26T20:00:00Z'],
+  ['price', '005930', 'Samsung Electronics', 'KRX', 'KRW', '77600', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-25T20:00:00Z'],
+  ['price', '005930', 'Samsung Electronics', 'KRX', 'KRW', '79000', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-26T20:00:00Z'],
+  ['price', 'ASML', 'ASML Holding', 'NASDAQ', 'USD', '1020', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-25T20:00:00Z'],
+  ['price', 'ASML', 'ASML Holding', 'NASDAQ', 'USD', '1015', '', '', '', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-26T20:00:00Z'],
+  ['fx', '', '', '', '', '', 'KRW', 'USD', '0.00080', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-25T20:00:00Z'],
+  ['fx', '', '', '', '', '', 'KRW', 'USD', '0.00081', '', '', '', '', '', '', 'ui-csv-sample', '2026-06-26T20:00:00Z'],
+  ['official_nav', 'DRAM', 'Roundhill Memory ETF', '', 'USD', '', '', '', '', '80.95', '', '', '', '', '2026-06-26', 'ui-csv-sample', '2026-06-26T20:00:00Z'],
+  ['snapshot_holding', '000660', 'SK hynix', 'KRX', 'KRW', '', '', '', '', '', '0.26', '76.31', 'DRAM', 'NYSEARCA', '2026-06-26', 'ui-csv-sample', ''],
+  ['snapshot_holding', 'MU', 'Micron Technology', 'NASDAQ', 'USD', '', '', '', '', '', '0.19', '76.31', 'DRAM', 'NYSEARCA', '2026-06-26', 'ui-csv-sample', ''],
+  ['snapshot_holding', '005930', 'Samsung Electronics', 'KRX', 'KRW', '', '', '', '', '', '0.15', '76.31', 'DRAM', 'NYSEARCA', '2026-06-26', 'ui-csv-sample', ''],
+  ['snapshot_holding', 'ASML', 'ASML Holding', 'NASDAQ', 'USD', '', '', '', '', '', '0.05', '76.31', 'DRAM', 'NYSEARCA', '2026-06-26', 'ui-csv-sample', '']
+].map(row => row.join(',')).join('\n');
 
 function price(ticker, name, exchange, currency, priceValue, observedAt) {
   return {

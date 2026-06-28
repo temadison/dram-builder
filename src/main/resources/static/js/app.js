@@ -319,7 +319,8 @@ function importSummary(result) {
   const prices = result?.pricesImported ?? 0;
   const fxRates = result?.fxRatesImported ?? 0;
   const officialNavs = result?.officialNavsImported ?? 0;
-  return `CSV imported: ${prices} prices / ${fxRates} FX / ${officialNavs} NAV.`;
+  const snapshot = result?.snapshotCreated ? ' Snapshot created.' : '';
+  return `CSV imported: ${prices} prices / ${fxRates} FX / ${officialNavs} NAV.${snapshot}`;
 }
 
 function optionalNumeric(value) {

@@ -6,6 +6,7 @@ public record MarketDataCsvImportResponse(
         int pricesImported,
         int fxRatesImported,
         int officialNavsImported,
+        boolean snapshotCreated,
         List<PriceSnapshotResponse> prices,
         List<FxRateSnapshotResponse> fxRates,
         List<OfficialNavSnapshotResponse> officialNavs

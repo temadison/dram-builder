@@ -92,7 +92,7 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 `MarketDataFreshnessService` checks configured required price snapshots and reports `FRESH`, `STALE`, or `MISSING` through the market data summary. This gives scheduled ingestion and local seed loads an immediate operational signal before a provider adapter exists.
 
-`MarketDataCsvImportService` parses combined price/FX CSV files into the same bulk import request contract. It is intentionally an adapter over `MarketDataService`, so CSV input, JSON input, and future provider jobs share the same persistence and validation path.
+`MarketDataCsvImportService` parses combined price, FX, official NAV, and snapshot holding CSV files into the same market data and market-data-driven snapshot services. It is intentionally an adapter over existing services, so CSV input, JSON input, UI entry, and future provider jobs share the same persistence and validation path.
 
 Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer/provider NAV snapshots in their own table rather than attaching them to calculated DRAM snapshots.
 

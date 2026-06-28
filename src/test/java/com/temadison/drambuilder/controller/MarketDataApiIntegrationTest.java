@@ -292,6 +292,7 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$.pricesImported", is(2)))
                 .andExpect(jsonPath("$.fxRatesImported", is(1)))
                 .andExpect(jsonPath("$.officialNavsImported", is(1)))
+                .andExpect(jsonPath("$.snapshotCreated", is(false)))
                 .andExpect(jsonPath("$.prices[0].ticker", is("DRAM")))
                 .andExpect(jsonPath("$.prices[1].ticker", is("000660")))
                 .andExpect(jsonPath("$.fxRates[0].baseCurrency", is("KRW")))
@@ -325,8 +326,53 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$.pricesImported", is(0)))
                 .andExpect(jsonPath("$.fxRatesImported", is(0)))
                 .andExpect(jsonPath("$.officialNavsImported", is(1)))
+                .andExpect(jsonPath("$.snapshotCreated", is(false)))
                 .andExpect(jsonPath("$.officialNavs[0].ticker", is("DRAM")))
                 .andExpect(jsonPath("$.officialNavs[0].source", is("issuer-csv")));
+    }
+
+    @Test
+    void importsCsvMarketDataAndCreatesSnapshotFromHoldingRows() throws Exception {
+        String csv = """
+                type,ticker,name,exchange,currency,price,weight,purchasePrice,etfTicker,etfExchange,asOfDate,source,observedAt
+                price,DRAM,Roundhill Memory ETF,BATS,USD,68.00,,,,,,csv-snapshot,2026-06-01T20:00:00Z
+                price,MU,Micron Technology,NASDAQ,USD,97.10,,,,,,csv-snapshot,2026-05-29T20:00:00Z
+                price,MU,Micron Technology,NASDAQ,USD,103.55,,,,,,csv-snapshot,2026-06-01T20:00:00Z
+                snapshot_holding,MU,Micron Technology,NASDAQ,USD,,0.2383,68.00,DRAM,BATS,2026-06-01,csv-snapshot,
+                """;
+
+        mockMvc.perform(post("/api/market-data/import/csv")
+                        .contentType("text/csv")
+                        .content(csv))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pricesImported", is(3)))
+                .andExpect(jsonPath("$.fxRatesImported", is(0)))
+                .andExpect(jsonPath("$.officialNavsImported", is(0)))
+                .andExpect(jsonPath("$.snapshotCreated", is(true)));
+
+        mockMvc.perform(get("/api/dram/latest"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.etfTicker", is("DRAM")))
+                .andExpect(jsonPath("$.asOfDate", is("2026-06-01")))
+                .andExpect(jsonPath("$.marketPrice", comparesEqualTo(68.00)))
+                .andExpect(jsonPath("$.purchasePrice", comparesEqualTo(68.00)))
+                .andExpect(jsonPath("$.holdings", hasSize(1)))
+                .andExpect(jsonPath("$.holdings[0].ticker", is("MU")));
+    }
+
+    @Test
+    void csvSnapshotHoldingRowsRequirePurchasePrice() throws Exception {
+        String csv = """
+                type,ticker,name,exchange,currency,weight
+                snapshot_holding,MU,Micron Technology,NASDAQ,USD,0.2383
+                """;
+
+        mockMvc.perform(post("/api/market-data/import/csv")
+                        .contentType("text/csv")
+                        .content(csv))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error", is("bad_request")))
+                .andExpect(jsonPath("$.message", is("purchasePrice is required when CSV includes snapshot holding rows")));
     }
 
     @Test
@@ -350,10 +396,10 @@ class MarketDataApiIntegrationTest {
 
         mockMvc.perform(post("/api/market-data/import/csv")
                         .contentType("text/csv")
-                        .content(csv))
+                .content(csv))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error", is("bad_request")))
-                .andExpect(jsonPath("$.message", is("At least one price, FX rate, or official NAV snapshot is required")));
+                .andExpect(jsonPath("$.message", is("At least one price, FX rate, official NAV, or snapshot holding row is required")));
     }
 
     @Test

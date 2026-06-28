@@ -58,13 +58,14 @@ For current DRAM setup, use Roundhill as the issuer source for holdings and offi
 
 ## CSV Imports
 
-Use `/api/market-data/import/csv` for quick provider or issuer exports. The CSV parser accepts `price`, `fx`/`fx_rate`, and `official_nav`/`nav` rows. Official NAV rows can be imported by themselves, which is useful when updating Roundhill issuer NAV separately from price and FX data.
+Use `/api/market-data/import/csv` for quick provider or issuer exports. The CSV parser accepts `price`, `fx`/`fx_rate`, `official_nav`/`nav`, and `snapshot_holding`/`holding` rows. Official NAV rows can be imported by themselves, which is useful when updating Roundhill issuer NAV separately from price and FX data. Snapshot holding rows create a DRAM snapshot after the price, FX, and NAV rows in the same CSV are stored.
 
 ```csv
-type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,nav,asOfDate,source,observedAt
-price,DRAM,Roundhill Memory ETF,BATS,USD,68.00,,,,,,stockanalysis-spglobal,2026-06-01T20:00:00Z
-fx,,,,,,KRW,USD,0.00073400,,,twelvedata,2026-06-01T20:00:00Z
-official_nav,DRAM,Roundhill Memory ETF,,USD,,,,,68.00,2026-06-01,roundhill,2026-06-01T20:00:00Z
+type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,nav,weight,purchasePrice,etfTicker,etfExchange,asOfDate,source,observedAt
+price,DRAM,Roundhill Memory ETF,BATS,USD,68.00,,,,,,,,,,stockanalysis-spglobal,2026-06-01T20:00:00Z
+fx,,,,,,KRW,USD,0.00073400,,,,,,,twelvedata,2026-06-01T20:00:00Z
+official_nav,DRAM,Roundhill Memory ETF,,USD,,,,,68.00,,,,2026-06-01,roundhill,2026-06-01T20:00:00Z
+snapshot_holding,MU,Micron Technology,NASDAQ,USD,,,,,,0.2383,68.00,DRAM,BATS,2026-06-01,roundhill,
 ```
 
 The June 1 starter JSON intentionally leaves `officialNavs` empty until the exact Roundhill official NAV is copied from an issuer export. Do not add an estimated NAV to `officialNavs`; the app validates this as an official issuer/provider fact.
