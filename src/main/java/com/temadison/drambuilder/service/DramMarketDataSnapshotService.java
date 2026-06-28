@@ -12,7 +12,6 @@ import com.temadison.drambuilder.repository.PriceSnapshotRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.List;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
 
@@ -75,15 +74,17 @@ public class DramMarketDataSnapshotService {
     private BigDecimal latestEtfPrice(MarketDataSnapshotRequest request) {
         String ticker = defaulted(request.etfTicker(), DEFAULT_ETF_TICKER);
         String exchange = defaulted(request.etfExchange(), DEFAULT_ETF_EXCHANGE);
-        return latestPrices(ticker, exchange).getFirst().getPrice();
+        return currentPrice(ticker, exchange).getPrice();
     }
 
     private HoldingInput toHoldingInput(MarketDataHoldingRequest holding) {
         String ticker = normalize(holding.ticker());
         String exchange = normalize(holding.exchange());
         String currency = normalize(holding.currency());
-        List<PriceSnapshot> prices = latestPrices(ticker, exchange);
-        List<FxRateSnapshot> fxRates = latestFxRates(currency);
+        PriceSnapshot currentPrice = currentPrice(ticker, exchange);
+        PriceSnapshot priorPrice = priorPrice(ticker, exchange, currentPrice);
+        FxRateSnapshot currentFxRate = currentFxRate(currency);
+        FxRateSnapshot priorFxRate = priorFxRate(currency, currentFxRate);
 
         return new HoldingInput(
                 ticker,
@@ -91,41 +92,53 @@ public class DramMarketDataSnapshotService {
                 exchange,
                 currency,
                 holding.weight(),
-                prices.getFirst().getPrice(),
-                priorPrice(prices),
-                fxRates.getFirst().getRate(),
-                priorFxRate(fxRates)
+                currentPrice.getPrice(),
+                priorPrice.getPrice(),
+                currentFxRate.getRate(),
+                priorFxRate.getRate()
         );
     }
 
-    private List<PriceSnapshot> latestPrices(String ticker, String exchange) {
-        List<PriceSnapshot> prices = priceSnapshotRepository
-                .findTop2BySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(ticker, exchange);
-        if (prices.isEmpty()) {
-            throw new IllegalStateException("No price snapshot exists for " + ticker + " on " + exchange);
-        }
-        return prices;
+    private PriceSnapshot currentPrice(String ticker, String exchange) {
+        return priceSnapshotRepository.findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(ticker, exchange)
+                .orElseThrow(() -> new IllegalStateException("No price snapshot exists for " + ticker + " on " + exchange));
     }
 
-    private List<FxRateSnapshot> latestFxRates(String currency) {
+    private PriceSnapshot priorPrice(String ticker, String exchange, PriceSnapshot current) {
+        return priceSnapshotRepository
+                .findFirstBySecurityTickerAndSecurityExchangeAndObservedAtBeforeOrderByObservedAtDesc(
+                        ticker,
+                        exchange,
+                        current.getObservedAt()
+                )
+                .orElse(current);
+    }
+
+    private FxRateSnapshot currentFxRate(String currency) {
         if (USD.equals(currency)) {
-            return List.of(new FxRateSnapshot(USD, USD, BigDecimal.ONE, "identity", Instant.EPOCH, Instant.EPOCH));
+            return identityFxRate();
         }
 
-        List<FxRateSnapshot> rates = fxRateSnapshotRepository
-                .findTop2ByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(currency, USD);
-        if (rates.isEmpty()) {
-            throw new IllegalStateException("No FX rate snapshot exists for " + currency + "/" + USD);
+        return fxRateSnapshotRepository.findFirstByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(currency, USD)
+                .orElseThrow(() -> new IllegalStateException("No FX rate snapshot exists for " + currency + "/" + USD));
+    }
+
+    private FxRateSnapshot priorFxRate(String currency, FxRateSnapshot current) {
+        if (USD.equals(currency)) {
+            return identityFxRate();
         }
-        return rates;
+
+        return fxRateSnapshotRepository
+                .findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtBeforeOrderByObservedAtDesc(
+                        currency,
+                        USD,
+                        current.getObservedAt()
+                )
+                .orElse(current);
     }
 
-    private BigDecimal priorPrice(List<PriceSnapshot> prices) {
-        return prices.size() > 1 ? prices.get(1).getPrice() : prices.getFirst().getPrice();
-    }
-
-    private BigDecimal priorFxRate(List<FxRateSnapshot> rates) {
-        return rates.size() > 1 ? rates.get(1).getRate() : rates.getFirst().getRate();
+    private FxRateSnapshot identityFxRate() {
+        return new FxRateSnapshot(USD, USD, BigDecimal.ONE, "identity", Instant.EPOCH, Instant.EPOCH);
     }
 
     private String defaulted(String value, String defaultValue) {

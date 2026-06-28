@@ -84,6 +84,45 @@ class DramMarketDataSnapshotIntegrationTest {
     }
 
     @Test
+    void fromMarketDataUsesPriorObservationBeforeDuplicateLatestRows() throws Exception {
+        createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "105.00", PRIOR_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "108.00", CURRENT_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "108.00", CURRENT_OBSERVED_AT);
+        createFxRate("KRW", "USD", "0.00080000", PRIOR_OBSERVED_AT);
+        createFxRate("KRW", "USD", "0.00081000", CURRENT_OBSERVED_AT);
+        createFxRate("KRW", "USD", "0.00081000", CURRENT_OBSERVED_AT);
+
+        MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                null,
+                new BigDecimal("76.31"),
+                null,
+                null,
+                List.of(
+                        new MarketDataHoldingRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("0.19")),
+                        new MarketDataHoldingRequest("000660", "SK hynix", "KRX", "KRW", new BigDecimal("0.26"))
+                )
+        );
+        createPrice("000660", "SK hynix", "KRX", "KRW", "110000.00", PRIOR_OBSERVED_AT);
+        createPrice("000660", "SK hynix", "KRX", "KRW", "114000.00", CURRENT_OBSERVED_AT);
+        createPrice("000660", "SK hynix", "KRX", "KRW", "114000.00", CURRENT_OBSERVED_AT);
+
+        mockMvc.perform(post("/api/dram/snapshot/from-market-data")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.holdings[0].ticker", is("000660")))
+                .andExpect(jsonPath("$.holdings[0].currentPrice", comparesEqualTo(114000.00)))
+                .andExpect(jsonPath("$.holdings[0].priorPrice", comparesEqualTo(110000.00)))
+                .andExpect(jsonPath("$.holdings[0].currentFxToUsd", comparesEqualTo(0.00081000)))
+                .andExpect(jsonPath("$.holdings[0].priorFxToUsd", comparesEqualTo(0.00080000)))
+                .andExpect(jsonPath("$.holdings[1].ticker", is("MU")))
+                .andExpect(jsonPath("$.holdings[1].currentPrice", comparesEqualTo(108.00)))
+                .andExpect(jsonPath("$.holdings[1].priorPrice", comparesEqualTo(105.00)));
+    }
+
+    @Test
     void fromMarketDataReturnsNotFoundWhenHoldingPriceIsMissing() throws Exception {
         createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
 
