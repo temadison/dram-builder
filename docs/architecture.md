@@ -96,6 +96,8 @@ The initial migration `V1__initial_schema.sql` creates the current ETF, security
 
 Official ETF NAV capture also lives behind `MarketDataService`. It stores issuer/provider NAV snapshots in their own table rather than attaching them to calculated DRAM snapshots.
 
+`MarketDataSnapshotReadinessValidator` owns pre-snapshot data quality gates for market-data-driven snapshots. It requires current ETF and holding prices for the snapshot date, prior holding prices, FX and prior FX for non-USD holdings, and official NAV for the ETF/as-of date before `DramMarketDataSnapshotService` can persist a snapshot.
+
 `MarketDataIngestionRunService` records ingestion attempts independently from the market data writes. It uses short transactions for start/success/failure updates so a failed data load still leaves an operational trail.
 
 `MarketDataIngestionConfigService` exposes non-secret runtime ingestion settings for operational checks. It reports file/scheduler mode, cron windows, provider count, and freshness configuration without surfacing database credentials or API keys.

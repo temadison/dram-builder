@@ -334,11 +334,12 @@ class MarketDataApiIntegrationTest {
     @Test
     void importsCsvMarketDataAndCreatesSnapshotFromHoldingRows() throws Exception {
         String csv = """
-                type,ticker,name,exchange,currency,price,weight,purchasePrice,etfTicker,etfExchange,asOfDate,source,observedAt
+                type,ticker,name,exchange,currency,price,nav,weight,purchasePrice,etfTicker,etfExchange,asOfDate,source,observedAt
                 price,DRAM,Roundhill Memory ETF,BATS,USD,68.00,,,,,,csv-snapshot,2026-06-01T20:00:00Z
                 price,MU,Micron Technology,NASDAQ,USD,97.10,,,,,,csv-snapshot,2026-05-29T20:00:00Z
                 price,MU,Micron Technology,NASDAQ,USD,103.55,,,,,,csv-snapshot,2026-06-01T20:00:00Z
-                snapshot_holding,MU,Micron Technology,NASDAQ,USD,,0.2383,68.00,DRAM,BATS,2026-06-01,csv-snapshot,
+                official_nav,DRAM,Roundhill Memory ETF,,USD,,68.00,,,,,2026-06-01,csv-snapshot,2026-06-01T20:00:00Z
+                snapshot_holding,MU,Micron Technology,NASDAQ,USD,,,0.2383,68.00,DRAM,BATS,2026-06-01,csv-snapshot,
                 """;
 
         mockMvc.perform(post("/api/market-data/import/csv")
@@ -347,7 +348,7 @@ class MarketDataApiIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pricesImported", is(3)))
                 .andExpect(jsonPath("$.fxRatesImported", is(0)))
-                .andExpect(jsonPath("$.officialNavsImported", is(0)))
+                .andExpect(jsonPath("$.officialNavsImported", is(1)))
                 .andExpect(jsonPath("$.snapshotCreated", is(true)));
 
         mockMvc.perform(get("/api/dram/latest"))

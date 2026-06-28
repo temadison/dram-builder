@@ -31,17 +31,20 @@ public class DramMarketDataSnapshotService {
     private final FxRateSnapshotRepository fxRateSnapshotRepository;
     private final DramSnapshotService dramSnapshotService;
     private final SnapshotInputValidator snapshotInputValidator;
+    private final MarketDataSnapshotReadinessValidator marketDataSnapshotReadinessValidator;
 
     public DramMarketDataSnapshotService(
             PriceSnapshotRepository priceSnapshotRepository,
             FxRateSnapshotRepository fxRateSnapshotRepository,
             DramSnapshotService dramSnapshotService,
-            SnapshotInputValidator snapshotInputValidator
+            SnapshotInputValidator snapshotInputValidator,
+            MarketDataSnapshotReadinessValidator marketDataSnapshotReadinessValidator
     ) {
         this.priceSnapshotRepository = priceSnapshotRepository;
         this.fxRateSnapshotRepository = fxRateSnapshotRepository;
         this.dramSnapshotService = dramSnapshotService;
         this.snapshotInputValidator = snapshotInputValidator;
+        this.marketDataSnapshotReadinessValidator = marketDataSnapshotReadinessValidator;
     }
 
     /**
@@ -55,13 +58,15 @@ public class DramMarketDataSnapshotService {
      */
     public SnapshotResponse createSnapshot(MarketDataSnapshotRequest request) {
         snapshotInputValidator.validate(request);
+        LocalDate asOfDate = request.asOfDate() == null ? LocalDate.now() : request.asOfDate();
+        marketDataSnapshotReadinessValidator.validateReady(request, asOfDate);
 
         BigDecimal marketPrice = request.marketPrice() == null
                 ? latestEtfPrice(request)
                 : request.marketPrice();
 
         SnapshotRequest snapshotRequest = new SnapshotRequest(
-                request.asOfDate() == null ? LocalDate.now() : request.asOfDate(),
+                asOfDate,
                 marketPrice,
                 request.purchasePrice(),
                 request.holdings().stream()

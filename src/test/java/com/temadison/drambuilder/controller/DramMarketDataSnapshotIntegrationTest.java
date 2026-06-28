@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.temadison.drambuilder.dto.FxRateSnapshotRequest;
 import com.temadison.drambuilder.dto.MarketDataHoldingRequest;
 import com.temadison.drambuilder.dto.MarketDataSnapshotRequest;
+import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -43,6 +44,7 @@ class DramMarketDataSnapshotIntegrationTest {
 
     @Test
     void createsDramSnapshotFromStoredMarketData() throws Exception {
+        createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
         createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
         createPrice("000660", "SK hynix", "KRX", "KRW", "110000.00", PRIOR_OBSERVED_AT);
         createPrice("000660", "SK hynix", "KRX", "KRW", "114000.00", CURRENT_OBSERVED_AT);
@@ -85,6 +87,7 @@ class DramMarketDataSnapshotIntegrationTest {
 
     @Test
     void fromMarketDataUsesPriorObservationBeforeDuplicateLatestRows() throws Exception {
+        createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
         createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
         createPrice("MU", "Micron Technology", "NASDAQ", "USD", "105.00", PRIOR_OBSERVED_AT);
         createPrice("MU", "Micron Technology", "NASDAQ", "USD", "108.00", CURRENT_OBSERVED_AT);
@@ -124,6 +127,7 @@ class DramMarketDataSnapshotIntegrationTest {
 
     @Test
     void fromMarketDataReturnsNotFoundWhenHoldingPriceIsMissing() throws Exception {
+        createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
         createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
 
         MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
@@ -147,6 +151,78 @@ class DramMarketDataSnapshotIntegrationTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", is("not_found")))
                 .andExpect(jsonPath("$.message", is("No price snapshot exists for MU on NASDAQ")));
+    }
+
+    @Test
+    void fromMarketDataRejectsMissingOfficialNavBeforeSnapshotCreation() throws Exception {
+        createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "105.00", PRIOR_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "108.00", CURRENT_OBSERVED_AT);
+
+        MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                null,
+                new BigDecimal("76.31"),
+                null,
+                null,
+                List.of(new MarketDataHoldingRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("0.19")))
+        );
+
+        mockMvc.perform(post("/api/dram/snapshot/from-market-data")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", is("not_found")))
+                .andExpect(jsonPath("$.message", is("No official NAV snapshot exists for DRAM as of 2026-06-26")));
+    }
+
+    @Test
+    void fromMarketDataRejectsStaleRequiredPriceBeforeSnapshotCreation() throws Exception {
+        createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
+        createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "105.00", Instant.parse("2026-06-24T20:00:00Z"));
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "108.00", PRIOR_OBSERVED_AT);
+
+        MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                null,
+                new BigDecimal("76.31"),
+                null,
+                null,
+                List.of(new MarketDataHoldingRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("0.19")))
+        );
+
+        mockMvc.perform(post("/api/dram/snapshot/from-market-data")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", is("not_found")))
+                .andExpect(jsonPath("$.message", is("Latest price snapshot is stale for MU on NASDAQ as of 2026-06-26")));
+    }
+
+    @Test
+    void fromMarketDataRejectsMissingPriorFxBeforeSnapshotCreation() throws Exception {
+        createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
+        createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
+        createPrice("000660", "SK hynix", "KRX", "KRW", "110000.00", PRIOR_OBSERVED_AT);
+        createPrice("000660", "SK hynix", "KRX", "KRW", "114000.00", CURRENT_OBSERVED_AT);
+        createFxRate("KRW", "USD", "0.00081000", CURRENT_OBSERVED_AT);
+
+        MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                null,
+                new BigDecimal("76.31"),
+                null,
+                null,
+                List.of(new MarketDataHoldingRequest("000660", "SK hynix", "KRX", "KRW", new BigDecimal("0.26")))
+        );
+
+        mockMvc.perform(post("/api/dram/snapshot/from-market-data")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", is("not_found")))
+                .andExpect(jsonPath("$.message", is("No prior FX rate snapshot exists for KRW/USD")));
     }
 
     @Test
@@ -197,6 +273,23 @@ class DramMarketDataSnapshotIntegrationTest {
                 observedAt
         );
         mockMvc.perform(post("/api/market-data/fx-rates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    private void createOfficialNav(String ticker, String name, String nav, LocalDate asOfDate, Instant observedAt)
+            throws Exception {
+        OfficialNavSnapshotRequest request = new OfficialNavSnapshotRequest(
+                ticker,
+                name,
+                new BigDecimal(nav),
+                "USD",
+                "manual-test",
+                asOfDate,
+                observedAt
+        );
+        mockMvc.perform(post("/api/market-data/official-navs")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk());

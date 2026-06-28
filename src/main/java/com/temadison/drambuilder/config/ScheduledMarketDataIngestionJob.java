@@ -1,6 +1,7 @@
 package com.temadison.drambuilder.config;
 
 import com.temadison.drambuilder.service.MarketDataFileIngestionService;
+import com.temadison.drambuilder.service.MarketDataIngestionService;
 import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ public class ScheduledMarketDataIngestionJob {
 
     private final MarketDataFileIngestionService marketDataFileIngestionService;
     private final MarketDataProviderIngestionService marketDataProviderIngestionService;
+    private final MarketDataIngestionService marketDataIngestionService;
     private final String ingestionFile;
     private final String mode;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -25,11 +27,13 @@ public class ScheduledMarketDataIngestionJob {
     public ScheduledMarketDataIngestionJob(
             MarketDataFileIngestionService marketDataFileIngestionService,
             MarketDataProviderIngestionService marketDataProviderIngestionService,
+            MarketDataIngestionService marketDataIngestionService,
             @Value("${app.ingest.file:}") String ingestionFile,
             @Value("${app.ingest.schedule.mode:file}") String mode
     ) {
         this.marketDataFileIngestionService = marketDataFileIngestionService;
         this.marketDataProviderIngestionService = marketDataProviderIngestionService;
+        this.marketDataIngestionService = marketDataIngestionService;
         this.ingestionFile = ingestionFile;
         this.mode = mode;
     }
@@ -57,7 +61,9 @@ public class ScheduledMarketDataIngestionJob {
             } else if ("file".equalsIgnoreCase(mode)) {
                 marketDataFileIngestionService.ingestFile("scheduled-file-" + window, ingestionFile);
             } else {
-                throw new IllegalArgumentException("Unsupported scheduled ingestion mode: " + mode);
+                IllegalArgumentException exception = new IllegalArgumentException("Unsupported scheduled ingestion mode: " + mode);
+                marketDataIngestionService.recordFailure("scheduled-" + window, null, exception);
+                throw exception;
             }
         } catch (Exception exception) {
             LOGGER.error("{} scheduled market data ingestion failed", window, exception);

@@ -88,6 +88,8 @@ If MySQL is on a non-default host port, include the datasource override in the s
 
 The runner validates the file, stores price/FX/NAV snapshots through the same service paths used by the API, optionally creates a DRAM snapshot, and exits when `app.ingest.exit-after-run=true`.
 
+Snapshot creation now has readiness gates. When a file or provider run includes `snapshot`, the app requires current ETF/holding prices for the snapshot date, prior prices for return calculations, FX and prior FX for every non-USD holding, and an official DRAM NAV for the snapshot date. Missing or stale inputs fail the ingestion run before a snapshot is created.
+
 ## Manual App-Triggered File Load
 
 When the app is already running, the data page has a `Run File` button that loads the configured `app.ingest.file` and records the result in ingestion history. This is useful for reloading `data/ingest/dram-market-data-local.json` without restarting the app in one-shot mode.
