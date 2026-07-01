@@ -279,34 +279,46 @@ async function loadSampleMarketData() {
 }
 
 async function runProviderIngestionFromUi() {
+  const button = document.getElementById('run-provider-ingestion-button');
   try {
-    await runProviderIngestion();
-    showStatus('Provider ingestion completed.', 'success');
+    setBusy(button, true, 'Running…');
+    showStatus('Running provider ingestion…');
+    const runs = await runProviderIngestion();
+    showStatus(ingestionSummary(runs?.[0], 'Provider ingestion completed.'), 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   } finally {
+    setBusy(button, false);
     await refreshMarketData();
   }
 }
 
 async function runFileIngestionFromUi() {
+  const button = document.getElementById('run-file-ingestion-button');
   try {
-    await runFileIngestion();
-    showStatus('Local file imported.', 'success');
+    setBusy(button, true, 'Importing…');
+    showStatus('Importing local file…');
+    const runs = await runFileIngestion();
+    showStatus(ingestionSummary(runs?.[0], 'Local file imported.'), 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   } finally {
+    setBusy(button, false);
     await refreshMarketData();
   }
 }
 
 async function runRoundhillIngestionFromUi() {
+  const button = document.getElementById('refresh-roundhill-ingestion-button');
   try {
-    await runRoundhillIngestion();
-    showStatus('Latest Roundhill data refreshed.', 'success');
+    setBusy(button, true, 'Refreshing…');
+    showStatus('Refreshing latest Roundhill data…');
+    const runs = await runRoundhillIngestion();
+    showStatus(ingestionSummary(runs?.[0], 'Latest Roundhill data refreshed.'), 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   } finally {
+    setBusy(button, false);
     await refreshMarketData();
   }
 }
@@ -334,6 +346,28 @@ function importSummary(result) {
   const officialNavs = result?.officialNavsImported ?? 0;
   const snapshot = result?.snapshotCreated ? ' Snapshot created.' : '';
   return `CSV imported: ${prices} prices / ${fxRates} FX / ${officialNavs} NAV.${snapshot}`;
+}
+
+function ingestionSummary(run, fallback) {
+  if (!run) {
+    return fallback;
+  }
+  const snapshot = run.snapshotCreated ? 'snapshot created' : 'no snapshot';
+  return `${fallback} ${run.pricesImported} prices / ${run.fxRatesImported} FX / ${run.officialNavsImported} NAV, ${snapshot}.`;
+}
+
+function setBusy(button, busy, label) {
+  if (!button) {
+    return;
+  }
+  if (busy) {
+    button.dataset.idleText = button.textContent;
+    button.textContent = label;
+    button.disabled = true;
+    return;
+  }
+  button.textContent = button.dataset.idleText || button.textContent;
+  button.disabled = false;
 }
 
 function optionalNumeric(value) {

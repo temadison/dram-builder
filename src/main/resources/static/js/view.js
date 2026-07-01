@@ -80,8 +80,10 @@ export function renderMarketData(marketData) {
   renderFreshness(marketData.freshness);
   renderSnapshotReadiness(marketData.snapshotReadiness, officialNavs[0]);
 
+  const latestNav = officialNavs[0];
+  const navSummary = latestNav ? ` / latest NAV ${latestNav.asOfDate}` : '';
   document.getElementById('market-data-summary').textContent =
-    `${prices.length} prices / ${fxRates.length} FX / ${officialNavs.length} NAV`;
+    `${prices.length} prices / ${fxRates.length} FX / ${officialNavs.length} NAV${navSummary}`;
 
   const rows = [
     ...prices.map(price => ({

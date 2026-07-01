@@ -417,6 +417,12 @@ textarea {
   color: #fff;
 }
 
+.text-button:disabled,
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .positive {
   color: var(--green);
 }
