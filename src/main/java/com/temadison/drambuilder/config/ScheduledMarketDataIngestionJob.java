@@ -3,6 +3,7 @@ package com.temadison.drambuilder.config;
 import com.temadison.drambuilder.service.MarketDataFileIngestionService;
 import com.temadison.drambuilder.service.MarketDataIngestionService;
 import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
+import com.temadison.drambuilder.service.RoundhillIssuerIngestionService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,6 +21,7 @@ public class ScheduledMarketDataIngestionJob {
     private final MarketDataFileIngestionService marketDataFileIngestionService;
     private final MarketDataProviderIngestionService marketDataProviderIngestionService;
     private final MarketDataIngestionService marketDataIngestionService;
+    private final RoundhillIssuerIngestionService roundhillIssuerIngestionService;
     private final String ingestionFile;
     private final String mode;
     private final AtomicBoolean running = new AtomicBoolean(false);
@@ -28,12 +30,14 @@ public class ScheduledMarketDataIngestionJob {
             MarketDataFileIngestionService marketDataFileIngestionService,
             MarketDataProviderIngestionService marketDataProviderIngestionService,
             MarketDataIngestionService marketDataIngestionService,
+            RoundhillIssuerIngestionService roundhillIssuerIngestionService,
             @Value("${app.ingest.file:}") String ingestionFile,
             @Value("${app.ingest.schedule.mode:file}") String mode
     ) {
         this.marketDataFileIngestionService = marketDataFileIngestionService;
         this.marketDataProviderIngestionService = marketDataProviderIngestionService;
         this.marketDataIngestionService = marketDataIngestionService;
+        this.roundhillIssuerIngestionService = roundhillIssuerIngestionService;
         this.ingestionFile = ingestionFile;
         this.mode = mode;
     }
@@ -58,6 +62,8 @@ public class ScheduledMarketDataIngestionJob {
             LOGGER.info("Starting {} scheduled market data ingestion", window);
             if ("provider".equalsIgnoreCase(mode)) {
                 marketDataProviderIngestionService.ingestProvider(window);
+            } else if ("roundhill".equalsIgnoreCase(mode)) {
+                roundhillIssuerIngestionService.ingestLatest(window);
             } else if ("file".equalsIgnoreCase(mode)) {
                 marketDataFileIngestionService.ingestFile("scheduled-file-" + window, ingestionFile);
             } else {

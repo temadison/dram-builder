@@ -193,10 +193,16 @@ For IntelliJ, use the same `data/ingest/dram-market-data-local.json` path in `--
 
 Default schedule:
 
-- `app.ingest.schedule.mode`: `file`
+- `app.ingest.schedule.mode`: `roundhill` in the `dev` profile, `file` otherwise unless overridden
 - `app.ingest.schedule.morning-cron`: `0 0 2 * * MON-FRI`
 - `app.ingest.schedule.evening-cron`: `0 30 16 * * MON-FRI`
 - `app.ingest.schedule.zone`: `America/Chicago`
+
+If you start the app without the `dev` profile and only pass `--app.ingest.schedule.enabled=true`, the base default is still `file` mode. For a local MySQL run that refreshes latest Roundhill data, include:
+
+```text
+--app.ingest.schedule.mode=roundhill
+```
 
 To run scheduled provider ingestion after validating the key and symbols:
 
