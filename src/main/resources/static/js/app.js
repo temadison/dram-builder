@@ -52,7 +52,7 @@ if (marketDataCsv) {
   marketDataCsv.value = sampleMarketDataCsv;
 }
 
-bindClick('refresh-button', refresh);
+bindClick('refresh-button', hasMarketData && !hasDashboard ? runRoundhillIngestionFromUi : refresh);
 bindClick('sample-button', saveSampleSnapshot);
 bindClick('load-market-sample-button', loadSampleMarketData);
 bindClick('reset-market-csv-button', () => {
