@@ -20,7 +20,7 @@ app:
       enabled: false
       purchase-price: 71.88
       etf-ticker: DRAM
-      etf-exchange: NYSE
+      etf-exchange: BZX
       holdings:
         - ticker: "000660"
           name: SK hynix
@@ -49,7 +49,7 @@ app:
           weight: 0.0178
         - ticker: "285A"
           name: Kioxia Holdings
-          exchange: JPX
+          exchange: TSE
           currency: JPY
           weight: 0.0474
         - ticker: "603986"
@@ -59,7 +59,7 @@ app:
           weight: 0.0272
         - ticker: "8299"
           name: Phison Electronics
-          exchange: TWSE
+          exchange: TPEX
           currency: TWD
           weight: 0.0061
         - ticker: MU
@@ -155,7 +155,7 @@ app:
           currency: CNY
   market-data:
     freshness:
-      required-prices: NYSE:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,JPX:285A,TWSE:2408,TWSE:2344,TWSE:2337,TWSE:8299,SSE:603986
+      required-prices: BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,TSE:285A,TWSE:2408,TWSE:2344,TWSE:2337,TPEX:8299,SSE:603986
   ingest:
     enabled: false
     file:

@@ -200,6 +200,8 @@ curl "$BASE_URL/api/market-data/ingestion-config"
 
 `POST /api/market-data/ingest/provider` manually triggers provider ingestion for setup validation. It records the attempt in `/api/market-data/ingestion-runs`.
 
+`POST /api/market-data/ingest/roundhill` downloads the latest public Roundhill issuer NAV and holdings CSV files, imports current/prior issuer rows, and creates a snapshot when the readiness gates pass. Use the Data page `Refresh Latest Data` button for this workflow.
+
 `POST /api/market-data/official-navs`
 
 Stores issuer or provider supplied ETF NAV separately from synthetic NAV. `observedAt` is optional; `asOfDate` is required because official NAV is date-based.

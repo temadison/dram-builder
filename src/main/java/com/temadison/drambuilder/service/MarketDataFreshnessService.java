@@ -23,7 +23,7 @@ public class MarketDataFreshnessService {
     public MarketDataFreshnessService(
             PriceSnapshotRepository priceSnapshotRepository,
             @Value("${app.market-data.freshness.max-age-hours:18}") long maxAgeHours,
-            @Value("${app.market-data.freshness.required-prices:BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX}") String requiredPrices
+            @Value("${app.market-data.freshness.required-prices:BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX}") String requiredPrices
     ) {
         this.priceSnapshotRepository = priceSnapshotRepository;
         this.maxAgeHours = maxAgeHours;

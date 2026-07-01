@@ -58,6 +58,14 @@ export async function runFileIngestion(window = 'manual') {
   });
 }
 
+export async function runRoundhillIngestion(window = 'manual') {
+  return request('/api/market-data/ingest/roundhill', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ window })
+  });
+}
+
 export async function savePriceSnapshot(payload) {
   return request('/api/market-data/prices', {
     method: 'POST',

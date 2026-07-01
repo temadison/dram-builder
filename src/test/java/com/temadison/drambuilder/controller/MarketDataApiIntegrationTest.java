@@ -151,7 +151,7 @@ class MarketDataApiIntegrationTest {
         Instant observedAt = Instant.now();
         BulkMarketDataImportRequest request = new BulkMarketDataImportRequest(
                 List.of(
-                        new PriceSnapshotRequest("DRAM", "Roundhill Memory ETF", "BATS", "USD", new BigDecimal("68.00"), "freshness-test", observedAt),
+                        new PriceSnapshotRequest("DRAM", "Roundhill Memory ETF", "BZX", "USD", new BigDecimal("68.00"), "freshness-test", observedAt),
                         new PriceSnapshotRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("103.55"), "freshness-test", observedAt),
                         new PriceSnapshotRequest("SNDK", "SanDisk", "NASDAQ", "USD", new BigDecimal("176.143"), "freshness-test", observedAt),
                         new PriceSnapshotRequest("WDC", "Western Digital", "NASDAQ", "USD", new BigDecimal("54.620"), "freshness-test", observedAt),
@@ -171,7 +171,7 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$.freshness.maxAgeHours", is(18)))
                 .andExpect(jsonPath("$.freshness.requiredPrices", hasSize(5)))
                 .andExpect(jsonPath("$.freshness.requiredPrices[0].ticker", is("DRAM")))
-                .andExpect(jsonPath("$.freshness.requiredPrices[0].exchange", is("BATS")))
+                .andExpect(jsonPath("$.freshness.requiredPrices[0].exchange", is("BZX")))
                 .andExpect(jsonPath("$.freshness.requiredPrices[0].missing", is(false)))
                 .andExpect(jsonPath("$.freshness.requiredPrices[0].stale", is(false)));
     }
@@ -202,7 +202,7 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$.eveningCron", is("0 30 16 * * MON-FRI")))
                 .andExpect(jsonPath("$.providerCount", is(0)))
                 .andExpect(jsonPath("$.freshnessMaxAgeHours", is(18)))
-                .andExpect(jsonPath("$.freshnessRequiredPrices", is("BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX")));
+                .andExpect(jsonPath("$.freshnessRequiredPrices", is("BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX")));
     }
 
     @Test

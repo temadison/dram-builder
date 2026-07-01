@@ -57,6 +57,7 @@ public class DramSnapshotController {
                         "GET /api/market-data/ingestion-config",
                         "GET /api/market-data/ingestion-runs",
                         "POST /api/market-data/ingest/file",
+                        "POST /api/market-data/ingest/roundhill",
                         "POST /api/market-data/ingest/provider",
                         "POST /api/market-data/import",
                         "POST /api/market-data/import/csv",

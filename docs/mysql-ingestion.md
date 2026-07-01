@@ -62,10 +62,10 @@ Use `/api/market-data/import/csv` for quick provider or issuer exports. The CSV 
 
 ```csv
 type,ticker,name,exchange,currency,price,baseCurrency,quoteCurrency,rate,nav,weight,purchasePrice,etfTicker,etfExchange,asOfDate,source,observedAt
-price,DRAM,Roundhill Memory ETF,BATS,USD,68.00,,,,,,,,,,stockanalysis-spglobal,2026-06-01T20:00:00Z
+price,DRAM,Roundhill Memory ETF,BZX,USD,68.00,,,,,,,,,,stockanalysis-spglobal,2026-06-01T20:00:00Z
 fx,,,,,,KRW,USD,0.00073400,,,,,,,twelvedata,2026-06-01T20:00:00Z
 official_nav,DRAM,Roundhill Memory ETF,,USD,,,,,68.00,,,,2026-06-01,roundhill,2026-06-01T20:00:00Z
-snapshot_holding,MU,Micron Technology,NASDAQ,USD,,,,,,0.2383,68.00,DRAM,BATS,2026-06-01,roundhill,
+snapshot_holding,MU,Micron Technology,NASDAQ,USD,,,,,,0.2383,68.00,DRAM,BZX,2026-06-01,roundhill,
 ```
 
 The June 1 starter JSON intentionally leaves `officialNavs` empty until the exact Roundhill official NAV is copied from an issuer export. Do not add an estimated NAV to `officialNavs`; the app validates this as an official issuer/provider fact.
@@ -90,9 +90,23 @@ The runner validates the file, stores price/FX/NAV snapshots through the same se
 
 Snapshot creation now has readiness gates. When a file or provider run includes `snapshot`, the app requires current ETF/holding prices for the snapshot date, prior prices for return calculations, FX and prior FX for every non-USD holding, and an official DRAM NAV for the snapshot date. Missing or stale inputs fail the ingestion run before a snapshot is created.
 
-## Manual App-Triggered File Load
+## Refresh Latest Issuer Data
 
-When the app is already running, the data page has a `Run File` button that loads the configured `app.ingest.file` and records the result in ingestion history. This is useful for reloading `data/ingest/dram-market-data-local.json` without restarting the app in one-shot mode.
+The Data page has a `Refresh Latest Data` button. It downloads Roundhill's public Daily NAV and holdings CSV files, derives current/prior holding prices and implied FX, stores the rows, and creates a snapshot when the readiness gates pass. This is the normal manual refresh path for current issuer data.
+
+The equivalent request is:
+
+```bash
+curl -X POST http://localhost:8082/api/market-data/ingest/roundhill \
+  -H 'Content-Type: application/json' \
+  -d '{"window":"manual"}'
+```
+
+Refreshes append new price, FX, official NAV, and snapshot rows; they do not delete older observations. That means the database naturally starts retaining historical market data as refreshes run.
+
+## Manual App-Triggered Local File Import
+
+When the app is already running, the data page has an `Import Local File` button that loads the configured `app.ingest.file` and records the result in ingestion history. This is useful for reloading `data/ingest/dram-market-data-local.json` without restarting the app in one-shot mode.
 
 The equivalent request is:
 
@@ -102,7 +116,7 @@ curl -X POST http://localhost:8082/api/market-data/ingest/file \
   -d '{"window":"manual"}'
 ```
 
-For IntelliJ, keep the normal app run configuration on port `8082` and include the file argument when you want `Run File` to work:
+For IntelliJ, keep the normal app run configuration on port `8082` and include the file argument when you want `Import Local File` to work:
 
 ```text
 --server.port=8082 --spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC --app.ingest.file=file:/Users/temadison/Development/Personal/GitHub/dram-builder/data/ingest/dram-market-data-local.json
@@ -138,7 +152,7 @@ curl http://localhost:8082/api/dram/bridge-score
 
 Every file ingestion run writes a `market_data_ingestion_run` record. Recent runs are available at `/api/market-data/ingestion-runs` with status, source, requested file, imported row counts, snapshot creation status, and timing.
 
-The data page at `/data.html` also shows snapshot readiness and recent ingestion runs, so manual, scheduled file, and provider failures are visible without querying the API directly.
+The data page at `/data.html` also shows snapshot readiness and recent ingestion runs, so Roundhill refresh, local-file import, scheduled file, and provider failures are visible without querying the API directly.
 
 For provider setup validation, the data page has a `Run Provider` button. It calls:
 

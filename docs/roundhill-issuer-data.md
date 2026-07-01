@@ -65,6 +65,8 @@ Provider FX should replace this once Twelve Data direct or inverse pairs are val
 
 ## Refresh Checklist
 
+The app now has a built-in manual refresh path: use `Refresh Latest Data` on `/data.html` or call `POST /api/market-data/ingest/roundhill`. The endpoint applies these rules and records the attempt in ingestion history.
+
 1. Download the latest non-future Daily NAV CSV and holdings CSV.
 2. Confirm both files agree on the intended current date.
 3. Download or retain the prior holdings file for prior closes/FX.

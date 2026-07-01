@@ -30,7 +30,7 @@ public class MarketDataIngestionConfigService {
             @Value("${app.ingest.schedule.morning-cron:0 0 2 * * MON-FRI}") String morningCron,
             @Value("${app.ingest.schedule.evening-cron:0 30 16 * * MON-FRI}") String eveningCron,
             @Value("${app.market-data.freshness.max-age-hours:18}") long freshnessMaxAgeHours,
-            @Value("${app.market-data.freshness.required-prices:BATS:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX}") String freshnessRequiredPrices,
+            @Value("${app.market-data.freshness.required-prices:BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX}") String freshnessRequiredPrices,
             List<MarketDataProvider> marketDataProviders
     ) {
         this.runnerEnabled = runnerEnabled;

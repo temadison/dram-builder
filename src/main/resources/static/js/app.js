@@ -9,6 +9,7 @@ import {
   runScenario,
   runFileIngestion,
   runProviderIngestion,
+  runRoundhillIngestion,
   saveFxRateSnapshot,
   saveOfficialNavSnapshot,
   savePriceSnapshot,
@@ -65,6 +66,7 @@ bindClick('reset-market-json-button', () => {
 });
 bindClick('run-file-ingestion-button', runFileIngestionFromUi);
 bindClick('run-provider-ingestion-button', runProviderIngestionFromUi);
+bindClick('refresh-roundhill-ingestion-button', runRoundhillIngestionFromUi);
 
 if (snapshotForm) {
   snapshotForm.addEventListener('submit', async event => {
@@ -290,7 +292,18 @@ async function runProviderIngestionFromUi() {
 async function runFileIngestionFromUi() {
   try {
     await runFileIngestion();
-    showStatus('File ingestion completed.', 'success');
+    showStatus('Local file imported.', 'success');
+  } catch (error) {
+    showStatus(error.message, 'error');
+  } finally {
+    await refreshMarketData();
+  }
+}
+
+async function runRoundhillIngestionFromUi() {
+  try {
+    await runRoundhillIngestion();
+    showStatus('Latest Roundhill data refreshed.', 'success');
   } catch (error) {
     showStatus(error.message, 'error');
   } finally {

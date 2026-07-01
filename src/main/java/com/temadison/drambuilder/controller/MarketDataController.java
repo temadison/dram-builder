@@ -20,6 +20,7 @@ import com.temadison.drambuilder.service.MarketDataIngestionConfigService;
 import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
 import com.temadison.drambuilder.service.MarketDataService;
+import com.temadison.drambuilder.service.RoundhillIssuerIngestionService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +42,7 @@ public class MarketDataController {
     private final MarketDataIngestionConfigService marketDataIngestionConfigService;
     private final MarketDataProviderIngestionService marketDataProviderIngestionService;
     private final MarketDataFileIngestionService marketDataFileIngestionService;
+    private final RoundhillIssuerIngestionService roundhillIssuerIngestionService;
     private final String ingestionFile;
 
     public MarketDataController(
@@ -50,6 +52,7 @@ public class MarketDataController {
             MarketDataIngestionConfigService marketDataIngestionConfigService,
             MarketDataProviderIngestionService marketDataProviderIngestionService,
             MarketDataFileIngestionService marketDataFileIngestionService,
+            RoundhillIssuerIngestionService roundhillIssuerIngestionService,
             @Value("${app.ingest.file:}") String ingestionFile
     ) {
         this.marketDataService = marketDataService;
@@ -58,6 +61,7 @@ public class MarketDataController {
         this.marketDataIngestionConfigService = marketDataIngestionConfigService;
         this.marketDataProviderIngestionService = marketDataProviderIngestionService;
         this.marketDataFileIngestionService = marketDataFileIngestionService;
+        this.roundhillIssuerIngestionService = roundhillIssuerIngestionService;
         this.ingestionFile = ingestionFile;
     }
 
@@ -91,6 +95,15 @@ public class MarketDataController {
                 ? "manual"
                 : request.window().trim();
         marketDataFileIngestionService.ingestFile("file-" + window, ingestionFile);
+        return marketDataIngestionRunService.recentRuns();
+    }
+
+    @PostMapping("/ingest/roundhill")
+    public List<MarketDataIngestionRunResponse> ingestRoundhill(@RequestBody(required = false) FileIngestionRequest request) {
+        String window = request == null || request.window() == null || request.window().isBlank()
+                ? "manual"
+                : request.window().trim();
+        roundhillIssuerIngestionService.ingestLatest(window);
         return marketDataIngestionRunService.recentRuns();
     }
 

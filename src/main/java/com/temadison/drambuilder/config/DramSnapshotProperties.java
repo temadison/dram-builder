@@ -11,7 +11,7 @@ public class DramSnapshotProperties {
     private boolean enabled;
     private BigDecimal purchasePrice;
     private String etfTicker = "DRAM";
-    private String etfExchange = "BATS";
+    private String etfExchange = "BZX";
     private List<Holding> holdings = new ArrayList<>();
 
     public boolean isEnabled() {
