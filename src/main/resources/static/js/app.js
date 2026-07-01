@@ -216,7 +216,12 @@ refresh();
 
 async function refresh() {
   if (hasMarketData) {
-    await refreshMarketData();
+    try {
+      await refreshMarketData();
+    } catch (error) {
+      showStatus(`Unable to load market data: ${error.message}`, 'error');
+      return;
+    }
   }
 
   if (!hasDashboard) {
@@ -285,11 +290,11 @@ async function runProviderIngestionFromUi() {
     showStatus('Running provider ingestion…');
     const runs = await runProviderIngestion();
     showStatus(ingestionSummary(runs?.[0], 'Provider ingestion completed.'), 'success');
+    await refreshMarketData();
   } catch (error) {
-    showStatus(error.message, 'error');
+    showStatus(`Provider ingestion failed: ${error.message}`, 'error');
   } finally {
     setBusy(button, false);
-    await refreshMarketData();
   }
 }
 
@@ -300,26 +305,29 @@ async function runFileIngestionFromUi() {
     showStatus('Importing local file…');
     const runs = await runFileIngestion();
     showStatus(ingestionSummary(runs?.[0], 'Local file imported.'), 'success');
+    await refreshMarketData();
   } catch (error) {
-    showStatus(error.message, 'error');
+    showStatus(`Local file import failed: ${error.message}`, 'error');
   } finally {
     setBusy(button, false);
-    await refreshMarketData();
   }
 }
 
 async function runRoundhillIngestionFromUi() {
-  const button = document.getElementById('refresh-roundhill-ingestion-button');
+  const buttons = [
+    document.getElementById('refresh-button'),
+    document.getElementById('refresh-roundhill-ingestion-button')
+  ].filter(Boolean);
   try {
-    setBusy(button, true, 'Refreshing…');
+    setBusyAll(buttons, true, 'Refreshing…');
     showStatus('Refreshing latest Roundhill data…');
     const runs = await runRoundhillIngestion();
     showStatus(ingestionSummary(runs?.[0], 'Latest Roundhill data refreshed.'), 'success');
-  } catch (error) {
-    showStatus(error.message, 'error');
-  } finally {
-    setBusy(button, false);
     await refreshMarketData();
+  } catch (error) {
+    showStatus(`Roundhill refresh failed: ${error.message}`, 'error');
+  } finally {
+    setBusyAll(buttons, false);
   }
 }
 
@@ -368,6 +376,10 @@ function setBusy(button, busy, label) {
   }
   button.textContent = button.dataset.idleText || button.textContent;
   button.disabled = false;
+}
+
+function setBusyAll(buttons, busy, label) {
+  buttons.forEach(button => setBusy(button, busy, label));
 }
 
 function optionalNumeric(value) {
