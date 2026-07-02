@@ -18,6 +18,9 @@ public class MarketDataIngestionConfigService {
     private final String eveningCron;
     private final int providerCount;
     private final long freshnessMaxAgeHours;
+    private final String freshnessMarketZone;
+    private final String freshnessExpectedAfterLocalTime;
+    private final String freshnessMarketHolidays;
     private final String freshnessRequiredPrices;
 
     public MarketDataIngestionConfigService(
@@ -30,6 +33,9 @@ public class MarketDataIngestionConfigService {
             @Value("${app.ingest.schedule.morning-cron:0 0 2 * * MON-FRI}") String morningCron,
             @Value("${app.ingest.schedule.evening-cron:0 30 16 * * MON-FRI}") String eveningCron,
             @Value("${app.market-data.freshness.max-age-hours:18}") long freshnessMaxAgeHours,
+            @Value("${app.market-data.freshness.market-zone:America/Chicago}") String freshnessMarketZone,
+            @Value("${app.market-data.freshness.expected-after-local-time:17:00}") String freshnessExpectedAfterLocalTime,
+            @Value("${app.market-data.freshness.market-holidays:}") String freshnessMarketHolidays,
             @Value("${app.market-data.freshness.required-prices:BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX}") String freshnessRequiredPrices,
             List<MarketDataProvider> marketDataProviders
     ) {
@@ -42,6 +48,9 @@ public class MarketDataIngestionConfigService {
         this.morningCron = morningCron;
         this.eveningCron = eveningCron;
         this.freshnessMaxAgeHours = freshnessMaxAgeHours;
+        this.freshnessMarketZone = freshnessMarketZone;
+        this.freshnessExpectedAfterLocalTime = freshnessExpectedAfterLocalTime;
+        this.freshnessMarketHolidays = freshnessMarketHolidays;
         this.freshnessRequiredPrices = freshnessRequiredPrices;
         this.providerCount = marketDataProviders.size();
     }
@@ -58,6 +67,9 @@ public class MarketDataIngestionConfigService {
                 eveningCron,
                 providerCount,
                 freshnessMaxAgeHours,
+                freshnessMarketZone,
+                freshnessExpectedAfterLocalTime,
+                freshnessMarketHolidays,
                 freshnessRequiredPrices
         );
     }

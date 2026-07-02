@@ -22,6 +22,17 @@ export function dateTime(value) {
   }).format(new Date(value));
 }
 
+export function dateOnly(value) {
+  if (!value) {
+    return '—';
+  }
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+  }).format(new Date(`${value}T00:00:00`));
+}
+
 export function signedClass(value) {
   const numeric = Number(value || 0);
   if (numeric > 0) {

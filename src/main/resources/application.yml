@@ -29,4 +29,7 @@ app:
   market-data:
     freshness:
       max-age-hours: 18
+      market-zone: America/Chicago
+      expected-after-local-time: "17:00"
+      market-holidays:
       required-prices: BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX

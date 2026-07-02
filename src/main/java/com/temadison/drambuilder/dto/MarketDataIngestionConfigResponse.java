@@ -11,6 +11,9 @@ public record MarketDataIngestionConfigResponse(
         String eveningCron,
         int providerCount,
         long freshnessMaxAgeHours,
+        String freshnessMarketZone,
+        String freshnessExpectedAfterLocalTime,
+        String freshnessMarketHolidays,
         String freshnessRequiredPrices
 ) {
 }

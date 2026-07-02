@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: dram_bridge
     password: dram_bridge
   jpa:
@@ -158,6 +158,9 @@ app:
           currency: CNY
   market-data:
     freshness:
+      market-zone: America/Chicago
+      expected-after-local-time: "17:00"
+      market-holidays: 2026-07-03
       required-prices: BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,TSE:285A,TWSE:2408,TWSE:2344,TWSE:2337,TPEX:8299,SSE:603986
   ingest:
     enabled: false

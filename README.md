@@ -82,7 +82,7 @@ The Data page separates stored-data reloads from ingestion:
 - `Provider Prices` loads configured Twelve Data closes and FX rates only. Provider query exchanges can differ from stored canonical exchanges through `output-exchange` in `application-dev.yml`.
 - `Local File Import` imports the configured JSON ingestion file.
 
-Freshness is a price age check across configured required symbols. Snapshot readiness is stricter: it verifies official NAV, current and prior prices, FX, holdings, and purchase price before snapshot creation.
+Freshness is a market-date check across configured required symbols. Before the configured local cutoff, the expected date is the prior market day; after the cutoff, it is the current market day, with weekends and configured holidays rolling back to the previous market day. Snapshot readiness is stricter: it verifies official NAV, current and prior prices, FX, holdings, and purchase price before snapshot creation.
 
 These endpoints also work immediately:
 
@@ -203,7 +203,7 @@ curl "$BASE_URL/api/market-data"
 curl "$BASE_URL/api/market-data/ingestion-config"
 ```
 
-`GET /api/market-data` also includes `freshness` and `snapshotReadiness` blocks. Freshness marks configured prices `FRESH`, `STALE`, or `MISSING` using `app.market-data.freshness.max-age-hours`. Snapshot readiness reports whether configured snapshot inputs have current/prior prices, required FX, and official NAV before snapshot creation is attempted.
+`GET /api/market-data` also includes `freshness` and `snapshotReadiness` blocks. Freshness marks configured prices `FRESH`, `STALE`, or `MISSING` by comparing each latest price date with the expected market date from `app.market-data.freshness.market-zone`, `app.market-data.freshness.expected-after-local-time`, and optional `app.market-data.freshness.market-holidays`. Snapshot readiness reports whether configured snapshot inputs have current/prior prices, required FX, and official NAV before snapshot creation is attempted.
 
 `GET /api/market-data/ingestion-config` returns non-secret runtime ingestion settings, including runner state, schedule mode, cron windows, configured file path, provider count, and freshness thresholds.
 

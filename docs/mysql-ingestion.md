@@ -164,7 +164,7 @@ curl -X POST http://localhost:8082/api/market-data/ingest/provider \
 
 This records the same ingestion run history as scheduled provider mode. Use it after setting `TWELVE_DATA_API_KEY` and enabling `app.provider.twelvedata.enabled=true`.
 
-`GET /api/market-data` includes a `freshness` block for the configured required price set. The dev profile checks the full configured provider universe: `BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,TSE:285A,TWSE:2408,TWSE:2344,TWSE:2337,TPEX:8299,SSE:603986`. `app.market-data.freshness.max-age-hours` controls when an observed price becomes stale.
+`GET /api/market-data` includes a `freshness` block for the configured required price set. The dev profile checks the full configured provider universe: `BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,TSE:285A,TWSE:2408,TWSE:2344,TWSE:2337,TPEX:8299,SSE:603986`. Freshness compares each latest price date with the expected market date from `app.market-data.freshness.market-zone`, `app.market-data.freshness.expected-after-local-time`, and optional `app.market-data.freshness.market-holidays`; before that local cutoff the expected date is the previous market day, with weekends and configured holidays rolling back to the prior market date.
 
 ## Provider Automation
 

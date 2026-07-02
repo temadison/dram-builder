@@ -1,4 +1,4 @@
-import { dateTime, decimal, money, percent, signedClass } from './format.js';
+import { dateOnly, dateTime, decimal, money, percent, signedClass } from './format.js';
 
 export function showStatus(message, tone = 'info') {
   const band = document.getElementById('status-band');
@@ -150,7 +150,7 @@ export function renderIngestionConfig(config) {
     ['Evening', config.eveningCron || '—'],
     ['File', config.ingestionFile || '—'],
     ['Providers', String(config.providerCount ?? 0)],
-    ['Freshness', `${config.freshnessMaxAgeHours}h / ${config.freshnessRequiredPrices || '—'}`]
+    ['Freshness', `${config.freshnessMarketZone || '—'} after ${config.freshnessExpectedAfterLocalTime || '—'} / holidays ${config.freshnessMarketHolidays || '—'} / ${config.freshnessRequiredPrices || '—'}`]
   ];
 
   renderRows('ingestion-config-table', rows, ([label, value]) => `
@@ -169,7 +169,9 @@ function renderFreshness(freshness) {
 
   document.getElementById('freshness-checked').textContent = `Checked ${dateTime(freshness?.checkedAt)}`;
   document.getElementById('freshness-threshold').textContent =
-    freshness?.maxAgeHours == null ? 'Threshold —' : `${freshness.maxAgeHours}h max age`;
+    freshness?.expectedAsOfDate
+      ? `Expected ${dateOnly(freshness.expectedAsOfDate)} after ${freshness.expectedAfterLocalTime || '—'} ${freshness.marketZone || ''}`.trim()
+      : 'Expected market date —';
 
   const rows = freshness?.requiredPrices || [];
   renderRows('freshness-table', rows, row => `
