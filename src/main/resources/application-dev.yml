@@ -91,6 +91,7 @@ app:
         dram:
           symbol: DRAM
           exchange: NYSE
+          output-exchange: BZX
           name: Roundhill Memory ETF
           currency: USD
         mu:
@@ -126,6 +127,7 @@ app:
         kioxia:
           symbol: "285A"
           exchange: JPX
+          output-exchange: TSE
           name: Kioxia Holdings
           currency: JPY
         nanya:
@@ -146,6 +148,7 @@ app:
         phison:
           symbol: "8299"
           exchange: TWSE
+          output-exchange: TPEX
           name: Phison Electronics
           currency: TWD
         gigadevice:

@@ -52,7 +52,7 @@ if (marketDataCsv) {
   marketDataCsv.value = sampleMarketDataCsv;
 }
 
-bindClick('refresh-button', hasMarketData && !hasDashboard ? runRoundhillIngestionFromUi : refresh);
+bindClick('refresh-button', refresh);
 bindClick('sample-button', saveSampleSnapshot);
 bindClick('load-market-sample-button', loadSampleMarketData);
 bindClick('reset-market-csv-button', () => {
@@ -286,7 +286,7 @@ async function loadSampleMarketData() {
 async function runProviderIngestionFromUi() {
   const button = document.getElementById('run-provider-ingestion-button');
   try {
-    setBusy(button, true, 'Running…');
+    setBusy(button, true, 'Running...');
     showStatus('Running provider ingestion…');
     const runs = await runProviderIngestion();
     showStatus(ingestionSummary(runs?.[0], 'Provider ingestion completed.'), 'success');
@@ -301,7 +301,7 @@ async function runProviderIngestionFromUi() {
 async function runFileIngestionFromUi() {
   const button = document.getElementById('run-file-ingestion-button');
   try {
-    setBusy(button, true, 'Importing…');
+    setBusy(button, true, 'Importing...');
     showStatus('Importing local file…');
     const runs = await runFileIngestion();
     showStatus(ingestionSummary(runs?.[0], 'Local file imported.'), 'success');
@@ -315,14 +315,13 @@ async function runFileIngestionFromUi() {
 
 async function runRoundhillIngestionFromUi() {
   const buttons = [
-    document.getElementById('refresh-button'),
     document.getElementById('refresh-roundhill-ingestion-button')
   ].filter(Boolean);
   try {
-    setBusyAll(buttons, true, 'Refreshing…');
-    showStatus('Refreshing latest Roundhill data…');
+    setBusyAll(buttons, true, 'Refreshing...');
+    showStatus('Refreshing latest Roundhill issuer data…');
     const runs = await runRoundhillIngestion();
-    showStatus(ingestionSummary(runs?.[0], 'Latest Roundhill data refreshed.'), 'success');
+    showStatus(ingestionSummary(runs?.[0], 'Latest Roundhill issuer data refreshed.'), 'success');
     await refreshMarketData();
   } catch (error) {
     showStatus(`Roundhill refresh failed: ${error.message}`, 'error');
@@ -370,11 +369,16 @@ function setBusy(button, busy, label) {
   }
   if (busy) {
     button.dataset.idleText = button.textContent;
+    button.dataset.idleHtml = button.innerHTML;
     button.textContent = label;
     button.disabled = true;
     return;
   }
-  button.textContent = button.dataset.idleText || button.textContent;
+  if (button.dataset.idleHtml) {
+    button.innerHTML = button.dataset.idleHtml;
+  } else {
+    button.textContent = button.dataset.idleText || button.textContent;
+  }
   button.disabled = false;
 }
 

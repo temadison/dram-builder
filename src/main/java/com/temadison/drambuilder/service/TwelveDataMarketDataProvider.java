@@ -94,7 +94,7 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
         return new PriceSnapshotRequest(
                 symbol.getSymbol(),
                 symbol.getName(),
-                symbol.getExchange(),
+                outputExchange(symbol),
                 normalize(symbol.getCurrency()),
                 close.close(),
                 SOURCE,
@@ -141,5 +141,10 @@ public class TwelveDataMarketDataProvider implements MarketDataProvider {
 
     private String normalize(String value) {
         return value.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String outputExchange(TwelveDataProviderProperties.Symbol symbol) {
+        String outputExchange = symbol.getOutputExchange();
+        return normalize(outputExchange == null || outputExchange.isBlank() ? symbol.getExchange() : outputExchange);
     }
 }

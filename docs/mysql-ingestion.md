@@ -92,7 +92,7 @@ Snapshot creation now has readiness gates. When a file or provider run includes 
 
 ## Refresh Latest Issuer Data
 
-The Data page has a `Refresh Latest Data` button. It downloads Roundhill's public Daily NAV and holdings CSV files, derives current/prior holding prices and implied FX, stores the rows, and creates a snapshot when the readiness gates pass. This is the normal manual refresh path for current issuer data.
+The Data page has an `Issuer Refresh` button. It downloads Roundhill's public Daily NAV and holdings CSV files, derives current/prior holding prices and implied FX, stores the rows, and creates a snapshot when the readiness gates pass. This is the normal manual refresh path for current issuer data.
 
 The equivalent request is:
 
@@ -164,7 +164,7 @@ curl -X POST http://localhost:8082/api/market-data/ingest/provider \
 
 This records the same ingestion run history as scheduled provider mode. Use it after setting `TWELVE_DATA_API_KEY` and enabling `app.provider.twelvedata.enabled=true`.
 
-`GET /api/market-data` includes a `freshness` block for the configured required price set. The dev profile checks the full configured provider universe: `NYSE:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,JPX:285A,TWSE:2408,TWSE:2344,TWSE:2337,TWSE:8299,SSE:603986`. `app.market-data.freshness.max-age-hours` controls when an observed price becomes stale.
+`GET /api/market-data` includes a `freshness` block for the configured required price set. The dev profile checks the full configured provider universe: `BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,TSE:285A,TWSE:2408,TWSE:2344,TWSE:2337,TPEX:8299,SSE:603986`. `app.market-data.freshness.max-age-hours` controls when an observed price becomes stale.
 
 ## Provider Automation
 

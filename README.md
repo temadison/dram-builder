@@ -75,6 +75,15 @@ The dashboard supports two snapshot workflows:
 
 For the market data workflow, use `Load Sample Market Data` to bulk import deterministic DRAM, SK hynix, Micron, Samsung, ASML, and KRW/USD records. Then use `Generate Snapshot` in the same panel. The generated snapshot becomes the latest dashboard snapshot and powers scenario and bridge score views.
 
+The Data page separates stored-data reloads from ingestion:
+
+- `Reload View` rereads the database and does not contact any external data source.
+- `Issuer Refresh` downloads Roundhill NAV and holdings data, imports current and prior issuer rows, refreshes DRAM under the canonical `BZX:DRAM` key, and creates a snapshot when readiness passes.
+- `Provider Prices` loads configured Twelve Data closes and FX rates only. Provider query exchanges can differ from stored canonical exchanges through `output-exchange` in `application-dev.yml`.
+- `Local File Import` imports the configured JSON ingestion file.
+
+Freshness is a price age check across configured required symbols. Snapshot readiness is stricter: it verifies official NAV, current and prior prices, FX, holdings, and purchase price before snapshot creation.
+
 These endpoints also work immediately:
 
 ```bash
@@ -200,7 +209,7 @@ curl "$BASE_URL/api/market-data/ingestion-config"
 
 `POST /api/market-data/ingest/provider` manually triggers provider ingestion for setup validation. It records the attempt in `/api/market-data/ingestion-runs`.
 
-`POST /api/market-data/ingest/roundhill` downloads the latest public Roundhill issuer NAV and holdings CSV files, imports current/prior issuer rows, and creates a snapshot when the readiness gates pass. Use the Data page `Refresh Latest Data` button for this workflow.
+`POST /api/market-data/ingest/roundhill` downloads the latest public Roundhill issuer NAV and holdings CSV files, imports current/prior issuer rows, and creates a snapshot when the readiness gates pass. Use the Data page `Issuer Refresh` button for this workflow.
 
 `POST /api/market-data/official-navs`
 

@@ -21,7 +21,7 @@
         <a href="/">Dashboard</a>
         <a class="active" href="/data.html">Data</a>
       </nav>
-      <button class="text-button primary" id="refresh-button" type="button" title="Refresh latest issuer data">Refresh Latest Data</button>
+      <button class="text-button primary" id="refresh-button" type="button" title="Reload stored data from the server">Reload View</button>
       <button class="text-button" id="sample-button" type="button">Load Sample Snapshot</button>
     </div>
   </header>
@@ -29,10 +29,66 @@
   <main class="shell">
     <section class="status-band" id="status-band" hidden></section>
 
+    <section class="panel data-load-status">
+      <div class="section-heading">
+        <h2>Data Load Status</h2>
+        <span id="market-data-summary">No records loaded</span>
+      </div>
+      <div class="load-action-grid">
+        <button class="load-action primary" id="refresh-roundhill-ingestion-button" type="button">
+          <span>Issuer Refresh</span>
+          <strong>Roundhill NAV, holdings, prices, FX, snapshot</strong>
+        </button>
+        <button class="load-action" id="run-provider-ingestion-button" type="button">
+          <span>Provider Prices</span>
+          <strong>Twelve Data closes and FX only</strong>
+        </button>
+        <button class="load-action" id="run-file-ingestion-button" type="button">
+          <span>Local File Import</span>
+          <strong>Configured JSON ingestion file</strong>
+        </button>
+      </div>
+      <div class="status-grid">
+        <div class="readiness-panel" id="snapshot-readiness">
+          <div class="freshness-status">
+            <span>Snapshot Readiness</span>
+            <strong id="snapshot-readiness-status">—</strong>
+          </div>
+          <div class="freshness-meta">
+            <span id="snapshot-readiness-date">As of —</span>
+            <span id="snapshot-readiness-nav">Official NAV —</span>
+          </div>
+          <div class="readiness-issues" id="snapshot-readiness-issues"></div>
+        </div>
+        <div class="freshness-panel" id="market-data-freshness">
+          <div class="freshness-status">
+            <span>Freshness</span>
+            <strong id="freshness-status">—</strong>
+          </div>
+          <div class="freshness-meta">
+            <span id="freshness-checked">Checked —</span>
+            <span id="freshness-threshold">Threshold —</span>
+          </div>
+          <div class="table-wrap compact freshness-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Required</th>
+                  <th>Observed</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="freshness-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section class="panel market-workflow">
       <div class="section-heading">
-        <h2>Market Data Workflow</h2>
-        <span id="market-data-summary">No records loaded</span>
+        <h2>Manual Data Tools</h2>
+        <span>Manual entry and snapshot generation</span>
       </div>
       <div class="market-data-grid">
         <section>
@@ -154,39 +210,6 @@
 
         <section>
           <h3>Recent Market Data</h3>
-          <div class="readiness-panel" id="snapshot-readiness">
-            <div class="freshness-status">
-              <span>Snapshot Readiness</span>
-              <strong id="snapshot-readiness-status">—</strong>
-            </div>
-            <div class="freshness-meta">
-              <span id="snapshot-readiness-date">As of —</span>
-              <span id="snapshot-readiness-nav">Official NAV —</span>
-            </div>
-            <div class="readiness-issues" id="snapshot-readiness-issues"></div>
-          </div>
-          <div class="freshness-panel" id="market-data-freshness">
-            <div class="freshness-status">
-              <span>Freshness</span>
-              <strong id="freshness-status">—</strong>
-            </div>
-            <div class="freshness-meta">
-              <span id="freshness-checked">Checked —</span>
-              <span id="freshness-threshold">Threshold —</span>
-            </div>
-            <div class="table-wrap compact freshness-table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Required</th>
-                    <th>Observed</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody id="freshness-table"></tbody>
-              </table>
-            </div>
-          </div>
           <div class="table-wrap compact market-summary-table">
             <table>
               <thead>
@@ -207,11 +230,7 @@
     <section class="panel">
       <div class="section-heading">
         <h2>Ingestion Configuration</h2>
-        <div class="form-actions inline-actions">
-          <button class="text-button primary" id="refresh-roundhill-ingestion-button" type="button">Refresh Latest Data</button>
-          <button class="text-button" id="run-file-ingestion-button" type="button">Import Local File</button>
-          <button class="text-button" id="run-provider-ingestion-button" type="button">Run Provider</button>
-        </div>
+        <span>Runtime settings</span>
       </div>
       <div class="table-wrap compact">
         <table>

@@ -38,7 +38,7 @@ Twelve Data `symbol_search` resolved the following symbols on June 28, 2026. The
 | Phison Electronics | 8299 | TWSE | XTAI | TWD |
 | GigaDevice Semiconductor | 603986 | SSE | XSHG | CNY |
 
-Roundhill lists DRAM's primary exchange as Cboe BZX, but Twelve Data `symbol_search` currently resolves the U.S. DRAM ETF row as `exchange=NYSE`, `mic_code=XASE`. Keep the provider config aligned with Twelve Data until `time_series` validation with the API key proves a better exchange alias.
+Roundhill lists DRAM's primary exchange as Cboe BZX, but Twelve Data `symbol_search` currently resolves the U.S. DRAM ETF row as `exchange=NYSE`, `mic_code=XASE`. Keep the provider query exchange aligned with Twelve Data, and set `output-exchange: BZX` so stored prices match the app's canonical freshness and snapshot-readiness key.
 
 ## Provider Scope
 

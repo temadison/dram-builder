@@ -48,6 +48,7 @@ public class TwelveDataProviderProperties {
 
         private String symbol;
         private String exchange;
+        private String outputExchange;
         private String name;
         private String currency;
 
@@ -65,6 +66,14 @@ public class TwelveDataProviderProperties {
 
         public void setExchange(String exchange) {
             this.exchange = exchange;
+        }
+
+        public String getOutputExchange() {
+            return outputExchange;
+        }
+
+        public void setOutputExchange(String outputExchange) {
+            this.outputExchange = outputExchange;
         }
 
         public String getName() {

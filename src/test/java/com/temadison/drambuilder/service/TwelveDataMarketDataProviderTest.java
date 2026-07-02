@@ -97,18 +97,18 @@ class TwelveDataMarketDataProviderTest {
         TwelveDataProviderProperties properties = new TwelveDataProviderProperties();
         properties.setApiKey("test-key");
         Map<String, TwelveDataProviderProperties.Symbol> symbols = new LinkedHashMap<>();
-        symbols.put("dram", symbol("DRAM", "NYSE", "Roundhill Memory ETF", "USD"));
+        symbols.put("dram", symbol("DRAM", "NYSE", "BZX", "Roundhill Memory ETF", "USD"));
         symbols.put("mu", symbol("MU", "NASDAQ", "Micron Technology", "USD"));
         symbols.put("sndk", symbol("SNDK", "NASDAQ", "SanDisk", "USD"));
         symbols.put("wdc", symbol("WDC", "NASDAQ", "Western Digital", "USD"));
         symbols.put("stx", symbol("STX", "NASDAQ", "Seagate Technology", "USD"));
         symbols.put("sk-hynix", symbol("000660", "KRX", "SK hynix", "KRW"));
         symbols.put("samsung", symbol("005930", "KRX", "Samsung Electronics", "KRW"));
-        symbols.put("kioxia", symbol("285A", "JPX", "Kioxia Holdings", "JPY"));
+        symbols.put("kioxia", symbol("285A", "JPX", "TSE", "Kioxia Holdings", "JPY"));
         symbols.put("nanya", symbol("2408", "TWSE", "Nanya Technology", "TWD"));
         symbols.put("winbond", symbol("2344", "TWSE", "Winbond Electronics", "TWD"));
         symbols.put("macronix", symbol("2337", "TWSE", "Macronix International", "TWD"));
-        symbols.put("phison", symbol("8299", "TWSE", "Phison Electronics", "TWD"));
+        symbols.put("phison", symbol("8299", "TWSE", "TPEX", "Phison Electronics", "TWD"));
         symbols.put("gigadevice", symbol("603986", "SSE", "GigaDevice Semiconductor", "CNY"));
         properties.setSymbols(symbols);
 
@@ -135,18 +135,18 @@ class TwelveDataMarketDataProviderTest {
         assertThat(request.prices())
                 .extracting(price -> price.exchange() + ":" + price.ticker())
                 .contains(
-                        "NYSE:DRAM",
+                        "BZX:DRAM",
                         "NASDAQ:MU",
                         "NASDAQ:SNDK",
                         "NASDAQ:WDC",
                         "NASDAQ:STX",
                         "KRX:000660",
                         "KRX:005930",
-                        "JPX:285A",
+                        "TSE:285A",
                         "TWSE:2408",
                         "TWSE:2344",
                         "TWSE:2337",
-                        "TWSE:8299",
+                        "TPEX:8299",
                         "SSE:603986"
                 );
         assertThat(request.fxRates()).hasSize(8);
@@ -168,6 +168,18 @@ class TwelveDataMarketDataProviderTest {
         symbol.setExchange(exchange);
         symbol.setName(name);
         symbol.setCurrency(currency);
+        return symbol;
+    }
+
+    private TwelveDataProviderProperties.Symbol symbol(
+            String ticker,
+            String exchange,
+            String outputExchange,
+            String name,
+            String currency
+    ) {
+        TwelveDataProviderProperties.Symbol symbol = symbol(ticker, exchange, name, currency);
+        symbol.setOutputExchange(outputExchange);
         return symbol;
     }
 

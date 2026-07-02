@@ -247,6 +247,62 @@ th {
   margin-bottom: 16px;
 }
 
+.data-load-status {
+  margin-bottom: 16px;
+}
+
+.load-action-grid,
+.status-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.load-action-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 14px;
+}
+
+.status-grid {
+  grid-template-columns: minmax(320px, 0.8fr) minmax(360px, 1.2fr);
+  align-items: start;
+}
+
+.load-action {
+  min-height: 76px;
+  display: grid;
+  gap: 5px;
+  align-content: center;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.load-action span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.load-action strong {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.load-action.primary {
+  border-color: var(--teal);
+  background: #f3fbfa;
+}
+
+.load-action:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
 .market-data-grid {
   display: grid;
   grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 1.1fr) minmax(320px, 0.9fr);
@@ -286,7 +342,6 @@ th {
 
 .freshness-panel,
 .readiness-panel {
-  margin-bottom: 14px;
   padding: 10px;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -450,6 +505,11 @@ textarea {
   }
 
   .market-data-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .load-action-grid,
+  .status-grid {
     grid-template-columns: 1fr;
   }
 }

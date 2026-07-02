@@ -19,7 +19,7 @@ app:
       enabled: false
       purchase-price:
       etf-ticker: DRAM
-      etf-exchange: BATS
+      etf-exchange: BZX
       holdings: []
   provider:
     twelvedata:
