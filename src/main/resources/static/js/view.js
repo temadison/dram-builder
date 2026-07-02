@@ -1,4 +1,4 @@
-import { dateOnly, dateTime, decimal, money, percent, signedClass } from './format.js';
+import { dateOnly, dateTime, decimal, money, percent, signedClass } from './format.js?v=market-calendar-20260702';
 
 export function showStatus(message, tone = 'info') {
   const band = document.getElementById('status-band');
@@ -22,7 +22,8 @@ export function renderSnapshot(snapshot) {
   document.getElementById('premium-discount').className = signedClass(snapshot.premiumDiscountPercent);
   document.getElementById('holding-count').textContent = `${snapshot.holdings.length} rows`;
 
-  renderRows('holdings-table', snapshot.holdings, holding => `
+  const holdings = [...snapshot.holdings].sort((left, right) => Number(right.weight) - Number(left.weight));
+  renderRows('holdings-table', holdings, holding => `
     <tr>
       <td>${escapeHtml(holding.ticker)}</td>
       <td>${escapeHtml(holding.name)}</td>

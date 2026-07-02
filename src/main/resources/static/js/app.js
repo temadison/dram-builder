@@ -15,8 +15,8 @@ import {
   savePriceSnapshot,
   saveSnapshot,
   saveSnapshotFromMarketData
-} from './api.js';
-import { sampleMarketData, sampleMarketDataCsv, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js';
+} from './api.js?v=market-calendar-20260702';
+import { sampleMarketData, sampleMarketDataCsv, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js?v=market-calendar-20260702';
 import {
   clearStatus,
   renderBridgeScore,
@@ -27,7 +27,7 @@ import {
   renderScenario,
   renderSnapshot,
   showStatus
-} from './view.js';
+} from './view.js?v=market-calendar-20260702';
 
 const snapshotJson = document.getElementById('snapshot-json');
 const marketSnapshotJson = document.getElementById('market-snapshot-json');
@@ -41,6 +41,7 @@ const marketDataCsv = document.getElementById('market-data-csv');
 const marketSnapshotForm = document.getElementById('market-snapshot-form');
 const hasDashboard = Boolean(document.getElementById('market-price'));
 const hasMarketData = Boolean(document.getElementById('market-data-summary'));
+let dashboardAutoLoadAttempted = false;
 
 if (snapshotJson) {
   snapshotJson.value = JSON.stringify(sampleSnapshot, null, 2);
@@ -240,11 +241,39 @@ async function refresh() {
     clearStatus();
   } catch (error) {
     if (error.status === 404) {
+      if (hasDashboard && !dashboardAutoLoadAttempted) {
+        dashboardAutoLoadAttempted = true;
+        await autoLoadDashboard();
+        return;
+      }
       renderEmpty();
       showStatus('No snapshot is available. Save the sample snapshot, generate one from market data, or start with local seed data.');
       return;
     }
     showStatus(error.message, 'error');
+  }
+}
+
+async function autoLoadDashboard() {
+  const button = document.getElementById('refresh-button');
+  try {
+    setBusy(button, true, '...');
+    renderEmpty();
+    showStatus('No snapshot is available. Loading latest issuer data...');
+    const runs = await runRoundhillIngestion();
+    const [snapshot, bridgeScore] = await Promise.all([
+      getLatestSnapshot(),
+      getBridgeScore()
+    ]);
+    renderSnapshot(snapshot);
+    renderBridgeScore(bridgeScore);
+    setScenarioPurchasePrice(snapshot.purchasePrice);
+    showStatus(ingestionSummary(runs?.[0], 'Latest issuer data loaded.'), 'success');
+  } catch (error) {
+    renderEmpty();
+    showStatus(`Unable to auto-load dashboard data: ${error.message}`, 'error');
+  } finally {
+    setBusy(button, false);
   }
 }
 
