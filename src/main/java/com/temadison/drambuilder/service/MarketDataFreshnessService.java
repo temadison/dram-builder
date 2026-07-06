@@ -1,5 +1,6 @@
 package com.temadison.drambuilder.service;
 
+import com.temadison.drambuilder.config.MarketDataFreshnessProperties;
 import com.temadison.drambuilder.domain.PriceSnapshot;
 import com.temadison.drambuilder.dto.MarketDataFreshnessResponse;
 import com.temadison.drambuilder.dto.MarketDataPriceFreshnessResponse;
@@ -10,13 +11,15 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.Arrays;
-import java.util.Set;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,28 +28,22 @@ public class MarketDataFreshnessService {
 
     private final PriceSnapshotRepository priceSnapshotRepository;
     private final long maxAgeHours;
-    private final ZoneId marketZone;
-    private final LocalTime expectedAfterLocalTime;
-    private final Set<LocalDate> marketHolidays;
+    private final MarketCalendar defaultCalendar;
+    private final Map<String, MarketCalendar> exchangeCalendars;
     private final List<RequiredPrice> requiredPrices;
     private final Clock clock;
 
     @Autowired
     public MarketDataFreshnessService(
             PriceSnapshotRepository priceSnapshotRepository,
-            @Value("${app.market-data.freshness.max-age-hours:18}") long maxAgeHours,
-            @Value("${app.market-data.freshness.market-zone:America/Chicago}") String marketZone,
-            @Value("${app.market-data.freshness.expected-after-local-time:17:00}") String expectedAfterLocalTime,
-            @Value("${app.market-data.freshness.market-holidays:}") String marketHolidays,
-            @Value("${app.market-data.freshness.required-prices:BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX}") String requiredPrices
+            MarketDataFreshnessProperties properties
     ) {
         this(
                 priceSnapshotRepository,
-                maxAgeHours,
-                ZoneId.of(marketZone),
-                LocalTime.parse(expectedAfterLocalTime),
-                parseMarketHolidays(marketHolidays),
-                requiredPrices,
+                properties.getMaxAgeHours(),
+                calendar(properties.getMarketZone(), properties.getExpectedAfterLocalTime(), properties.getMarketHolidays()),
+                exchangeCalendars(properties),
+                properties.getRequiredPrices(),
                 Clock.systemUTC()
         );
     }
@@ -54,17 +51,15 @@ public class MarketDataFreshnessService {
     MarketDataFreshnessService(
             PriceSnapshotRepository priceSnapshotRepository,
             long maxAgeHours,
-            ZoneId marketZone,
-            LocalTime expectedAfterLocalTime,
-            Set<LocalDate> marketHolidays,
+            MarketCalendar defaultCalendar,
+            Map<String, MarketCalendar> exchangeCalendars,
             String requiredPrices,
             Clock clock
     ) {
         this.priceSnapshotRepository = priceSnapshotRepository;
         this.maxAgeHours = maxAgeHours;
-        this.marketZone = marketZone;
-        this.expectedAfterLocalTime = expectedAfterLocalTime;
-        this.marketHolidays = Set.copyOf(marketHolidays);
+        this.defaultCalendar = defaultCalendar;
+        this.exchangeCalendars = Map.copyOf(exchangeCalendars);
         this.requiredPrices = parseRequiredPrices(requiredPrices);
         this.clock = clock;
     }
@@ -72,11 +67,11 @@ public class MarketDataFreshnessService {
     @Transactional(readOnly = true)
     public MarketDataFreshnessResponse freshness() {
         Instant checkedAt = clock.instant();
-        LocalDate expectedAsOfDate = expectedAsOfDate(checkedAt);
-        Instant staleBefore = expectedAsOfDate.atStartOfDay(marketZone).toInstant();
+        LocalDate expectedAsOfDate = expectedAsOfDate(checkedAt, defaultCalendar);
+        Instant staleBefore = expectedAsOfDate.atStartOfDay(defaultCalendar.marketZone()).toInstant();
 
         List<MarketDataPriceFreshnessResponse> priceStatuses = requiredPrices.stream()
-                .map(requiredPrice -> priceStatus(requiredPrice, expectedAsOfDate))
+                .map(requiredPrice -> priceStatus(requiredPrice, checkedAt))
                 .toList();
 
         boolean hasMissing = priceStatuses.stream().anyMatch(MarketDataPriceFreshnessResponse::missing);
@@ -89,22 +84,27 @@ public class MarketDataFreshnessService {
                 staleBefore,
                 maxAgeHours,
                 expectedAsOfDate,
-                marketZone.getId(),
-                expectedAfterLocalTime.toString(),
+                defaultCalendar.marketZone().getId(),
+                defaultCalendar.expectedAfterLocalTime().toString(),
                 priceStatuses
         );
     }
 
-    private MarketDataPriceFreshnessResponse priceStatus(RequiredPrice requiredPrice, LocalDate expectedAsOfDate) {
+    private MarketDataPriceFreshnessResponse priceStatus(RequiredPrice requiredPrice, Instant checkedAt) {
+        MarketCalendar calendar = calendarFor(requiredPrice.exchange());
+        LocalDate expectedAsOfDate = expectedAsOfDate(checkedAt, calendar);
         return priceSnapshotRepository.findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(
                         requiredPrice.ticker(),
                         requiredPrice.exchange()
                 )
-                .map(snapshot -> toPriceStatus(requiredPrice, snapshot, expectedAsOfDate))
+                .map(snapshot -> toPriceStatus(requiredPrice, snapshot, expectedAsOfDate, calendar))
                 .orElseGet(() -> new MarketDataPriceFreshnessResponse(
                         requiredPrice.ticker(),
                         requiredPrice.exchange(),
                         null,
+                        expectedAsOfDate,
+                        calendar.marketZone().getId(),
+                        calendar.expectedAfterLocalTime().toString(),
                         true,
                         false
                 ));
@@ -113,41 +113,49 @@ public class MarketDataFreshnessService {
     private MarketDataPriceFreshnessResponse toPriceStatus(
             RequiredPrice requiredPrice,
             PriceSnapshot snapshot,
-            LocalDate expectedAsOfDate
+            LocalDate expectedAsOfDate,
+            MarketCalendar calendar
     ) {
-        LocalDate observedDate = snapshot.getObservedAt().atZone(marketZone).toLocalDate();
+        LocalDate observedDate = snapshot.getObservedAt().atZone(ZoneOffset.UTC).toLocalDate();
         return new MarketDataPriceFreshnessResponse(
                 requiredPrice.ticker(),
                 requiredPrice.exchange(),
                 snapshot.getObservedAt(),
+                expectedAsOfDate,
+                calendar.marketZone().getId(),
+                calendar.expectedAfterLocalTime().toString(),
                 false,
                 observedDate.isBefore(expectedAsOfDate)
         );
     }
 
-    private LocalDate expectedAsOfDate(Instant checkedAt) {
-        LocalDate localDate = checkedAt.atZone(marketZone).toLocalDate();
-        LocalTime localTime = checkedAt.atZone(marketZone).toLocalTime();
-        LocalDate candidate = localTime.isBefore(expectedAfterLocalTime) ? previousDate(localDate) : localDate;
-        return previousMarketDateIfNeeded(candidate);
+    private MarketCalendar calendarFor(String exchange) {
+        return exchangeCalendars.getOrDefault(exchange, defaultCalendar);
+    }
+
+    private LocalDate expectedAsOfDate(Instant checkedAt, MarketCalendar calendar) {
+        LocalDate localDate = checkedAt.atZone(calendar.marketZone()).toLocalDate();
+        LocalTime localTime = checkedAt.atZone(calendar.marketZone()).toLocalTime();
+        LocalDate candidate = localTime.isBefore(calendar.expectedAfterLocalTime()) ? previousDate(localDate) : localDate;
+        return previousMarketDateIfNeeded(candidate, calendar);
     }
 
     private LocalDate previousDate(LocalDate date) {
         return date.minusDays(1);
     }
 
-    private LocalDate previousMarketDateIfNeeded(LocalDate date) {
+    private LocalDate previousMarketDateIfNeeded(LocalDate date, MarketCalendar calendar) {
         LocalDate candidate = date;
-        while (isNonMarketDate(candidate)) {
+        while (isNonMarketDate(candidate, calendar)) {
             candidate = candidate.minusDays(1);
         }
         return candidate;
     }
 
-    private boolean isNonMarketDate(LocalDate date) {
+    private boolean isNonMarketDate(LocalDate date, MarketCalendar calendar) {
         return date.getDayOfWeek() == DayOfWeek.SATURDAY
                 || date.getDayOfWeek() == DayOfWeek.SUNDAY
-                || marketHolidays.contains(date);
+                || calendar.marketHolidays().contains(date);
     }
 
     private List<RequiredPrice> parseRequiredPrices(String value) {
@@ -183,6 +191,38 @@ public class MarketDataFreshnessService {
                 .collect(Collectors.toUnmodifiableSet());
     }
 
+    private static MarketCalendar calendar(String marketZone, String expectedAfterLocalTime, String marketHolidays) {
+        return new MarketCalendar(
+                ZoneId.of(marketZone),
+                LocalTime.parse(expectedAfterLocalTime),
+                parseMarketHolidays(marketHolidays)
+        );
+    }
+
+    private static Map<String, MarketCalendar> exchangeCalendars(MarketDataFreshnessProperties properties) {
+        Map<String, MarketCalendar> calendars = new LinkedHashMap<>();
+        properties.getExchangeCalendars().forEach((exchange, calendar) -> calendars.put(
+                exchange.trim().toUpperCase(Locale.ROOT),
+                calendar(
+                        defaulted(calendar.getMarketZone(), properties.getMarketZone()),
+                        defaulted(calendar.getExpectedAfterLocalTime(), properties.getExpectedAfterLocalTime()),
+                        defaulted(calendar.getMarketHolidays(), properties.getMarketHolidays())
+                )
+        ));
+        return calendars;
+    }
+
+    private static String defaulted(String value, String defaultValue) {
+        return value == null || value.isBlank() ? defaultValue : value;
+    }
+
     private record RequiredPrice(String ticker, String exchange) {
+    }
+
+    record MarketCalendar(ZoneId marketZone, LocalTime expectedAfterLocalTime, Set<LocalDate> marketHolidays) {
+
+        MarketCalendar {
+            marketHolidays = Set.copyOf(marketHolidays);
+        }
     }
 }

@@ -198,7 +198,7 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$.scheduleEnabled", is(false)))
                 .andExpect(jsonPath("$.scheduleMode", is("file")))
                 .andExpect(jsonPath("$.scheduleZone", is("America/Chicago")))
-                .andExpect(jsonPath("$.morningCron", is("0 0 2 * * MON-FRI")))
+                .andExpect(jsonPath("$.morningCron", is("0 30 4 * * MON-FRI")))
                 .andExpect(jsonPath("$.eveningCron", is("0 30 16 * * MON-FRI")))
                 .andExpect(jsonPath("$.providerCount", is(0)))
                 .andExpect(jsonPath("$.freshnessMaxAgeHours", is(18)))

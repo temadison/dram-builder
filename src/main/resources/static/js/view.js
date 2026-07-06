@@ -151,7 +151,7 @@ export function renderIngestionConfig(config) {
     ['Evening', config.eveningCron || '—'],
     ['File', config.ingestionFile || '—'],
     ['Providers', String(config.providerCount ?? 0)],
-    ['Freshness', `${config.freshnessMarketZone || '—'} after ${config.freshnessExpectedAfterLocalTime || '—'} / holidays ${config.freshnessMarketHolidays || '—'} / ${config.freshnessRequiredPrices || '—'}`]
+    ['Freshness', `${config.freshnessMarketZone || '—'} after ${config.freshnessExpectedAfterLocalTime || '—'} / calendars ${config.freshnessExchangeCalendars || '—'} / holidays ${config.freshnessMarketHolidays || '—'} / ${config.freshnessRequiredPrices || '—'}`]
   ];
 
   renderRows('ingestion-config-table', rows, ([label, value]) => `
@@ -178,10 +178,11 @@ function renderFreshness(freshness) {
   renderRows('freshness-table', rows, row => `
     <tr>
       <td>${escapeHtml(row.exchange)}:${escapeHtml(row.ticker)}</td>
+      <td>${dateOnly(row.expectedAsOfDate)}</td>
       <td>${dateTime(row.latestObservedAt)}</td>
       <td class="${freshnessClass(rowStatus(row))}">${rowStatus(row)}</td>
     </tr>
-  `, 3);
+  `, 4);
 }
 
 function renderSnapshotReadiness(readiness, latestOfficialNav) {

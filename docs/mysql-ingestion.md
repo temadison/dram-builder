@@ -94,6 +94,8 @@ Snapshot creation now has readiness gates. When a file or provider run includes 
 
 The Data page has an `Issuer Refresh` button. It downloads Roundhill's public Daily NAV and holdings CSV files, derives current/prior holding prices and implied FX, stores the rows, and creates a snapshot when the readiness gates pass. This is the normal manual refresh path for current issuer data.
 
+The dev scheduled ingestion windows are set for `04:30` and `16:30` America/Chicago. The morning run is intended to land after the main Asian exchanges have closed and before regular U.S. trading opens; the evening run is intended to land after U.S. markets close and before the next Asian trading session opens.
+
 The equivalent request is:
 
 ```bash
@@ -164,7 +166,7 @@ curl -X POST http://localhost:8082/api/market-data/ingest/provider \
 
 This records the same ingestion run history as scheduled provider mode. Use it after setting `TWELVE_DATA_API_KEY` and enabling `app.provider.twelvedata.enabled=true`.
 
-`GET /api/market-data` includes a `freshness` block for the configured required price set. The dev profile checks the full configured provider universe: `BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,TSE:285A,TWSE:2408,TWSE:2344,TWSE:2337,TPEX:8299,SSE:603986`. Freshness compares each latest price date with the expected market date from `app.market-data.freshness.market-zone`, `app.market-data.freshness.expected-after-local-time`, and optional `app.market-data.freshness.market-holidays`; before that local cutoff the expected date is the previous market day, with weekends and configured holidays rolling back to the prior market date.
+`GET /api/market-data` includes a `freshness` block for the configured required price set. The dev profile checks the full configured provider universe: `BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX,KRX:000660,KRX:005930,TSE:285A,TWSE:2408,TWSE:2344,TWSE:2337,TPEX:8299,SSE:603986`. Freshness compares each latest price date with the expected market date from the default freshness calendar or the matching `app.market-data.freshness.exchange-calendars.<exchange>` override. This lets U.S., Korean, Japanese, Taiwanese, and Chinese listings roll around their own local cutoff times and holiday lists.
 
 ## Provider Automation
 

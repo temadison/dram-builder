@@ -1,7 +1,9 @@
 package com.temadison.drambuilder.service;
 
+import com.temadison.drambuilder.config.MarketDataFreshnessProperties;
 import com.temadison.drambuilder.dto.MarketDataIngestionConfigResponse;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ public class MarketDataIngestionConfigService {
     private final String freshnessMarketZone;
     private final String freshnessExpectedAfterLocalTime;
     private final String freshnessMarketHolidays;
+    private final String freshnessExchangeCalendars;
     private final String freshnessRequiredPrices;
 
     public MarketDataIngestionConfigService(
@@ -30,13 +33,9 @@ public class MarketDataIngestionConfigService {
             @Value("${app.ingest.schedule.enabled:false}") boolean scheduleEnabled,
             @Value("${app.ingest.schedule.mode:file}") String scheduleMode,
             @Value("${app.ingest.schedule.zone:America/Chicago}") String scheduleZone,
-            @Value("${app.ingest.schedule.morning-cron:0 0 2 * * MON-FRI}") String morningCron,
+            @Value("${app.ingest.schedule.morning-cron:0 30 4 * * MON-FRI}") String morningCron,
             @Value("${app.ingest.schedule.evening-cron:0 30 16 * * MON-FRI}") String eveningCron,
-            @Value("${app.market-data.freshness.max-age-hours:18}") long freshnessMaxAgeHours,
-            @Value("${app.market-data.freshness.market-zone:America/Chicago}") String freshnessMarketZone,
-            @Value("${app.market-data.freshness.expected-after-local-time:17:00}") String freshnessExpectedAfterLocalTime,
-            @Value("${app.market-data.freshness.market-holidays:}") String freshnessMarketHolidays,
-            @Value("${app.market-data.freshness.required-prices:BZX:DRAM,NASDAQ:MU,NASDAQ:SNDK,NASDAQ:WDC,NASDAQ:STX}") String freshnessRequiredPrices,
+            MarketDataFreshnessProperties freshnessProperties,
             List<MarketDataProvider> marketDataProviders
     ) {
         this.runnerEnabled = runnerEnabled;
@@ -47,11 +46,12 @@ public class MarketDataIngestionConfigService {
         this.scheduleZone = scheduleZone;
         this.morningCron = morningCron;
         this.eveningCron = eveningCron;
-        this.freshnessMaxAgeHours = freshnessMaxAgeHours;
-        this.freshnessMarketZone = freshnessMarketZone;
-        this.freshnessExpectedAfterLocalTime = freshnessExpectedAfterLocalTime;
-        this.freshnessMarketHolidays = freshnessMarketHolidays;
-        this.freshnessRequiredPrices = freshnessRequiredPrices;
+        this.freshnessMaxAgeHours = freshnessProperties.getMaxAgeHours();
+        this.freshnessMarketZone = freshnessProperties.getMarketZone();
+        this.freshnessExpectedAfterLocalTime = freshnessProperties.getExpectedAfterLocalTime();
+        this.freshnessMarketHolidays = freshnessProperties.getMarketHolidays();
+        this.freshnessExchangeCalendars = exchangeCalendarSummary(freshnessProperties);
+        this.freshnessRequiredPrices = freshnessProperties.getRequiredPrices();
         this.providerCount = marketDataProviders.size();
     }
 
@@ -70,7 +70,18 @@ public class MarketDataIngestionConfigService {
                 freshnessMarketZone,
                 freshnessExpectedAfterLocalTime,
                 freshnessMarketHolidays,
+                freshnessExchangeCalendars,
                 freshnessRequiredPrices
         );
+    }
+
+    private String exchangeCalendarSummary(MarketDataFreshnessProperties properties) {
+        if (properties.getExchangeCalendars().isEmpty()) {
+            return "";
+        }
+        return properties.getExchangeCalendars().entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + entry.getValue().getMarketZone()
+                        + "@" + entry.getValue().getExpectedAfterLocalTime())
+                .collect(Collectors.joining(","));
     }
 }

@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -82,12 +83,53 @@ class MarketDataFreshnessServiceTest {
         return new MarketDataFreshnessService(
                 repository,
                 18,
-                MARKET_ZONE,
-                LocalTime.parse("17:00"),
-                marketHolidays,
+                new MarketDataFreshnessService.MarketCalendar(
+                        MARKET_ZONE,
+                        LocalTime.parse("17:00"),
+                        marketHolidays
+                ),
+                Map.of(),
                 "BZX:DRAM",
                 Clock.fixed(Instant.parse(checkedAt), ZoneOffset.UTC)
         ).freshness();
+    }
+
+    @Test
+    void appliesExchangeSpecificCalendarToFreshnessRows() {
+        PriceSnapshotRepository repository = mock(PriceSnapshotRepository.class);
+        when(repository.findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc("DRAM", "BZX"))
+                .thenReturn(Optional.of(price("2026-07-02T20:00:00Z")));
+        when(repository.findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc("000660", "KRX"))
+                .thenReturn(Optional.of(new PriceSnapshot(
+                        new Security("000660", "SK hynix", "KRX", "KRW"),
+                        new BigDecimal("2560000"),
+                        "KRW",
+                        "test",
+                        Instant.parse("2026-07-03T20:00:00Z"),
+                        Instant.parse("2026-07-03T20:00:00Z")
+                )));
+
+        MarketDataFreshnessResponse freshness = new MarketDataFreshnessService(
+                repository,
+                18,
+                new MarketDataFreshnessService.MarketCalendar(
+                        ZoneId.of("America/New_York"),
+                        LocalTime.parse("17:30"),
+                        Set.of(LocalDate.parse("2026-07-03"))
+                ),
+                Map.of("KRX", new MarketDataFreshnessService.MarketCalendar(
+                        ZoneId.of("Asia/Seoul"),
+                        LocalTime.parse("15:45"),
+                        Set.of()
+                )),
+                "BZX:DRAM,KRX:000660",
+                Clock.fixed(Instant.parse("2026-07-03T08:00:00Z"), ZoneOffset.UTC)
+        ).freshness();
+
+        assertThat(freshness.requiredPrices().get(0).expectedAsOfDate()).isEqualTo(LocalDate.parse("2026-07-02"));
+        assertThat(freshness.requiredPrices().get(0).stale()).isFalse();
+        assertThat(freshness.requiredPrices().get(1).expectedAsOfDate()).isEqualTo(LocalDate.parse("2026-07-03"));
+        assertThat(freshness.requiredPrices().get(1).stale()).isFalse();
     }
 
     private PriceSnapshot price(String observedAt) {

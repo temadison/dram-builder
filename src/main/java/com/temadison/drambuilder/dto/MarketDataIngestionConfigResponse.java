@@ -14,6 +14,7 @@ public record MarketDataIngestionConfigResponse(
         String freshnessMarketZone,
         String freshnessExpectedAfterLocalTime,
         String freshnessMarketHolidays,
+        String freshnessExchangeCalendars,
         String freshnessRequiredPrices
 ) {
 }
