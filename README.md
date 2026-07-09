@@ -105,19 +105,19 @@ curl "$BASE_URL/actuator/health"
 
 ## Running With MySQL
 
-For the fastest local setup, start MySQL with Docker Compose:
-
-```bash
-docker compose up -d mysql
-```
-
-Then run with the `dev` profile:
+For the fastest local setup, run with the `dev` profile:
 
 ```bash
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
-The compose file matches `src/main/resources/application-dev.yml`.
+Spring Boot starts the MySQL service from `docker-compose.yml` automatically when Docker Desktop is running. The compose file matches `src/main/resources/application-dev.yml`.
+
+If you want to manage MySQL yourself, start it manually:
+
+```bash
+docker compose up -d mysql
+```
 
 If you prefer a manually managed MySQL instance, create a local MySQL user/database or allow the configured URL to create the database:
 

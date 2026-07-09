@@ -5,10 +5,10 @@ This guide connects the app to local MySQL and loads market data from a JSON ing
 ## Start MySQL
 
 ```bash
-docker compose up -d mysql
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
-The compose file creates:
+Spring Boot starts the MySQL service from `docker-compose.yml` automatically when Docker Desktop is running. The compose file creates:
 
 - database: `dram_bridge`
 - user: `dram_bridge`
@@ -16,6 +16,12 @@ The compose file creates:
 - default host port: `3306`
 
 The Spring `dev` profile is already configured for those values in `src/main/resources/application-dev.yml`. Flyway applies all migrations on startup.
+
+If you want to manage MySQL manually, start it directly:
+
+```bash
+docker compose up -d mysql
+```
 
 If port `3306` is already in use, choose another host port:
 
