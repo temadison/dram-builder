@@ -53,7 +53,7 @@ if (marketDataCsv) {
   marketDataCsv.value = sampleMarketDataCsv;
 }
 
-bindClick('refresh-button', refresh);
+bindClick('refresh-button', refreshLatestData);
 bindClick('sample-button', saveSampleSnapshot);
 bindClick('load-market-sample-button', loadSampleMarketData);
 bindClick('reset-market-csv-button', () => {
@@ -215,19 +215,42 @@ if (scenarioForm) {
 
 refresh();
 
+async function refreshLatestData() {
+  if (hasMarketData) {
+    await runRoundhillIngestionFromUi();
+    return;
+  }
+  await reloadView();
+}
+
+async function reloadView() {
+  const button = document.getElementById('refresh-button');
+  try {
+    setBusy(button, true, 'Reloading...');
+    showStatus('Reloading stored data...');
+    const result = await refresh();
+    if (result.loaded) {
+      showStatus(reloadSummary(result.marketData), result.marketData?.freshness?.status === 'FRESH' ? 'success' : 'info');
+    }
+  } finally {
+    setBusy(button, false);
+  }
+}
+
 async function refresh() {
+  let marketData = null;
   if (hasMarketData) {
     try {
-      await refreshMarketData();
+      marketData = await refreshMarketData();
     } catch (error) {
       showStatus(`Unable to load market data: ${error.message}`, 'error');
-      return;
+      return { loaded: false, marketData: null };
     }
   }
 
   if (!hasDashboard) {
     clearStatus();
-    return;
+    return { loaded: true, marketData };
   }
 
   try {
@@ -239,18 +262,20 @@ async function refresh() {
     renderBridgeScore(bridgeScore);
     setScenarioPurchasePrice(snapshot.purchasePrice);
     clearStatus();
+    return { loaded: true, marketData };
   } catch (error) {
     if (error.status === 404) {
       if (hasDashboard && !dashboardAutoLoadAttempted) {
         dashboardAutoLoadAttempted = true;
         await autoLoadDashboard();
-        return;
+        return { loaded: true, marketData };
       }
       renderEmpty();
       showStatus('No snapshot is available. Save the sample snapshot, generate one from market data, or start with local seed data.');
-      return;
+      return { loaded: false, marketData };
     }
     showStatus(error.message, 'error');
+    return { loaded: false, marketData };
   }
 }
 
@@ -279,7 +304,7 @@ async function autoLoadDashboard() {
 
 async function refreshMarketData() {
   if (!hasMarketData) {
-    return;
+    return null;
   }
   const [marketData, ingestionRuns, ingestionConfig] = await Promise.all([
     getMarketData(),
@@ -289,6 +314,7 @@ async function refreshMarketData() {
   renderMarketData(marketData);
   renderIngestionRuns(ingestionRuns);
   renderIngestionConfig(ingestionConfig);
+  return marketData;
 }
 
 async function saveSampleSnapshot() {
@@ -344,6 +370,7 @@ async function runFileIngestionFromUi() {
 
 async function runRoundhillIngestionFromUi() {
   const buttons = [
+    document.getElementById('refresh-button'),
     document.getElementById('refresh-roundhill-ingestion-button')
   ].filter(Boolean);
   try {
@@ -390,6 +417,17 @@ function ingestionSummary(run, fallback) {
   }
   const snapshot = run.snapshotCreated ? 'snapshot created' : 'no snapshot';
   return `${fallback} ${run.pricesImported} prices / ${run.fxRatesImported} FX / ${run.officialNavsImported} NAV, ${snapshot}.`;
+}
+
+function reloadSummary(marketData) {
+  const status = marketData?.freshness?.status;
+  if (status === 'FRESH') {
+    return 'Stored data reloaded. Required prices are fresh.';
+  }
+  if (status === 'STALE' || status === 'MISSING') {
+    return `Stored data reloaded. Required prices are ${status.toLowerCase()}; run Issuer Refresh or Provider Prices to update source data.`;
+  }
+  return 'Stored data reloaded.';
 }
 
 function setBusy(button, busy, label) {

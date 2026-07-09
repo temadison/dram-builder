@@ -127,7 +127,7 @@ curl -X POST http://localhost:8082/api/market-data/ingest/file \
 For IntelliJ, keep the normal app run configuration on port `8082` and include the file argument when you want `Import Local File` to work:
 
 ```text
---server.port=8082 --spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC --app.ingest.file=file:/Users/temadison/Development/Personal/GitHub/dram-builder/data/ingest/dram-market-data-local.json
+--server.port=8082 --app.ingest.file=file:/Users/temadison/Development/Personal/GitHub/dram-builder/data/ingest/dram-market-data-local.json
 ```
 
 ## Run the App Against MySQL
@@ -194,7 +194,7 @@ The app includes a disabled-by-default file scheduler using those windows. It re
 To enable scheduled file ingestion against the Docker MySQL database:
 
 ```bash
-SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC --server.port=8082 --app.ingest.file=file:/absolute/path/to/market-data.json --app.ingest.schedule.enabled=true'
+SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--server.port=8082 --app.ingest.file=file:/absolute/path/to/market-data.json --app.ingest.schedule.enabled=true'
 ```
 
 For IntelliJ, use the same `data/ingest/dram-market-data-local.json` path in `--app.ingest.file`.

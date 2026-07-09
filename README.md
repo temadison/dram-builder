@@ -77,7 +77,7 @@ For the market data workflow, use `Load Sample Market Data` to bulk import deter
 
 The Data page separates stored-data reloads from ingestion:
 
-- `Reload View` rereads the database and does not contact any external data source.
+- `Refresh Latest Data` downloads Roundhill NAV and holdings data, imports current and prior issuer rows, then reloads the view.
 - `Issuer Refresh` downloads Roundhill NAV and holdings data, imports current and prior issuer rows, refreshes DRAM under the canonical `BZX:DRAM` key, and creates a snapshot when readiness passes.
 - `Provider Prices` loads configured Twelve Data closes and FX rates only. Provider query exchanges can differ from stored canonical exchanges through `output-exchange` in `application-dev.yml`.
 - `Local File Import` imports the configured JSON ingestion file.
