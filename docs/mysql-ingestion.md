@@ -13,7 +13,7 @@ Spring Boot starts the MySQL service from `docker-compose.yml` automatically whe
 - database: `dram_bridge`
 - user: `dram_bridge`
 - password: `dram_bridge`
-- default host port: `3306`
+- default host port: `3307`
 
 The Spring `dev` profile is already configured for those values in `src/main/resources/application-dev.yml`. Flyway applies all migrations on startup.
 
@@ -23,16 +23,16 @@ If you want to manage MySQL manually, start it directly:
 docker compose up -d mysql
 ```
 
-If port `3306` is already in use, choose another host port:
+If port `3307` is already in use, choose another host port:
 
 ```bash
-DRAM_MYSQL_PORT=3307 docker compose up -d mysql
+DRAM_MYSQL_PORT=3308 docker compose up -d mysql
 ```
 
 When using a non-default host port, pass a matching datasource URL to Spring:
 
 ```bash
---spring.datasource.url=jdbc:mysql://localhost:3307/dram_bridge?createDatabaseIfNotExist=true\&useSSL=false\&allowPublicKeyRetrieval=true\&serverTimezone=UTC
+DRAM_MYSQL_PORT=3308 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
 ## Prepare Ingestion Data
@@ -90,7 +90,7 @@ For this repository's default local path:
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun --args='--app.ingest.enabled=true --app.ingest.file=file:/Users/temadison/Development/Personal/GitHub/dram-builder/data/ingest/dram-market-data-local.json --app.ingest.exit-after-run=true'
 ```
 
-If MySQL is on a non-default host port, include the datasource override in the same `--args` string.
+If MySQL is on a non-default host port, set `DRAM_MYSQL_PORT` for the Spring process too.
 
 The runner validates the file, stores price/FX/NAV snapshots through the same service paths used by the API, optionally creates a DRAM snapshot, and exits when `app.ingest.exit-after-run=true`.
 
