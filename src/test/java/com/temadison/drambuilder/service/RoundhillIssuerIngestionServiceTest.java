@@ -8,9 +8,6 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import com.temadison.drambuilder.dto.MarketDataIngestionRequest;
 import java.math.BigDecimal;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneOffset;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.ExpectedCount;
@@ -26,8 +23,7 @@ class RoundhillIssuerIngestionServiceTest {
         RoundhillIssuerIngestionService service = new RoundhillIssuerIngestionService(
                 builder,
                 mock(MarketDataIngestionService.class),
-                "https://roundhill.test/assets/data",
-                Clock.fixed(Instant.parse("2026-07-01T15:00:00Z"), ZoneOffset.UTC)
+                "https://roundhill.test/assets/data"
         );
 
         server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_DailyNAV.csv")))
@@ -35,8 +31,6 @@ class RoundhillIssuerIngestionServiceTest {
                         Fund Name,Fund Ticker,CUSIP,Net Assets,Shares Outstanding,NAV,NAV Change Dollars,NAV Change Percentage,Market Price,Market Price Change Dollars,Market Price Change Percentage,Premium/Discount,Rate Date
                         Roundhill Memory ETF,DRAM,77926X320,25910762038.87,357990000.000,72.38,1.05,1.48,73.85,1.91,2.65,2.03,06/30/2026
                         """, MediaType.TEXT_PLAIN));
-        server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_07012026.csv")))
-                .andRespond(withSuccess("<!doctype html>", MediaType.TEXT_HTML));
         server.expect(ExpectedCount.times(2), requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_06302026.csv")))
                 .andRespond(withSuccess(holdingsCsv("07/01/2026", "15.96%", "8.10%", "14.46%", "11.00%", "25.00%"), MediaType.TEXT_PLAIN));
         server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_06292026.csv")))

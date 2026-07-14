@@ -10,6 +10,13 @@ public interface FxRateSnapshotRepository extends JpaRepository<FxRateSnapshot, 
 
     Optional<FxRateSnapshot> findFirstByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(String baseCurrency, String quoteCurrency);
 
+    Optional<FxRateSnapshot> findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
+            String baseCurrency,
+            String quoteCurrency,
+            Instant observedAtStart,
+            Instant observedAtEnd
+    );
+
     List<FxRateSnapshot> findTop2ByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(String baseCurrency, String quoteCurrency);
 
     Optional<FxRateSnapshot> findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtBeforeOrderByObservedAtDesc(

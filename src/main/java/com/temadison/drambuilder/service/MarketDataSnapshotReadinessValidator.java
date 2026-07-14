@@ -9,6 +9,7 @@ import com.temadison.drambuilder.repository.OfficialNavSnapshotRepository;
 import com.temadison.drambuilder.repository.PriceSnapshotRepository;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.Locale;
 import org.springframework.stereotype.Component;
 
@@ -38,8 +39,7 @@ public class MarketDataSnapshotReadinessValidator {
         String etfExchange = defaulted(request.etfExchange(), DEFAULT_ETF_EXCHANGE);
 
         if (request.marketPrice() == null) {
-            PriceSnapshot etfPrice = currentPrice(etfTicker, etfExchange);
-            requireFreshPrice(etfTicker, etfExchange, etfPrice, asOfDate);
+            currentPrice(etfTicker, etfExchange, asOfDate);
         }
 
         requireOfficialNav(etfTicker, asOfDate);
@@ -51,61 +51,62 @@ public class MarketDataSnapshotReadinessValidator {
         String exchange = normalize(holding.exchange());
         String currency = normalize(holding.currency());
 
-        PriceSnapshot price = currentPrice(ticker, exchange);
-        requireFreshPrice(ticker, exchange, price, asOfDate);
-        requirePriorPrice(ticker, exchange, price);
+        currentPrice(ticker, exchange, asOfDate);
+        requirePriorPrice(ticker, exchange, asOfDate);
 
         if (!USD.equals(currency)) {
-            FxRateSnapshot fxRate = currentFxRate(currency);
-            requireFreshFx(currency, fxRate, asOfDate);
-            requirePriorFx(currency, fxRate);
+            currentFxRate(currency, asOfDate);
+            requirePriorFx(currency, asOfDate);
         }
     }
 
-    private PriceSnapshot currentPrice(String ticker, String exchange) {
-        return priceSnapshotRepository.findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(ticker, exchange)
-                .orElseThrow(() -> new IllegalStateException("No price snapshot exists for " + ticker + " on " + exchange));
+    private PriceSnapshot currentPrice(String ticker, String exchange, LocalDate asOfDate) {
+        Instant start = asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant end = asOfDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        return priceSnapshotRepository
+                .findFirstBySecurityTickerAndSecurityExchangeAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
+                        ticker,
+                        exchange,
+                        start,
+                        end
+                )
+                .orElseThrow(() -> new IllegalStateException("No price snapshot exists for " + ticker + " on " + exchange + " as of " + asOfDate));
     }
 
-    private void requirePriorPrice(String ticker, String exchange, PriceSnapshot current) {
+    private void requirePriorPrice(String ticker, String exchange, LocalDate asOfDate) {
         priceSnapshotRepository.findFirstBySecurityTickerAndSecurityExchangeAndObservedAtBeforeOrderByObservedAtDesc(
                         ticker,
                         exchange,
-                        current.getObservedAt()
+                        asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant()
                 )
                 .orElseThrow(() -> new IllegalStateException("No prior price snapshot exists for " + ticker + " on " + exchange));
     }
 
-    private FxRateSnapshot currentFxRate(String currency) {
-        return fxRateSnapshotRepository.findFirstByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(currency, USD)
-                .orElseThrow(() -> new IllegalStateException("No FX rate snapshot exists for " + currency + "/" + USD));
+    private FxRateSnapshot currentFxRate(String currency, LocalDate asOfDate) {
+        Instant start = asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant end = asOfDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        return fxRateSnapshotRepository
+                .findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
+                        currency,
+                        USD,
+                        start,
+                        end
+                )
+                .orElseThrow(() -> new IllegalStateException("No FX rate snapshot exists for " + currency + "/" + USD + " as of " + asOfDate));
     }
 
-    private void requirePriorFx(String currency, FxRateSnapshot current) {
+    private void requirePriorFx(String currency, LocalDate asOfDate) {
         fxRateSnapshotRepository.findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtBeforeOrderByObservedAtDesc(
                         currency,
                         USD,
-                        current.getObservedAt()
+                        asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant()
                 )
                 .orElseThrow(() -> new IllegalStateException("No prior FX rate snapshot exists for " + currency + "/" + USD));
     }
 
     private void requireOfficialNav(String etfTicker, LocalDate asOfDate) {
-        officialNavSnapshotRepository.findFirstByEtfTickerOrderByObservedAtDesc(etfTicker)
-                .filter(nav -> asOfDate.equals(nav.getAsOfDate()))
+        officialNavSnapshotRepository.findFirstByEtfTickerAndAsOfDateOrderByObservedAtDesc(etfTicker, asOfDate)
                 .orElseThrow(() -> new IllegalStateException("No official NAV snapshot exists for " + etfTicker + " as of " + asOfDate));
-    }
-
-    private void requireFreshPrice(String ticker, String exchange, PriceSnapshot price, LocalDate asOfDate) {
-        if (price.getObservedAt().isBefore(asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant())) {
-            throw new IllegalStateException("Latest price snapshot is stale for " + ticker + " on " + exchange + " as of " + asOfDate);
-        }
-    }
-
-    private void requireFreshFx(String currency, FxRateSnapshot fxRate, LocalDate asOfDate) {
-        if (fxRate.getObservedAt().isBefore(asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant())) {
-            throw new IllegalStateException("Latest FX rate snapshot is stale for " + currency + "/" + USD + " as of " + asOfDate);
-        }
     }
 
     private String defaulted(String value, String defaultValue) {

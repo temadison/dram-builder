@@ -12,6 +12,7 @@ import com.temadison.drambuilder.repository.PriceSnapshotRepository;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.Locale;
 import org.springframework.stereotype.Service;
 
@@ -49,9 +50,8 @@ public class DramMarketDataSnapshotService {
 
     /**
      * Creates a DRAM snapshot using latest persisted market data. A holding's
-     * most recent price/FX values become the current inputs; the previous
-     * observations become the prior inputs. If only one observation exists, it
-     * is reused for prior inputs so the snapshot remains usable.
+     * price/FX values from the snapshot date become the current inputs; the
+     * previous date's observations become the prior inputs.
      *
      * @param request ETF-level parameters and holding identities/weights
      * @return persisted snapshot response with synthetic NAV and attribution
@@ -70,7 +70,7 @@ public class DramMarketDataSnapshotService {
                 marketPrice,
                 request.purchasePrice(),
                 request.holdings().stream()
-                        .map(this::toHoldingInput)
+                        .map(holding -> toHoldingInput(holding, asOfDate))
                         .toList()
         );
         return dramSnapshotService.createSnapshot(snapshotRequest);
@@ -79,17 +79,18 @@ public class DramMarketDataSnapshotService {
     private BigDecimal latestEtfPrice(MarketDataSnapshotRequest request) {
         String ticker = defaulted(request.etfTicker(), DEFAULT_ETF_TICKER);
         String exchange = defaulted(request.etfExchange(), DEFAULT_ETF_EXCHANGE);
-        return currentPrice(ticker, exchange).getPrice();
+        LocalDate asOfDate = request.asOfDate() == null ? LocalDate.now() : request.asOfDate();
+        return currentPrice(ticker, exchange, asOfDate).getPrice();
     }
 
-    private HoldingInput toHoldingInput(MarketDataHoldingRequest holding) {
+    private HoldingInput toHoldingInput(MarketDataHoldingRequest holding, LocalDate asOfDate) {
         String ticker = normalize(holding.ticker());
         String exchange = normalize(holding.exchange());
         String currency = normalize(holding.currency());
-        PriceSnapshot currentPrice = currentPrice(ticker, exchange);
-        PriceSnapshot priorPrice = priorPrice(ticker, exchange, currentPrice);
-        FxRateSnapshot currentFxRate = currentFxRate(currency);
-        FxRateSnapshot priorFxRate = priorFxRate(currency, currentFxRate);
+        PriceSnapshot currentPrice = currentPrice(ticker, exchange, asOfDate);
+        PriceSnapshot priorPrice = priorPrice(ticker, exchange, asOfDate);
+        FxRateSnapshot currentFxRate = currentFxRate(currency, asOfDate);
+        FxRateSnapshot priorFxRate = priorFxRate(currency, asOfDate);
 
         return new HoldingInput(
                 ticker,
@@ -104,31 +105,47 @@ public class DramMarketDataSnapshotService {
         );
     }
 
-    private PriceSnapshot currentPrice(String ticker, String exchange) {
-        return priceSnapshotRepository.findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(ticker, exchange)
-                .orElseThrow(() -> new IllegalStateException("No price snapshot exists for " + ticker + " on " + exchange));
+    private PriceSnapshot currentPrice(String ticker, String exchange, LocalDate asOfDate) {
+        Instant start = asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant end = asOfDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        return priceSnapshotRepository
+                .findFirstBySecurityTickerAndSecurityExchangeAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
+                        ticker,
+                        exchange,
+                        start,
+                        end
+                )
+                .orElseThrow(() -> new IllegalStateException("No price snapshot exists for " + ticker + " on " + exchange + " as of " + asOfDate));
     }
 
-    private PriceSnapshot priorPrice(String ticker, String exchange, PriceSnapshot current) {
+    private PriceSnapshot priorPrice(String ticker, String exchange, LocalDate asOfDate) {
         return priceSnapshotRepository
                 .findFirstBySecurityTickerAndSecurityExchangeAndObservedAtBeforeOrderByObservedAtDesc(
                         ticker,
                         exchange,
-                        current.getObservedAt()
+                        asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant()
                 )
-                .orElse(current);
+                .orElseThrow(() -> new IllegalStateException("No prior price snapshot exists for " + ticker + " on " + exchange));
     }
 
-    private FxRateSnapshot currentFxRate(String currency) {
+    private FxRateSnapshot currentFxRate(String currency, LocalDate asOfDate) {
         if (USD.equals(currency)) {
             return identityFxRate();
         }
 
-        return fxRateSnapshotRepository.findFirstByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(currency, USD)
-                .orElseThrow(() -> new IllegalStateException("No FX rate snapshot exists for " + currency + "/" + USD));
+        Instant start = asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant end = asOfDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        return fxRateSnapshotRepository
+                .findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
+                        currency,
+                        USD,
+                        start,
+                        end
+                )
+                .orElseThrow(() -> new IllegalStateException("No FX rate snapshot exists for " + currency + "/" + USD + " as of " + asOfDate));
     }
 
-    private FxRateSnapshot priorFxRate(String currency, FxRateSnapshot current) {
+    private FxRateSnapshot priorFxRate(String currency, LocalDate asOfDate) {
         if (USD.equals(currency)) {
             return identityFxRate();
         }
@@ -137,9 +154,9 @@ public class DramMarketDataSnapshotService {
                 .findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtBeforeOrderByObservedAtDesc(
                         currency,
                         USD,
-                        current.getObservedAt()
+                        asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant()
                 )
-                .orElse(current);
+                .orElseThrow(() -> new IllegalStateException("No prior FX rate snapshot exists for " + currency + "/" + USD));
     }
 
     private FxRateSnapshot identityFxRate() {

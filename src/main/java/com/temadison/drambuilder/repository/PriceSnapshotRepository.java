@@ -10,6 +10,13 @@ public interface PriceSnapshotRepository extends JpaRepository<PriceSnapshot, Lo
 
     Optional<PriceSnapshot> findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(String ticker, String exchange);
 
+    Optional<PriceSnapshot> findFirstBySecurityTickerAndSecurityExchangeAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
+            String ticker,
+            String exchange,
+            Instant observedAtStart,
+            Instant observedAtEnd
+    );
+
     List<PriceSnapshot> findTop2BySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(String ticker, String exchange);
 
     Optional<PriceSnapshot> findFirstBySecurityTickerAndSecurityExchangeAndObservedAtBeforeOrderByObservedAtDesc(

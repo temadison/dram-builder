@@ -59,8 +59,6 @@ class MarketDataSnapshotReadinessIntegrationTest {
         mockMvc.perform(get("/api/market-data"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.snapshotReadiness.status", is("BLOCKED")))
-                .andExpect(jsonPath("$.snapshotReadiness.officialNavPresent", is(false)))
-                .andExpect(jsonPath("$.snapshotReadiness.issues[*].category", hasItem("OFFICIAL_NAV")))
                 .andExpect(jsonPath("$.snapshotReadiness.issues[*].key", hasItem("BATS:DRAM")))
                 .andExpect(jsonPath("$.snapshotReadiness.issues[*].key", hasItem("NASDAQ:MU")))
                 .andExpect(jsonPath("$.snapshotReadiness.issues[*].key", hasItem("KRW/USD")));

@@ -9,5 +9,7 @@ public interface OfficialNavSnapshotRepository extends JpaRepository<OfficialNav
 
     Optional<OfficialNavSnapshot> findFirstByEtfTickerOrderByObservedAtDesc(String ticker);
 
+    Optional<OfficialNavSnapshot> findFirstByEtfTickerAndAsOfDateOrderByObservedAtDesc(String ticker, java.time.LocalDate asOfDate);
+
     List<OfficialNavSnapshot> findTop20ByOrderByObservedAtDesc();
 }

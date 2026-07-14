@@ -8,7 +8,6 @@ import com.temadison.drambuilder.dto.OfficialNavSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -35,7 +34,6 @@ public class RoundhillIssuerIngestionService {
     private final RestClient restClient;
     private final MarketDataIngestionService marketDataIngestionService;
     private final String baseUrl;
-    private final Clock clock;
 
     @Autowired
     public RoundhillIssuerIngestionService(
@@ -43,19 +41,9 @@ public class RoundhillIssuerIngestionService {
             MarketDataIngestionService marketDataIngestionService,
             @Value("${app.issuer.roundhill.base-url:https://www.roundhillinvestments.com/assets/data}") String baseUrl
     ) {
-        this(restClientBuilder, marketDataIngestionService, baseUrl, Clock.systemUTC());
-    }
-
-    RoundhillIssuerIngestionService(
-            RestClient.Builder restClientBuilder,
-            MarketDataIngestionService marketDataIngestionService,
-            String baseUrl,
-            Clock clock
-    ) {
         this.restClient = restClientBuilder.build();
         this.marketDataIngestionService = marketDataIngestionService;
         this.baseUrl = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        this.clock = clock;
     }
 
     public void ingestLatest(String window) {
@@ -72,7 +60,8 @@ public class RoundhillIssuerIngestionService {
 
     MarketDataIngestionRequest latestIngestionRequest() {
         NavRow nav = latestDramNav();
-        HoldingsExport current = latestHoldings();
+        HoldingsExport current = holdingsForFileDate(nav.rateDate())
+                .orElseThrow(() -> new IllegalStateException("No Roundhill DRAM holdings CSV was found for NAV date " + nav.rateDate()));
         HoldingsExport prior = priorHoldingsBefore(current.rowDate());
 
         List<PriceSnapshotRequest> prices = new ArrayList<>();
@@ -127,19 +116,6 @@ public class RoundhillIssuerIngestionService {
                 .orElseThrow(() -> new IllegalStateException("Roundhill Daily NAV CSV did not include DRAM"));
     }
 
-    private HoldingsExport latestHoldings() {
-        LocalDate today = LocalDate.now(clock);
-        for (int offset = 0; offset < 20; offset++) {
-            LocalDate fileDate = today.minusDays(offset);
-            Optional<HoldingsExport> export = holdingsForFileDate(fileDate)
-                    .filter(holdings -> !holdings.rowDate().isAfter(today));
-            if (export.isPresent()) {
-                return export.get();
-            }
-        }
-        throw new IllegalStateException("No current Roundhill DRAM holdings CSV was found");
-    }
-
     private HoldingsExport priorHoldingsBefore(LocalDate currentRowDate) {
         for (int offset = 1; offset < 30; offset++) {
             Optional<HoldingsExport> export = holdingsForFileDate(currentRowDate.minusDays(offset))
@@ -164,7 +140,7 @@ public class RoundhillIssuerIngestionService {
             return Optional.empty();
         }
         LocalDate rowDate = parseDate(rows.getFirst().get("Date"));
-        return Optional.of(new HoldingsExport(rowDate, rows));
+        return Optional.of(new HoldingsExport(fileDate, rowDate, rows));
     }
 
     private List<PriceSnapshotRequest> holdingPrices(HoldingsExport export) {
@@ -180,7 +156,7 @@ public class RoundhillIssuerIngestionService {
                             definition.currency(),
                             decimal(row.get("Price")),
                             SOURCE_HOLDINGS,
-                            observedAt(export.rowDate())
+                            observedAt(export.fileDate())
                     );
                 })
                 .toList();
@@ -206,7 +182,7 @@ public class RoundhillIssuerIngestionService {
                         "USD",
                         average(entry.getValue()),
                         SOURCE_FX,
-                        observedAt(export.rowDate())
+                        observedAt(export.fileDate())
                 ))
                 .toList();
     }
@@ -306,7 +282,7 @@ public class RoundhillIssuerIngestionService {
     private record NavRow(BigDecimal nav, BigDecimal marketPrice, LocalDate rateDate) {
     }
 
-    private record HoldingsExport(LocalDate rowDate, List<Map<String, String>> rows) {
+    private record HoldingsExport(LocalDate fileDate, LocalDate rowDate, List<Map<String, String>> rows) {
 
         private Map<String, String> requireRow(String stockTicker) {
             return rows.stream()

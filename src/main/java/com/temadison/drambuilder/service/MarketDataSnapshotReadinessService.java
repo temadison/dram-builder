@@ -10,6 +10,7 @@ import com.temadison.drambuilder.repository.FxRateSnapshotRepository;
 import com.temadison.drambuilder.repository.OfficialNavSnapshotRepository;
 import com.temadison.drambuilder.repository.PriceSnapshotRepository;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -90,23 +91,24 @@ public class MarketDataSnapshotReadinessService {
             LocalDate asOfDate,
             List<MarketDataSnapshotReadinessIssueResponse> issues
     ) {
-        Optional<PriceSnapshot> latest = priceSnapshotRepository.findFirstBySecurityTickerAndSecurityExchangeOrderByObservedAtDesc(
+        Instant start = asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant end = asOfDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        Optional<PriceSnapshot> latest = priceSnapshotRepository
+                .findFirstBySecurityTickerAndSecurityExchangeAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
                 ticker,
-                exchange
+                exchange,
+                start,
+                end
         );
         String key = exchange + ":" + ticker;
         if (latest.isEmpty()) {
-            issues.add(issue("PRICE", key, "Latest price is missing"));
+            issues.add(issue("PRICE", key, "Price is missing for " + asOfDate));
             return;
-        }
-        PriceSnapshot latestPrice = latest.get();
-        if (latestPrice.getObservedAt().isBefore(asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant())) {
-            issues.add(issue("PRICE", key, "Latest price is stale for " + asOfDate));
         }
         boolean hasPrior = priceSnapshotRepository.findFirstBySecurityTickerAndSecurityExchangeAndObservedAtBeforeOrderByObservedAtDesc(
                 ticker,
                 exchange,
-                latestPrice.getObservedAt()
+                asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant()
         ).isPresent();
         if (!hasPrior) {
             issues.add(issue("PRICE", key, "Prior price is missing"));
@@ -118,20 +120,24 @@ public class MarketDataSnapshotReadinessService {
             LocalDate asOfDate,
             List<MarketDataSnapshotReadinessIssueResponse> issues
     ) {
-        Optional<FxRateSnapshot> latest = fxRateSnapshotRepository.findFirstByBaseCurrencyAndQuoteCurrencyOrderByObservedAtDesc(currency, USD);
+        Instant start = asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant();
+        Instant end = asOfDate.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant();
+        Optional<FxRateSnapshot> latest = fxRateSnapshotRepository
+                .findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtGreaterThanEqualAndObservedAtBeforeOrderByObservedAtDesc(
+                        currency,
+                        USD,
+                        start,
+                        end
+                );
         String key = currency + "/" + USD;
         if (latest.isEmpty()) {
-            issues.add(issue("FX", key, "Latest FX rate is missing"));
+            issues.add(issue("FX", key, "FX rate is missing for " + asOfDate));
             return;
-        }
-        FxRateSnapshot latestFx = latest.get();
-        if (latestFx.getObservedAt().isBefore(asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant())) {
-            issues.add(issue("FX", key, "Latest FX rate is stale for " + asOfDate));
         }
         boolean hasPrior = fxRateSnapshotRepository.findFirstByBaseCurrencyAndQuoteCurrencyAndObservedAtBeforeOrderByObservedAtDesc(
                 currency,
                 USD,
-                latestFx.getObservedAt()
+                asOfDate.atStartOfDay(ZoneOffset.UTC).toInstant()
         ).isPresent();
         if (!hasPrior) {
             issues.add(issue("FX", key, "Prior FX rate is missing"));

@@ -126,6 +126,57 @@ class DramMarketDataSnapshotIntegrationTest {
     }
 
     @Test
+    void fromMarketDataDoesNotUseNewerPriceForRequestedSnapshotDate() throws Exception {
+        createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
+        createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "105.00", PRIOR_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "112.00", Instant.parse("2026-06-27T20:00:00Z"));
+
+        MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                null,
+                new BigDecimal("76.31"),
+                null,
+                null,
+                List.of(new MarketDataHoldingRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("0.19")))
+        );
+
+        mockMvc.perform(post("/api/dram/snapshot/from-market-data")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error", is("not_found")))
+                .andExpect(jsonPath("$.message", is("No price snapshot exists for MU on NASDAQ as of 2026-06-26")));
+    }
+
+    @Test
+    void fromMarketDataUsesLatestObservationOnRequestedSnapshotDate() throws Exception {
+        createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
+        createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "105.00", PRIOR_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "107.00", Instant.parse("2026-06-26T14:00:00Z"));
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "108.00", CURRENT_OBSERVED_AT);
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "112.00", Instant.parse("2026-06-27T20:00:00Z"));
+
+        MarketDataSnapshotRequest request = new MarketDataSnapshotRequest(
+                LocalDate.of(2026, 6, 26),
+                null,
+                new BigDecimal("76.31"),
+                null,
+                null,
+                List.of(new MarketDataHoldingRequest("MU", "Micron Technology", "NASDAQ", "USD", new BigDecimal("0.19")))
+        );
+
+        mockMvc.perform(post("/api/dram/snapshot/from-market-data")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.holdings[0].ticker", is("MU")))
+                .andExpect(jsonPath("$.holdings[0].currentPrice", comparesEqualTo(108.00)))
+                .andExpect(jsonPath("$.holdings[0].priorPrice", comparesEqualTo(105.00)));
+    }
+
+    @Test
     void fromMarketDataReturnsNotFoundWhenHoldingPriceIsMissing() throws Exception {
         createOfficialNav("DRAM", "Roundhill Memory ETF", "80.95", LocalDate.of(2026, 6, 26), CURRENT_OBSERVED_AT);
         createPrice("DRAM", "Roundhill Memory ETF", "NYSEARCA", "USD", "81.50", CURRENT_OBSERVED_AT);
@@ -150,7 +201,7 @@ class DramMarketDataSnapshotIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", is("not_found")))
-                .andExpect(jsonPath("$.message", is("No price snapshot exists for MU on NASDAQ")));
+                .andExpect(jsonPath("$.message", is("No price snapshot exists for MU on NASDAQ as of 2026-06-26")));
     }
 
     @Test
@@ -197,7 +248,7 @@ class DramMarketDataSnapshotIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error", is("not_found")))
-                .andExpect(jsonPath("$.message", is("Latest price snapshot is stale for MU on NASDAQ as of 2026-06-26")));
+                .andExpect(jsonPath("$.message", is("No price snapshot exists for MU on NASDAQ as of 2026-06-26")));
     }
 
     @Test
