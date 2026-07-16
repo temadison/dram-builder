@@ -161,6 +161,10 @@ app:
           exchange: SSE
           name: GigaDevice Semiconductor
           currency: CNY
+  market-cap:
+    micron-shares-outstanding: 1116000000
+    sk-hynix-local-shares-outstanding: 728002365
+    sk-hynix-adr-per-local-share: 10
   market-data:
     freshness:
       market-zone: America/New_York

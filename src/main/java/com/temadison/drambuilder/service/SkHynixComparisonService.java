@@ -1,5 +1,6 @@
 package com.temadison.drambuilder.service;
 
+import com.temadison.drambuilder.config.MarketCapitalizationProperties;
 import com.temadison.drambuilder.domain.FxRateSnapshot;
 import com.temadison.drambuilder.domain.PriceSnapshot;
 import com.temadison.drambuilder.dto.SkHynixComparisonPointResponse;
@@ -33,21 +34,22 @@ public class SkHynixComparisonService {
     private static final String LOCAL_TICKER = "000660";
     private static final String LOCAL_EXCHANGE = "KRX";
     private static final String MICRON_TICKER = "MU";
-    private static final String DRAM_TICKER = "DRAM";
-    private static final String DRAM_EXCHANGE = "BZX";
     private static final String KRW = "KRW";
     private static final String USD = "USD";
-    private static final int ADR_PER_LOCAL_SHARE = 10;
+    private static final LocalDate MARKET_CAP_START_DATE = LocalDate.of(2026, 7, 1);
 
     private final PriceSnapshotRepository priceSnapshotRepository;
     private final FxRateSnapshotRepository fxRateSnapshotRepository;
+    private final MarketCapitalizationProperties marketCapitalizationProperties;
 
     public SkHynixComparisonService(
             PriceSnapshotRepository priceSnapshotRepository,
-            FxRateSnapshotRepository fxRateSnapshotRepository
+            FxRateSnapshotRepository fxRateSnapshotRepository,
+            MarketCapitalizationProperties marketCapitalizationProperties
     ) {
         this.priceSnapshotRepository = priceSnapshotRepository;
         this.fxRateSnapshotRepository = fxRateSnapshotRepository;
+        this.marketCapitalizationProperties = marketCapitalizationProperties;
     }
 
     @Transactional(readOnly = true)
@@ -55,14 +57,30 @@ public class SkHynixComparisonService {
         List<PriceSnapshot> adrPrices = prices(ADR_TICKER, ADR_EXCHANGE);
         List<PriceSnapshot> localPrices = prices(LOCAL_TICKER, LOCAL_EXCHANGE);
         List<PriceSnapshot> micronPrices = prices(MICRON_TICKER, ADR_EXCHANGE);
-        List<PriceSnapshot> dramPrices = prices(DRAM_TICKER, DRAM_EXCHANGE);
 
         SkHynixParityResponse latestParity = latestParity(adrPrices, localPrices);
         List<SkHynixComparisonPointResponse> performance = List.of(
-                        normalizedSeries("SKHY", "SK hynix ADR", adrPrices, price -> price.getPrice()),
-                        normalizedSeries("000660", "SK hynix KRX", localPrices, this::usdAdjustedLocalPrice),
-                        normalizedSeries("MU", "Micron", micronPrices, price -> price.getPrice()),
-                        normalizedSeries("DRAM", "DRAM ETF", dramPrices, price -> price.getPrice())
+                        marketCapSeries(
+                                "SKHY",
+                                "SK hynix ADR",
+                                adrPrices,
+                                price -> price.getPrice(),
+                                skHynixAdrEquivalentShares()
+                        ),
+                        marketCapSeries(
+                                "000660",
+                                "SK hynix KRX",
+                                localPrices,
+                                this::usdAdjustedLocalPrice,
+                                marketCapitalizationProperties.getSkHynixLocalSharesOutstanding()
+                        ),
+                        marketCapSeries(
+                                "MU",
+                                "Micron",
+                                micronPrices,
+                                price -> price.getPrice(),
+                                marketCapitalizationProperties.getMicronSharesOutstanding()
+                        )
                 ).stream()
                 .flatMap(List::stream)
                 .sorted(Comparator.comparing(SkHynixComparisonPointResponse::date).thenComparing(SkHynixComparisonPointResponse::symbol))
@@ -72,7 +90,9 @@ public class SkHynixComparisonService {
                 ADR_TICKER,
                 LOCAL_TICKER,
                 LOCAL_EXCHANGE,
-                ADR_PER_LOCAL_SHARE,
+                marketCapitalizationProperties.getSkHynixAdrPerLocalShare(),
+                marketCapitalizationProperties.getMicronSharesOutstanding(),
+                marketCapitalizationProperties.getSkHynixLocalSharesOutstanding(),
                 latestParity,
                 performance
         );
@@ -106,7 +126,7 @@ public class SkHynixComparisonService {
                 .orElseThrow(() -> new IllegalStateException("No FX rate snapshot exists for KRW/USD as of " + date.get()));
         BigDecimal localEquivalent = local.getPrice()
                 .multiply(fx.getRate(), MATH_CONTEXT)
-                .divide(new BigDecimal(ADR_PER_LOCAL_SHARE), MATH_CONTEXT)
+                .divide(new BigDecimal(marketCapitalizationProperties.getSkHynixAdrPerLocalShare()), MATH_CONTEXT)
                 .setScale(6, RoundingMode.HALF_UP);
         BigDecimal premiumDiscount = adr.getPrice()
                 .divide(localEquivalent, MATH_CONTEXT)
@@ -127,31 +147,51 @@ public class SkHynixComparisonService {
         );
     }
 
-    private List<SkHynixComparisonPointResponse> normalizedSeries(
+    private List<SkHynixComparisonPointResponse> marketCapSeries(
             String symbol,
             String label,
             List<PriceSnapshot> prices,
-            Function<PriceSnapshot, BigDecimal> valueMapper
+            Function<PriceSnapshot, BigDecimal> priceMapper,
+            BigDecimal sharesOutstanding
     ) {
         List<DailyValue> values = latestByDate(prices).entrySet().stream()
-                .map(entry -> new DailyValue(entry.getKey(), valueMapper.apply(entry.getValue())))
-                .filter(value -> value.price() != null && value.price().signum() > 0)
+                .filter(entry -> !entry.getKey().isBefore(MARKET_CAP_START_DATE))
+                .map(entry -> toDailyMarketCap(entry.getKey(), entry.getValue(), priceMapper, sharesOutstanding))
+                .filter(value -> value.price() != null && value.price().signum() > 0 && value.marketCapUsd().signum() > 0)
                 .sorted(Comparator.comparing(DailyValue::date))
                 .toList();
         if (values.isEmpty()) {
             return List.of();
         }
 
-        BigDecimal base = values.getFirst().price();
         return values.stream()
                 .map(value -> new SkHynixComparisonPointResponse(
                         value.date(),
                         symbol,
                         label,
                         value.price().setScale(6, RoundingMode.HALF_UP),
-                        value.price().divide(base, MATH_CONTEXT).multiply(ONE_HUNDRED, MATH_CONTEXT).setScale(6, RoundingMode.HALF_UP)
+                        sharesOutstanding.setScale(6, RoundingMode.HALF_UP),
+                        value.marketCapUsd().setScale(6, RoundingMode.HALF_UP)
                 ))
                 .toList();
+    }
+
+    private DailyValue toDailyMarketCap(
+            LocalDate date,
+            PriceSnapshot price,
+            Function<PriceSnapshot, BigDecimal> priceMapper,
+            BigDecimal sharesOutstanding
+    ) {
+        BigDecimal usdPrice = priceMapper.apply(price);
+        if (usdPrice == null || sharesOutstanding == null) {
+            return new DailyValue(date, null, BigDecimal.ZERO);
+        }
+        return new DailyValue(date, usdPrice, usdPrice.multiply(sharesOutstanding, MATH_CONTEXT));
+    }
+
+    private BigDecimal skHynixAdrEquivalentShares() {
+        return marketCapitalizationProperties.getSkHynixLocalSharesOutstanding()
+                .multiply(new BigDecimal(marketCapitalizationProperties.getSkHynixAdrPerLocalShare()), MATH_CONTEXT);
     }
 
     private BigDecimal usdAdjustedLocalPrice(PriceSnapshot price) {
@@ -189,6 +229,6 @@ public class SkHynixComparisonService {
         return instant.atZone(ZoneOffset.UTC).toLocalDate();
     }
 
-    private record DailyValue(LocalDate date, BigDecimal price) {
+    private record DailyValue(LocalDate date, BigDecimal price, BigDecimal marketCapUsd) {
     }
 }

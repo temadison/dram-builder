@@ -98,7 +98,7 @@ Snapshot creation now has readiness gates. When a file or provider run includes 
 
 ## Refresh Latest Issuer Data
 
-The Data page has an `Issuer Refresh` button. It downloads Roundhill's public Daily NAV and holdings CSV files, derives current/prior holding prices and implied FX, stores the rows, and creates a snapshot when the readiness gates pass. This is the normal manual refresh path for current issuer data.
+The Data page has an `Issuer Refresh` button. It downloads Roundhill's public Daily NAV and the latest available holdings CSV independently, derives current/prior holding prices and implied FX from the holdings row dates, stores the rows, and creates a snapshot from the holdings file that matches the official NAV date when the readiness gates pass. This lets midday refreshes pick up the latest closed Asian-market holdings while the official NAV is still tied to the prior U.S. close.
 
 The dev scheduled ingestion windows are set for `04:30` and `16:30` America/Chicago. The morning run is intended to land after the main Asian exchanges have closed and before regular U.S. trading opens; the evening run is intended to land after U.S. markets close and before the next Asian trading session opens.
 

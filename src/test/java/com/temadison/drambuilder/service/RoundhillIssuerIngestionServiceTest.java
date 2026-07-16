@@ -8,9 +8,11 @@ import static org.springframework.test.web.client.response.MockRestResponseCreat
 
 import com.temadison.drambuilder.dto.MarketDataIngestionRequest;
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneId;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
-import org.springframework.test.web.client.ExpectedCount;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
 
@@ -23,7 +25,8 @@ class RoundhillIssuerIngestionServiceTest {
         RoundhillIssuerIngestionService service = new RoundhillIssuerIngestionService(
                 builder,
                 mock(MarketDataIngestionService.class),
-                "https://roundhill.test/assets/data"
+                "https://roundhill.test/assets/data",
+                fixedClock("2026-07-01T14:00:00Z")
         );
 
         server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_DailyNAV.csv")))
@@ -31,7 +34,9 @@ class RoundhillIssuerIngestionServiceTest {
                         Fund Name,Fund Ticker,CUSIP,Net Assets,Shares Outstanding,NAV,NAV Change Dollars,NAV Change Percentage,Market Price,Market Price Change Dollars,Market Price Change Percentage,Premium/Discount,Rate Date
                         Roundhill Memory ETF,DRAM,77926X320,25910762038.87,357990000.000,72.38,1.05,1.48,73.85,1.91,2.65,2.03,06/30/2026
                         """, MediaType.TEXT_PLAIN));
-        server.expect(ExpectedCount.times(2), requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_06302026.csv")))
+        server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_07012026.csv")))
+                .andRespond(withSuccess("not found", MediaType.TEXT_PLAIN));
+        server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_06302026.csv")))
                 .andRespond(withSuccess(holdingsCsv("07/01/2026", "15.96%", "8.10%", "14.46%", "11.00%", "25.00%"), MediaType.TEXT_PLAIN));
         server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_06292026.csv")))
                 .andRespond(withSuccess(holdingsCsv("06/30/2026", "15.50%", "8.00%", "14.00%", "10.50%", "24.00%"), MediaType.TEXT_PLAIN));
@@ -55,6 +60,44 @@ class RoundhillIssuerIngestionServiceTest {
                 .findFirst()
                 .orElseThrow()
                 .weight()).isEqualByComparingTo(new BigDecimal("0.4000"));
+        server.verify();
+    }
+
+    @Test
+    void usesLatestHoldingsPricesEvenWhenNavDateIsStillPriorTradingDay() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).ignoreExpectOrder(true).build();
+        RoundhillIssuerIngestionService service = new RoundhillIssuerIngestionService(
+                builder,
+                mock(MarketDataIngestionService.class),
+                "https://roundhill.test/assets/data",
+                fixedClock("2026-07-16T17:00:00Z")
+        );
+
+        server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_DailyNAV.csv")))
+                .andRespond(withSuccess("""
+                        Fund Name,Fund Ticker,CUSIP,Net Assets,Shares Outstanding,NAV,NAV Change Dollars,NAV Change Percentage,Market Price,Market Price Change Dollars,Market Price Change Percentage,Premium/Discount,Rate Date
+                        Roundhill Memory ETF,DRAM,77926X320,25910762038.87,357990000.000,72.38,1.05,1.48,73.85,1.91,2.65,2.03,07/15/2026
+                        """, MediaType.TEXT_PLAIN));
+        server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_07162026.csv")))
+                .andRespond(withSuccess(holdingsCsv("07/16/2026", "15.96%", "8.10%", "14.46%", "11.00%", "25.00%"), MediaType.TEXT_PLAIN));
+        server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_07152026.csv")))
+                .andRespond(withSuccess(holdingsCsv("07/15/2026", "15.50%", "8.00%", "14.00%", "10.50%", "24.00%"), MediaType.TEXT_PLAIN));
+        server.expect(requestTo(endsWith("/FilepointRoundhill.40RU.RU_Holdings_07142026.csv")))
+                .andRespond(withSuccess(holdingsCsv("07/14/2026", "15.00%", "7.90%", "13.90%", "10.40%", "23.00%"), MediaType.TEXT_PLAIN));
+
+        MarketDataIngestionRequest request = service.latestIngestionRequest();
+
+        assertThat(request.snapshot().asOfDate()).hasToString("2026-07-15");
+        assertThat(request.prices()).anySatisfy(price -> {
+            assertThat(price.ticker()).isEqualTo("000660");
+            assertThat(price.exchange()).isEqualTo("KRX");
+            assertThat(price.observedAt()).isEqualTo(Instant.parse("2026-07-16T20:00:00Z"));
+        });
+        assertThat(request.fxRates()).anySatisfy(rate -> {
+            assertThat(rate.baseCurrency()).isEqualTo("KRW");
+            assertThat(rate.observedAt()).isEqualTo(Instant.parse("2026-07-16T20:00:00Z"));
+        });
         server.verify();
     }
 
@@ -95,5 +138,9 @@ class RoundhillIssuerIngestionServiceTest {
                 date,
                 date
         );
+    }
+
+    private Clock fixedClock(String instant) {
+        return Clock.fixed(Instant.parse(instant), ZoneId.of("America/New_York"));
     }
 }

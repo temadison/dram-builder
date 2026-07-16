@@ -9,7 +9,7 @@ Roundhill's DRAM page loads issuer data from public CSV files under `https://www
 - Daily NAV: `FilepointRoundhill.40RU.RU_DailyNAV.csv`
 - Holdings: `FilepointRoundhill.40RU.RU_Holdings_MMDDYYYY.csv`
 
-The holdings filename uses a U.S. date stamp. The site attempts recent dates until it finds a populated file. When refreshing local data, use the latest holdings file whose row `Date` is not after the current calendar date.
+The holdings filename uses a U.S. date stamp. The site attempts recent dates until it finds a populated file. When refreshing local data, use the latest holdings file whose row `Date` is not after the current New York calendar date, and timestamp derived holding prices and implied FX with that row `Date`.
 
 ## Current Local Baseline
 

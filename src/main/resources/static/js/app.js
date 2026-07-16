@@ -16,8 +16,8 @@ import {
   savePriceSnapshot,
   saveSnapshot,
   saveSnapshotFromMarketData
-} from './api.js?v=skhynix-comparison-20260715';
-import { sampleMarketData, sampleMarketDataCsv, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js?v=skhynix-comparison-20260715';
+} from './api.js?v=market-cap-start-20260716';
+import { sampleMarketData, sampleMarketDataCsv, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js?v=market-cap-start-20260716';
 import {
   clearStatus,
   renderBridgeScore,
@@ -29,7 +29,7 @@ import {
   renderSkHynixComparison,
   renderSnapshot,
   showStatus
-} from './view.js?v=skhynix-comparison-20260715';
+} from './view.js?v=market-cap-start-20260716';
 
 const snapshotJson = document.getElementById('snapshot-json');
 const marketSnapshotJson = document.getElementById('market-snapshot-json');

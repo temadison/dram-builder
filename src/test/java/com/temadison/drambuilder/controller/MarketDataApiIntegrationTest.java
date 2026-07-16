@@ -1,8 +1,10 @@
 package com.temadison.drambuilder.controller;
 
 import static org.hamcrest.Matchers.comparesEqualTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -148,14 +150,19 @@ class MarketDataApiIntegrationTest {
 
     @Test
     void exposesSkHynixAdrParityAndPerformanceComparison() throws Exception {
+        createPrice("SKHY", "SK hynix ADR", "NASDAQ", "USD", "140.00", Instant.parse("2026-06-30T20:00:00Z"));
         createPrice("SKHY", "SK hynix ADR", "NASDAQ", "USD", "150.00", Instant.parse("2026-07-13T20:00:00Z"));
         createPrice("SKHY", "SK hynix ADR", "NASDAQ", "USD", "184.51", Instant.parse("2026-07-14T20:00:00Z"));
+        createPrice("000660", "SK hynix", "KRX", "KRW", "1800000.00", Instant.parse("2026-06-30T20:00:00Z"));
         createPrice("000660", "SK hynix", "KRX", "KRW", "1860000.00", Instant.parse("2026-07-13T20:00:00Z"));
         createPrice("000660", "SK hynix", "KRX", "KRW", "1913000.00", Instant.parse("2026-07-14T20:00:00Z"));
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "108.00", Instant.parse("2026-06-30T20:00:00Z"));
         createPrice("MU", "Micron Technology", "NASDAQ", "USD", "112.00", Instant.parse("2026-07-13T20:00:00Z"));
         createPrice("MU", "Micron Technology", "NASDAQ", "USD", "116.70", Instant.parse("2026-07-14T20:00:00Z"));
+        createPrice("DRAM", "Roundhill Memory ETF", "BZX", "USD", "65.00", Instant.parse("2026-07-13T20:00:00Z"));
         createPrice("DRAM", "Roundhill Memory ETF", "BZX", "USD", "62.00", Instant.parse("2026-07-13T20:00:00Z"));
         createPrice("DRAM", "Roundhill Memory ETF", "BZX", "USD", "57.30", Instant.parse("2026-07-14T20:00:00Z"));
+        createFx("KRW", "USD", "0.00066900", Instant.parse("2026-06-30T20:00:00Z"));
         createFx("KRW", "USD", "0.00066900", Instant.parse("2026-07-13T20:00:00Z"));
         createFx("KRW", "USD", "0.00066900", Instant.parse("2026-07-14T20:00:00Z"));
 
@@ -164,12 +171,20 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$.adrTicker", is("SKHY")))
                 .andExpect(jsonPath("$.localTicker", is("000660")))
                 .andExpect(jsonPath("$.adrPerLocalShare", is(10)))
+                .andExpect(jsonPath("$.micronSharesOutstanding", comparesEqualTo(1116000000)))
+                .andExpect(jsonPath("$.skHynixLocalSharesOutstanding", comparesEqualTo(728002365)))
+                .andExpect(jsonPath("$.dramSharesOutstanding").doesNotExist())
                 .andExpect(jsonPath("$.latestParity.date", is("2026-07-14")))
                 .andExpect(jsonPath("$.latestParity.adrPrice", comparesEqualTo(184.51)))
                 .andExpect(jsonPath("$.latestParity.krxPrice", comparesEqualTo(1913000.00)))
                 .andExpect(jsonPath("$.latestParity.localEquivalentUsdPerAdr", comparesEqualTo(127.979700)))
                 .andExpect(jsonPath("$.latestParity.premiumDiscountPercent", comparesEqualTo(44.171302)))
-                .andExpect(jsonPath("$.performance", hasSize(8)));
+                .andExpect(jsonPath("$.performance", hasSize(6)))
+                .andExpect(jsonPath("$.performance[*].symbol", not(hasItem("DRAM"))))
+                .andExpect(jsonPath("$.performance[*].date", not(hasItem("2026-06-30"))))
+                .andExpect(jsonPath("$.performance[5].symbol", is("SKHY")))
+                .andExpect(jsonPath("$.performance[5].normalizedValue").doesNotExist())
+                .andExpect(jsonPath("$.performance[5].marketCapUsd", comparesEqualTo(new BigDecimal("1343237163661.500000"))));
     }
 
     @Test

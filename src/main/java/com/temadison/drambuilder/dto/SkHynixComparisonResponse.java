@@ -7,6 +7,8 @@ public record SkHynixComparisonResponse(
         String localTicker,
         String localExchange,
         int adrPerLocalShare,
+        java.math.BigDecimal micronSharesOutstanding,
+        java.math.BigDecimal skHynixLocalSharesOutstanding,
         SkHynixParityResponse latestParity,
         List<SkHynixComparisonPointResponse> performance
 ) {

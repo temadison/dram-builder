@@ -8,6 +8,7 @@ public record SkHynixComparisonPointResponse(
         String symbol,
         String label,
         BigDecimal price,
-        BigDecimal normalizedValue
+        BigDecimal sharesOutstanding,
+        BigDecimal marketCapUsd
 ) {
 }

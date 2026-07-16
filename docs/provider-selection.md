@@ -40,7 +40,7 @@ Twelve Data `symbol_search` resolved the following symbols on June 28, 2026. The
 
 Roundhill lists DRAM's primary exchange as Cboe BZX, but Twelve Data `symbol_search` currently resolves the U.S. DRAM ETF row as `exchange=NYSE`, `mic_code=XASE`. Keep the provider query exchange aligned with Twelve Data, and set `output-exchange: BZX` so stored prices match the app's canonical freshness and snapshot-readiness key.
 
-SK hynix is tracked in two forms: Korean ordinary shares as `KRX:000660` and the U.S. ADR as `NASDAQ:SKHY`. The dashboard parity component treats `10` SKHY ADRs as equivalent to one Korean ordinary share, so parity is calculated as `KRX close * KRW/USD / 10` and the ADR premium/discount is `SKHY / parity - 1`.
+SK hynix is tracked in two forms: Korean ordinary shares as `KRX:000660` and the U.S. ADR as `NASDAQ:SKHY`. The dashboard parity component treats `10` SKHY ADRs as equivalent to one Korean ordinary share, so parity is calculated as `KRX close * KRW/USD / 10` and the ADR premium/discount is `SKHY / parity - 1`. The comparison graph uses configured share counts under `app.market-cap` to plot USD market capitalization for `NASDAQ:SKHY`, `KRX:000660`, and `NASDAQ:MU` from July 1, 2026 onward.
 
 ## Provider Scope
 

@@ -1,4 +1,4 @@
-import { dateOnly, dateTime, decimal, money, percent, signedClass } from './format.js?v=skhynix-comparison-20260715';
+import { dateOnly, dateTime, decimal, money, percent, signedClass } from './format.js?v=market-cap-start-20260716';
 
 export function showStatus(message, tone = 'info') {
   const band = document.getElementById('status-band');
@@ -81,7 +81,7 @@ export function renderSkHynixComparison(comparison) {
     return;
   }
 
-  dateElement.textContent = parity ? `As of ${parity.date}` : 'No parity data';
+  dateElement.textContent = parity ? `Market cap chart / parity ${parity.date}` : 'Market cap chart';
   document.getElementById('skhynix-adr-price').textContent = money(parity?.adrPrice);
   document.getElementById('skhynix-local-equivalent').textContent = money(parity?.localEquivalentUsdPerAdr);
   const premiumElement = document.getElementById('skhynix-premium');
@@ -312,17 +312,20 @@ function renderPerformanceChart(points) {
   const series = groupBySymbol(points);
   const symbols = Object.keys(series);
   if (symbols.length === 0) {
-    svg.innerHTML = '<text x="360" y="132" text-anchor="middle" class="chart-empty">No comparison history</text>';
+    svg.innerHTML = '<text x="360" y="132" text-anchor="middle" class="chart-empty">No market cap history</text>';
     legend.innerHTML = '';
     return;
   }
 
   const width = 720;
   const height = 260;
-  const margin = { top: 18, right: 22, bottom: 34, left: 46 };
-  const values = points.map(point => Number(point.normalizedValue)).filter(Number.isFinite);
-  const minValue = Math.min(...values, 95);
-  const maxValue = Math.max(...values, 105);
+  const margin = { top: 18, right: 22, bottom: 34, left: 58 };
+  const values = points.map(point => billions(point.marketCapUsd)).filter(Number.isFinite);
+  const rawMinValue = Math.min(...values);
+  const rawMaxValue = Math.max(...values);
+  const padding = Math.max((rawMaxValue - rawMinValue) * 0.08, 1);
+  const minValue = Math.max(0, rawMinValue - padding);
+  const maxValue = rawMaxValue + padding;
   const dates = [...new Set(points.map(point => point.date))].sort();
   const xForDate = date => {
     const index = dates.indexOf(date);
@@ -338,22 +341,22 @@ function renderPerformanceChart(points) {
   const palette = {
     SKHY: 'var(--teal)',
     '000660': 'var(--blue)',
-    MU: 'var(--green)',
-    DRAM: 'var(--amber)'
+    MU: 'var(--green)'
   };
 
-  const gridValues = [minValue, 100, maxValue].filter((value, index, all) => all.indexOf(value) === index);
+  const gridValues = [minValue, (minValue + maxValue) / 2, maxValue];
   const grid = gridValues.map(value => `
     <g>
       <line x1="${margin.left}" y1="${yForValue(value)}" x2="${width - margin.right}" y2="${yForValue(value)}" class="chart-grid-line"></line>
-      <text x="${margin.left - 8}" y="${yForValue(value) + 4}" text-anchor="end" class="chart-axis-label">${decimal(value, 0)}</text>
+      <text x="${margin.left - 8}" y="${yForValue(value) + 4}" text-anchor="end" class="chart-axis-label">$${decimal(value, 0)}B</text>
     </g>
   `).join('');
+  const axisTitle = '<text x="14" y="132" text-anchor="middle" class="chart-axis-label" transform="rotate(-90 14 132)">Market cap ($B)</text>';
 
   const paths = symbols.map(symbol => {
     const path = series[symbol]
       .sort((left, right) => left.date.localeCompare(right.date))
-      .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xForDate(point.date).toFixed(2)} ${yForValue(Number(point.normalizedValue)).toFixed(2)}`)
+      .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xForDate(point.date).toFixed(2)} ${yForValue(billions(point.marketCapUsd)).toFixed(2)}`)
       .join(' ');
     return `<path d="${path}" class="chart-line" style="stroke: ${palette[symbol] || 'var(--muted)'}"></path>`;
   }).join('');
@@ -363,10 +366,13 @@ function renderPerformanceChart(points) {
     <text x="${width - margin.right}" y="${height - 10}" text-anchor="end" class="chart-axis-label">${escapeHtml(dates[dates.length - 1])}</text>
   ` : '';
 
-  svg.innerHTML = `${grid}${paths}${labels}`;
+  svg.innerHTML = `${grid}${axisTitle}${paths}${labels}`;
   legend.innerHTML = symbols.map(symbol => {
-    const label = series[symbol][0]?.label || symbol;
-    return `<span><i style="background: ${palette[symbol] || 'var(--muted)'}"></i>${escapeHtml(label)}</span>`;
+    const sorted = [...series[symbol]].sort((left, right) => left.date.localeCompare(right.date));
+    const latest = sorted[sorted.length - 1];
+    const label = latest?.label || symbol;
+    const marketCap = latest?.marketCapUsd == null ? '—' : `$${decimal(billions(latest.marketCapUsd), 1)}B`;
+    return `<span><i style="background: ${palette[symbol] || 'var(--muted)'}"></i>${escapeHtml(label)} ${escapeHtml(marketCap)}</span>`;
   }).join('');
 }
 
@@ -378,6 +384,10 @@ function groupBySymbol(points) {
     groups[point.symbol].push(point);
     return groups;
   }, {});
+}
+
+function billions(value) {
+  return Number(value) / 1000000000;
 }
 
 function renderRows(id, rows, mapper, emptyColspan = 1) {
