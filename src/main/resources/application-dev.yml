@@ -119,6 +119,11 @@ app:
           exchange: KRX
           name: SK hynix
           currency: KRW
+        sk-hynix-adr:
+          symbol: SKHY
+          exchange: NASDAQ
+          name: SK hynix ADR
+          currency: USD
         samsung:
           symbol: "005930"
           exchange: KRX

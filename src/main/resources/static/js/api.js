@@ -18,6 +18,10 @@ export async function getMarketData() {
   return request('/api/market-data');
 }
 
+export async function getSkHynixComparison() {
+  return request('/api/market-data/sk-hynix-comparison');
+}
+
 export async function getIngestionRuns() {
   return request('/api/market-data/ingestion-runs');
 }

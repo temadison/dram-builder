@@ -4,6 +4,7 @@ import {
   getIngestionRuns,
   getLatestSnapshot,
   getMarketData,
+  getSkHynixComparison,
   importMarketData,
   importMarketDataCsv,
   runScenario,
@@ -15,8 +16,8 @@ import {
   savePriceSnapshot,
   saveSnapshot,
   saveSnapshotFromMarketData
-} from './api.js?v=market-calendar-20260702';
-import { sampleMarketData, sampleMarketDataCsv, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js?v=market-calendar-20260702';
+} from './api.js?v=skhynix-comparison-20260715';
+import { sampleMarketData, sampleMarketDataCsv, sampleMarketDataSnapshot, sampleSnapshot } from './sampleData.js?v=skhynix-comparison-20260715';
 import {
   clearStatus,
   renderBridgeScore,
@@ -25,9 +26,10 @@ import {
   renderIngestionRuns,
   renderMarketData,
   renderScenario,
+  renderSkHynixComparison,
   renderSnapshot,
   showStatus
-} from './view.js?v=market-calendar-20260702';
+} from './view.js?v=skhynix-comparison-20260715';
 
 const snapshotJson = document.getElementById('snapshot-json');
 const marketSnapshotJson = document.getElementById('market-snapshot-json');
@@ -254,12 +256,14 @@ async function refresh() {
   }
 
   try {
-    const [snapshot, bridgeScore] = await Promise.all([
+    const [snapshot, bridgeScore, skHynixComparison] = await Promise.all([
       getLatestSnapshot(),
-      getBridgeScore()
+      getBridgeScore(),
+      getSkHynixComparison()
     ]);
     renderSnapshot(snapshot);
     renderBridgeScore(bridgeScore);
+    renderSkHynixComparison(skHynixComparison);
     setScenarioPurchasePrice(snapshot.purchasePrice);
     clearStatus();
     return { loaded: true, marketData };
@@ -286,12 +290,14 @@ async function autoLoadDashboard() {
     renderEmpty();
     showStatus('No snapshot is available. Loading latest issuer data...');
     const runs = await runRoundhillIngestion();
-    const [snapshot, bridgeScore] = await Promise.all([
+    const [snapshot, bridgeScore, skHynixComparison] = await Promise.all([
       getLatestSnapshot(),
-      getBridgeScore()
+      getBridgeScore(),
+      getSkHynixComparison()
     ]);
     renderSnapshot(snapshot);
     renderBridgeScore(bridgeScore);
+    renderSkHynixComparison(skHynixComparison);
     setScenarioPurchasePrice(snapshot.purchasePrice);
     showStatus(ingestionSummary(runs?.[0], 'Latest issuer data loaded.'), 'success');
   } catch (error) {

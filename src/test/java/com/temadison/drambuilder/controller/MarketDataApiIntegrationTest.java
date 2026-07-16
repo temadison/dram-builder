@@ -147,6 +147,32 @@ class MarketDataApiIntegrationTest {
     }
 
     @Test
+    void exposesSkHynixAdrParityAndPerformanceComparison() throws Exception {
+        createPrice("SKHY", "SK hynix ADR", "NASDAQ", "USD", "150.00", Instant.parse("2026-07-13T20:00:00Z"));
+        createPrice("SKHY", "SK hynix ADR", "NASDAQ", "USD", "184.51", Instant.parse("2026-07-14T20:00:00Z"));
+        createPrice("000660", "SK hynix", "KRX", "KRW", "1860000.00", Instant.parse("2026-07-13T20:00:00Z"));
+        createPrice("000660", "SK hynix", "KRX", "KRW", "1913000.00", Instant.parse("2026-07-14T20:00:00Z"));
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "112.00", Instant.parse("2026-07-13T20:00:00Z"));
+        createPrice("MU", "Micron Technology", "NASDAQ", "USD", "116.70", Instant.parse("2026-07-14T20:00:00Z"));
+        createPrice("DRAM", "Roundhill Memory ETF", "BZX", "USD", "62.00", Instant.parse("2026-07-13T20:00:00Z"));
+        createPrice("DRAM", "Roundhill Memory ETF", "BZX", "USD", "57.30", Instant.parse("2026-07-14T20:00:00Z"));
+        createFx("KRW", "USD", "0.00066900", Instant.parse("2026-07-13T20:00:00Z"));
+        createFx("KRW", "USD", "0.00066900", Instant.parse("2026-07-14T20:00:00Z"));
+
+        mockMvc.perform(get("/api/market-data/sk-hynix-comparison"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.adrTicker", is("SKHY")))
+                .andExpect(jsonPath("$.localTicker", is("000660")))
+                .andExpect(jsonPath("$.adrPerLocalShare", is(10)))
+                .andExpect(jsonPath("$.latestParity.date", is("2026-07-14")))
+                .andExpect(jsonPath("$.latestParity.adrPrice", comparesEqualTo(184.51)))
+                .andExpect(jsonPath("$.latestParity.krxPrice", comparesEqualTo(1913000.00)))
+                .andExpect(jsonPath("$.latestParity.localEquivalentUsdPerAdr", comparesEqualTo(127.979700)))
+                .andExpect(jsonPath("$.latestParity.premiumDiscountPercent", comparesEqualTo(44.171302)))
+                .andExpect(jsonPath("$.performance", hasSize(8)));
+    }
+
+    @Test
     void summaryReportsFreshnessForRequiredPrices() throws Exception {
         Instant observedAt = Instant.now();
         BulkMarketDataImportRequest request = new BulkMarketDataImportRequest(
@@ -491,5 +517,36 @@ class MarketDataApiIntegrationTest {
                 .andExpect(jsonPath("$[0].status", is("FAILED")))
                 .andExpect(jsonPath("$[0].message", is("No market data provider is configured")))
                 .andExpect(jsonPath("$[0].completedAt", notNullValue()));
+    }
+
+    private void createPrice(String ticker, String name, String exchange, String currency, String price, Instant observedAt)
+            throws Exception {
+        PriceSnapshotRequest request = new PriceSnapshotRequest(
+                ticker,
+                name,
+                exchange,
+                currency,
+                new BigDecimal(price),
+                "comparison-test",
+                observedAt
+        );
+        mockMvc.perform(post("/api/market-data/prices")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
+    }
+
+    private void createFx(String baseCurrency, String quoteCurrency, String rate, Instant observedAt) throws Exception {
+        FxRateSnapshotRequest request = new FxRateSnapshotRequest(
+                baseCurrency,
+                quoteCurrency,
+                new BigDecimal(rate),
+                "comparison-test",
+                observedAt
+        );
+        mockMvc.perform(post("/api/market-data/fx-rates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk());
     }
 }

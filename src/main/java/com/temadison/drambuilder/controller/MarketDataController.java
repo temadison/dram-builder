@@ -14,6 +14,7 @@ import com.temadison.drambuilder.dto.OfficialNavSnapshotResponse;
 import com.temadison.drambuilder.dto.PriceSnapshotRequest;
 import com.temadison.drambuilder.dto.PriceSnapshotResponse;
 import com.temadison.drambuilder.dto.ProviderIngestionRequest;
+import com.temadison.drambuilder.dto.SkHynixComparisonResponse;
 import com.temadison.drambuilder.service.MarketDataCsvImportService;
 import com.temadison.drambuilder.service.MarketDataFileIngestionService;
 import com.temadison.drambuilder.service.MarketDataIngestionConfigService;
@@ -21,6 +22,7 @@ import com.temadison.drambuilder.service.MarketDataIngestionRunService;
 import com.temadison.drambuilder.service.MarketDataProviderIngestionService;
 import com.temadison.drambuilder.service.MarketDataService;
 import com.temadison.drambuilder.service.RoundhillIssuerIngestionService;
+import com.temadison.drambuilder.service.SkHynixComparisonService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,6 +45,7 @@ public class MarketDataController {
     private final MarketDataProviderIngestionService marketDataProviderIngestionService;
     private final MarketDataFileIngestionService marketDataFileIngestionService;
     private final RoundhillIssuerIngestionService roundhillIssuerIngestionService;
+    private final SkHynixComparisonService skHynixComparisonService;
     private final String ingestionFile;
 
     public MarketDataController(
@@ -53,6 +56,7 @@ public class MarketDataController {
             MarketDataProviderIngestionService marketDataProviderIngestionService,
             MarketDataFileIngestionService marketDataFileIngestionService,
             RoundhillIssuerIngestionService roundhillIssuerIngestionService,
+            SkHynixComparisonService skHynixComparisonService,
             @Value("${app.ingest.file:}") String ingestionFile
     ) {
         this.marketDataService = marketDataService;
@@ -62,6 +66,7 @@ public class MarketDataController {
         this.marketDataProviderIngestionService = marketDataProviderIngestionService;
         this.marketDataFileIngestionService = marketDataFileIngestionService;
         this.roundhillIssuerIngestionService = roundhillIssuerIngestionService;
+        this.skHynixComparisonService = skHynixComparisonService;
         this.ingestionFile = ingestionFile;
     }
 
@@ -78,6 +83,11 @@ public class MarketDataController {
     @GetMapping("/ingestion-config")
     public MarketDataIngestionConfigResponse ingestionConfig() {
         return marketDataIngestionConfigService.config();
+    }
+
+    @GetMapping("/sk-hynix-comparison")
+    public SkHynixComparisonResponse skHynixComparison() {
+        return skHynixComparisonService.comparison();
     }
 
     @PostMapping("/ingest/provider")

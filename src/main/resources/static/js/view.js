@@ -1,4 +1,4 @@
-import { dateOnly, dateTime, decimal, money, percent, signedClass } from './format.js?v=market-calendar-20260702';
+import { dateOnly, dateTime, decimal, money, percent, signedClass } from './format.js?v=skhynix-comparison-20260715';
 
 export function showStatus(message, tone = 'info') {
   const band = document.getElementById('status-band');
@@ -72,6 +72,23 @@ export function renderScenario(scenario) {
       <td class="${signedClass(holding.weightedContributionPercent)}">${percent(holding.weightedContributionPercent)}</td>
     </tr>
   `);
+}
+
+export function renderSkHynixComparison(comparison) {
+  const parity = comparison?.latestParity;
+  const dateElement = document.getElementById('skhynix-parity-date');
+  if (!dateElement) {
+    return;
+  }
+
+  dateElement.textContent = parity ? `As of ${parity.date}` : 'No parity data';
+  document.getElementById('skhynix-adr-price').textContent = money(parity?.adrPrice);
+  document.getElementById('skhynix-local-equivalent').textContent = money(parity?.localEquivalentUsdPerAdr);
+  const premiumElement = document.getElementById('skhynix-premium');
+  premiumElement.textContent = percent(parity?.premiumDiscountPercent);
+  premiumElement.className = signedClass(parity?.premiumDiscountPercent);
+
+  renderPerformanceChart(comparison?.performance || []);
 }
 
 export function renderMarketData(marketData) {
@@ -282,6 +299,85 @@ export function renderEmpty() {
   document.getElementById('scenario-table').innerHTML = emptyRow(4);
   document.getElementById('attribution-table').innerHTML = emptyRow(4);
   document.getElementById('score-components').innerHTML = '';
+  renderSkHynixComparison(null);
+}
+
+function renderPerformanceChart(points) {
+  const svg = document.getElementById('skhynix-performance-chart');
+  const legend = document.getElementById('skhynix-performance-legend');
+  if (!svg || !legend) {
+    return;
+  }
+
+  const series = groupBySymbol(points);
+  const symbols = Object.keys(series);
+  if (symbols.length === 0) {
+    svg.innerHTML = '<text x="360" y="132" text-anchor="middle" class="chart-empty">No comparison history</text>';
+    legend.innerHTML = '';
+    return;
+  }
+
+  const width = 720;
+  const height = 260;
+  const margin = { top: 18, right: 22, bottom: 34, left: 46 };
+  const values = points.map(point => Number(point.normalizedValue)).filter(Number.isFinite);
+  const minValue = Math.min(...values, 95);
+  const maxValue = Math.max(...values, 105);
+  const dates = [...new Set(points.map(point => point.date))].sort();
+  const xForDate = date => {
+    const index = dates.indexOf(date);
+    if (dates.length <= 1) {
+      return margin.left;
+    }
+    return margin.left + (index / (dates.length - 1)) * (width - margin.left - margin.right);
+  };
+  const yForValue = value => {
+    const range = maxValue - minValue || 1;
+    return margin.top + ((maxValue - value) / range) * (height - margin.top - margin.bottom);
+  };
+  const palette = {
+    SKHY: 'var(--teal)',
+    '000660': 'var(--blue)',
+    MU: 'var(--green)',
+    DRAM: 'var(--amber)'
+  };
+
+  const gridValues = [minValue, 100, maxValue].filter((value, index, all) => all.indexOf(value) === index);
+  const grid = gridValues.map(value => `
+    <g>
+      <line x1="${margin.left}" y1="${yForValue(value)}" x2="${width - margin.right}" y2="${yForValue(value)}" class="chart-grid-line"></line>
+      <text x="${margin.left - 8}" y="${yForValue(value) + 4}" text-anchor="end" class="chart-axis-label">${decimal(value, 0)}</text>
+    </g>
+  `).join('');
+
+  const paths = symbols.map(symbol => {
+    const path = series[symbol]
+      .sort((left, right) => left.date.localeCompare(right.date))
+      .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xForDate(point.date).toFixed(2)} ${yForValue(Number(point.normalizedValue)).toFixed(2)}`)
+      .join(' ');
+    return `<path d="${path}" class="chart-line" style="stroke: ${palette[symbol] || 'var(--muted)'}"></path>`;
+  }).join('');
+
+  const labels = dates.length ? `
+    <text x="${margin.left}" y="${height - 10}" class="chart-axis-label">${escapeHtml(dates[0])}</text>
+    <text x="${width - margin.right}" y="${height - 10}" text-anchor="end" class="chart-axis-label">${escapeHtml(dates[dates.length - 1])}</text>
+  ` : '';
+
+  svg.innerHTML = `${grid}${paths}${labels}`;
+  legend.innerHTML = symbols.map(symbol => {
+    const label = series[symbol][0]?.label || symbol;
+    return `<span><i style="background: ${palette[symbol] || 'var(--muted)'}"></i>${escapeHtml(label)}</span>`;
+  }).join('');
+}
+
+function groupBySymbol(points) {
+  return points.reduce((groups, point) => {
+    if (!groups[point.symbol]) {
+      groups[point.symbol] = [];
+    }
+    groups[point.symbol].push(point);
+    return groups;
+  }, {});
 }
 
 function renderRows(id, rows, mapper, emptyColspan = 1) {
