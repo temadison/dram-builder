@@ -111,14 +111,15 @@ For the fastest local setup, run with the `dev` profile:
 SPRING_PROFILES_ACTIVE=dev ./gradlew bootRun
 ```
 
-Spring Boot starts the MySQL service from `docker-compose.yml` automatically when Docker Desktop is running. The compose file matches `src/main/resources/application-dev.yml`.
+Spring Boot starts the MySQL service from `docker-compose.yml` automatically when Docker Desktop is running. The compose integration is enabled only by the `dev` profile and matches `src/main/resources/application-dev.yml`.
 The default MySQL host port is `3307` to avoid collisions with a locally installed MySQL on `3306`; set `DRAM_MYSQL_PORT` for both Docker Compose and the Spring process if you need a different host port.
-
-If you want to manage MySQL yourself, start it manually:
+If startup fails with a MySQL communications-link error, confirm Docker Desktop is running and start the service manually:
 
 ```bash
 docker compose up -d mysql
 ```
+
+Then restart the application.
 
 If you prefer a manually managed MySQL instance, create a local MySQL user/database or allow the configured URL to create the database:
 

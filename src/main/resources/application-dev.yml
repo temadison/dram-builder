@@ -1,4 +1,11 @@
 spring:
+  docker:
+    compose:
+      enabled: true
+      file: docker-compose.yml
+      lifecycle-management: start-only
+      readiness:
+        wait: only-if-started
   datasource:
     url: jdbc:mysql://localhost:${DRAM_MYSQL_PORT:3307}/dram_bridge?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: dram_bridge

@@ -3,6 +3,9 @@ spring:
     name: dram-bridge-model
   profiles:
     active: local
+  docker:
+    compose:
+      enabled: false
 
 server:
   port: 8080
